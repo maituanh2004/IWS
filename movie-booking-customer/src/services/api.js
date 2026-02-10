@@ -12,11 +12,12 @@ const getApiUrl = () => {
     if (Platform.OS === 'android') {
         return 'http://10.0.2.2:5000/api';
     }
-    // For iOS simulator or web
-    return 'http://localhost:5000/api';
 
-    // For physical device, uncomment below and comment above:
-    return 'http://192.168.1.7:5000/api';
+    // For physical device OR web where localhost might not work
+    // return 'http://192.168.1.7:5000/api';
+
+    // Default for iOS simulator or web localhost
+    return 'http://localhost:5000/api';
 };
 
 const API_URL = getApiUrl();

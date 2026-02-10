@@ -5,8 +5,8 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Alert,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,15 +18,42 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Error', 'Please fill in all fields');
+            Alert.alert("Error", "Please fill in all fields");
             return;
         }
 
         setLoading(true);
+
         try {
-            await signIn(email, password);
+            console.log("🔵 SENDING LOGIN REQUEST...");
+
+            const result = await signIn(email, password);
+
+            console.log("🟢 LOGIN SUCCESS:", result);
+            Alert.alert("Success", "Login successful!");
+
         } catch (error) {
-            Alert.alert('Error', error.message || error.response?.data?.message || 'Login failed');
+            console.log("🔴 LOGIN ERROR RAW:", error);
+
+            if (error.response) {
+                console.log("🔴 SERVER RESPONSE:", error.response.data);
+
+                const message =
+                    error.response.data?.error ||
+                    error.response.data?.message ||
+                    "Invalid email or password";
+
+                Alert.alert("Login Failed", message);
+            }
+            else if (error.request) {
+                console.log("🔴 REQUEST ERROR:", error.request);
+                Alert.alert("Network Error", "Cannot reach the server");
+            }
+            else {
+                console.log("🔴 UNKNOWN ERROR:", error.message);
+                Alert.alert("Error", error.message);
+            }
+
         } finally {
             setLoading(false);
         }
@@ -42,8 +69,8 @@ export default function LoginScreen() {
                 placeholder="Admin Email"
                 value={email}
                 onChangeText={setEmail}
-                keyboardType="email-address"
                 autoCapitalize="none"
+                keyboardType="email-address"
             />
 
             <TextInput
@@ -74,28 +101,28 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#c04444ff',
     },
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        marginBottom: 10,
-        textAlign: 'center',
         color: '#fff',
+        textAlign: 'center',
+        marginBottom: 10,
     },
     subtitle: {
         fontSize: 16,
-        marginBottom: 30,
+        color: '#f1f1f1ff',
         textAlign: 'center',
-        color: '#999',
+        marginBottom: 30,
     },
     input: {
-        backgroundColor: '#2a2a2a',
+        backgroundColor: '#faf5f5ff',
         padding: 15,
         borderRadius: 8,
         marginBottom: 15,
         fontSize: 16,
-        color: '#fff',
+        color: '#403737ff',
     },
     button: {
         backgroundColor: '#e50914',

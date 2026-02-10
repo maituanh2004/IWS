@@ -9,9 +9,17 @@ app.use(express.json());
 // Enable CORS
 app.use(cors());
 
+// Request logger
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+});
+
 // Route files
 const auth = require('./routes/auth');
+
 const movies = require('./routes/movies');
+
 const showtimes = require('./routes/showtimes');
 
 // Mount routers

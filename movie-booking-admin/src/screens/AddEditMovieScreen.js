@@ -10,7 +10,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import * as api from '../services/api';
-
+import * as movieService from '../services/movieService';
 export default function AddEditMovieScreen({ route, navigation }) {
     const { movie } = route.params || {};
     const isEdit = !!movie;
@@ -43,12 +43,13 @@ export default function AddEditMovieScreen({ route, navigation }) {
         setLoading(true);
         try {
             if (isEdit) {
-                await api.updateMovie(movie._id, movieData);
+                await movieService.updateMovie(movie._id, movieData);
                 Alert.alert('Success', 'Movie updated');
             } else {
-                await api.createMovie(movieData);
+                await movieService.createMovie(movieData);
                 Alert.alert('Success', 'Movie created');
             }
+
             navigation.goBack();
         } catch (error) {
             Alert.alert('Error', error.response?.data?.message || 'Failed to save movie');

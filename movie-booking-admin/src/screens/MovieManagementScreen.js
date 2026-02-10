@@ -9,7 +9,7 @@ import {
     Alert,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import * as api from '../services/api';
+import * as movieApi from '../services/movieService';
 
 export default function MovieManagementScreen({ navigation }) {
     const [movies, setMovies] = useState([]);
@@ -29,7 +29,7 @@ export default function MovieManagementScreen({ navigation }) {
 
     const loadMovies = async () => {
         try {
-            const response = await api.getMovies();
+            const response = await movieApi.getMovies();
             setMovies(response.data.data);
         } catch (error) {
             Alert.alert('Error', 'Failed to load movies');
@@ -38,28 +38,31 @@ export default function MovieManagementScreen({ navigation }) {
         }
     };
 
+
     const handleDelete = async (id, title) => {
         Alert.alert(
-            'Delete Movie',
+            "Delete Movie",
             `Are you sure you want to delete "${title}"?`,
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: "Cancel", style: "cancel" },
                 {
-                    text: 'Delete',
-                    style: 'destructive',
+                    text: "Delete",
+                    style: "destructive",
                     onPress: async () => {
                         try {
-                            await api.deleteMovie(id);
+                            await movieApi.deleteMovie(id);
                             loadMovies();
-                            Alert.alert('Success', 'Movie deleted');
+                            Alert.alert("Success", "Movie deleted");
                         } catch (error) {
-                            Alert.alert('Error', 'Failed to delete movie');
+                            console.log("Delete error:", error.response?.data || error);
+                            Alert.alert("Error", "Failed to delete movie");
                         }
-                    },
-                },
+                    }
+                }
             ]
         );
     };
+
 
     const renderMovie = ({ item }) => (
         <View style={styles.card}>

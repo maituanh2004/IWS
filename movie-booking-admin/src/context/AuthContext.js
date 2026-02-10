@@ -30,19 +30,42 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         }
     };
-
     const signIn = async (email, password) => {
         const response = await api.login(email, password);
 
-        // Check if user is admin
-        if (response.data.user.role !== 'admin') {
-            throw new Error('Access denied. Admin only.');
+        console.log("LOGIN RESPONSE:", response.data);  // kiểm tra
+
+        const user =
+            response.data.user ||
+            response.data.data?.user ||
+            response.data.data;
+
+        const token =
+            response.data.token ||
+            response.data.data?.token;
+
+        if (!user || !token) {
+            throw new Error("Invalid API response format");
         }
 
-        await AsyncStorage.setItem('token', response.data.token);
-        setUser(response.data.user);
-        return response.data;
+        if (user.role !== 'admin') {
+            throw new Error("Access denied. Admin only.");
+        }
+
+        await AsyncStorage.setItem('token', token);
+        setUser(user);
+
+        return { user, token };
     };
+    const onSubmit = async () => {
+        try {
+            const res = await signIn(email, password);
+            console.log("SIGNIN RESULT:", res);
+        } catch (err) {
+            console.log("SIGNIN ERROR:", err.message);
+        }
+    };
+
 
     const signOut = async () => {
         await AsyncStorage.removeItem('token');

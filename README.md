@@ -67,3 +67,7 @@ If your IP changes, update the return value in:
 - **MongoDB**: Ensure MongoDB is running locally on port `27017` or update the `.env` in `movie-booking-backend`.
 - **Network Error**: Ensure your phone and computer are on the same WiFi network and use the correct local IP.
 - **Port 5000**: Required for the backend API.
+cách sửa code 
+// git add .
+git commit -m "mô tả thay đổi"
+git push

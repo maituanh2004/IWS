@@ -26,7 +26,7 @@ export default function LoginScreen({ navigation }) {
         try {
             await signIn(email, password);
         } catch (error) {
-            Alert.alert('Error', error.response?.data?.message || 'Login failed');
+            Alert.alert('Error', error.response?.data?.error || 'Login failed');
         } finally {
             setLoading(false);
         }
@@ -80,20 +80,20 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#c04444ff',
     },
     title: {
         fontSize: 32,
         fontWeight: 'bold',
         marginBottom: 10,
         textAlign: 'center',
-        color: '#333',
+        color: '#f4e5e5ff',
     },
     subtitle: {
         fontSize: 16,
         marginBottom: 30,
         textAlign: 'center',
-        color: '#666',
+        color: '#f7f2f2ff',
     },
     input: {
         backgroundColor: '#fff',
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     linkText: {
         marginTop: 20,
         textAlign: 'center',
-        color: '#e50914',
+        color: '#faf1f1ff',
         fontSize: 14,
     },
 });
