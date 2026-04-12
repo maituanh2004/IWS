@@ -14,6 +14,17 @@ const bookingSchema = new mongoose.Schema({
         ref: 'Showtime',
         required: true
     },
+    seats: [String],
+    totalPrice: Number,
+    status: {
+        type: String,
+        enum: ['CONFIRMED', 'CANCELLED'],
+        default: 'CONFIRMED'
+    },
+    bookingDate: {
+        type: Date,
+        default: Date.now
+    },
     // Array of selected seat numbers, required
     selectedSeats: [{
         type: String,
