@@ -1,5 +1,6 @@
 const Showtime = require('../models/Showtime');
 const Booking = require('../models/Booking');
+const { generateSeats } = require('../utils/seatUtils');
 
 // @desc    Get all showtimes
 // @route   GET /api/showtimes
@@ -29,14 +30,7 @@ exports.getSeats = async (req, res) => {
     try {
         const { showtimeId } = req.params;
 
-        const rows = 'ABCDEFGH';
-        const allSeats = [];
-
-        for (let i = 0; i < rows.length; i++) {
-            for (let j = 1; j <= 10; j++) {
-                allSeats.push(`${rows[i]}${j}`);
-            }
-        }
+        const allSeats = generateSeats();
 
         const bookings = await Booking.find({
             showtime: showtimeId,
@@ -56,6 +50,19 @@ exports.getSeats = async (req, res) => {
             allSeats
         });
 
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getShowtimesByMovie = async (req, res) => {
+    try {
+        const { movieId } = req.params;
+
+        const showtimes = await Showtime.find({ movie: movieId })
+            .populate('movie');
+
+        res.json(showtimes);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
