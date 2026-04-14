@@ -8,6 +8,11 @@ import MovieManagementScreen from '../screens/MovieManagementScreen';
 import AddEditMovieScreen from '../screens/AddEditMovieScreen';
 import ShowtimeManagementScreen from '../screens/ShowtimeManagementScreen';
 import AddEditShowtimeScreen from '../screens/AddEditShowtimeScreen';
+import DiscountManagementScreen from '../screens/DiscountManagementScreen';
+import OccupancyScreen from '../screens/OccupancyScreen';
+import SystemErrorScreen from '../screens/SystemErrorScreen';
+
+import { navigationRef } from './NavigationService';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,13 +24,14 @@ export default function AppNavigator() {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
             {user ? (
                 <Stack.Navigator
                     screenOptions={{
                         headerStyle: { backgroundColor: '#e50914' },
-                        headerTintColor: '#fff',
-                        headerTitleStyle: { fontWeight: 'bold' },
+                        headerTintColor: '#000',
+                        headerTitleStyle: { fontWeight: '900', color: '#000' },
+                        headerTitleAlign: 'center',
                     }}
                 >
                     <Stack.Screen
@@ -43,7 +49,7 @@ export default function AppNavigator() {
                     <Stack.Screen
                         name="ShowtimeManagement"
                         component={ShowtimeManagementScreen}
-                        options={{ title: 'Showtime Management' }}
+                        options={{ headerShown: false }}
                     />
                     <Stack.Screen
                         name="AddEditShowtime"
@@ -51,6 +57,21 @@ export default function AppNavigator() {
                         options={({ route }) => ({
                             title: route.params?.showtime ? 'Edit Showtime' : 'Add Showtime',
                         })}
+                    />
+                    <Stack.Screen
+                        name="DiscountManagement"
+                        component={DiscountManagementScreen}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="Occupancy"
+                        component={OccupancyScreen}
+                        options={{ title: 'Theater Occupancy' }}
+                    />
+                    <Stack.Screen
+                        name="SystemError"
+                        component={SystemErrorScreen}
+                        options={{ headerShown: false }}
                     />
                 </Stack.Navigator>
             ) : (
