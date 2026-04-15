@@ -1,26 +1,92 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     View,
     Text,
     ScrollView,
     TouchableOpacity,
-    StyleSheet,
+    ActivityIndicator,
+    Alert,
     Dimensions,
 } from 'react-native';
-import { Inbox, Info, ArrowLeft, Armchair } from 'lucide-react-native';
+import { Inbox, Info, Armchair } from 'lucide-react-native';
+import * as showtimeApi from '../services/showtimeService';
 
 const { width } = Dimensions.get('window');
 const SEAT_SIZE = (width - 60) / 10;
 
 export default function OccupancyScreen({ route, navigation }) {
-    const { showtime } = route.params || {};
+    const { showtimeId } = route.params || {};
+    const [showtime, setShowtime] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Safety check for showtime data
+    useEffect(() => {
+        loadShowtime();
+    }, [showtimeId]);
+
+    const loadShowtime = async () => {
+        setLoading(true);
+        if (!showtimeId) {
+            // No showtime selected — leave data empty so UI renders an empty state
+            setShowtime(null);
+            setLoading(false);
+            return;
+        }
+        try {
+            const response = await showtimeApi.getShowtime(showtimeId);
+            setShowtime(response.data.data);
+        } catch (error) {
+            console.error('Failed to load showtime details:', error);
+            setShowtime(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const capacity = useMemo(() => {
+        if (!showtime) return 80;
+        return showtime.totalSeats || 80;
+    }, [showtime]);
+
+    const cols = 10;
+    const rows = Math.ceil(capacity / cols);
+    const vipRowsCount = capacity >= 100 ? 3 : 2;
+
+  
+    const bookedSeats = useMemo(() => {
+        const booked = new Set();
+        if (!showtime) return booked;
+        
+        const bookedCount = showtime.bookedSeats || 0;
+        const seedValue = showtime._id ? showtime._id.slice(-4) : '0';
+        const seed = parseInt(seedValue, 16) || 123;
+        
+        // Simple LCG PRNG for consistency
+        let m_w = seed;
+        const random = () => {
+            m_w = (1103515245 * m_w + 12345) & 0x7fffffff;
+            return m_w / 0x7fffffff;
+        };
+
+        while (booked.size < bookedCount) {
+            const randomSeat = Math.floor(random() * capacity);
+            booked.add(randomSeat);
+        }
+        return booked;
+    }, [capacity, showtime]);
+
+    if (loading) {
+        return (
+            <View className="flex-1 justify-center items-center bg-gray-50">
+                <ActivityIndicator size="large" color="#e50914" />
+            </View>
+        );
+    }
+
     if (!showtime) {
         return (
             <View className="flex-1 justify-center items-center bg-gray-50 p-6">
                 <Inbox color="#e50914" size={64} />
-                <Text className="text-xl font-bold text-gray-900 mt-4 text-center">No Showtime Data</Text>
+                <Text className="text-xl font-bold text-gray-900 mt-4 text-center">Showtime not found</Text>
                 <TouchableOpacity
                     className="mt-6 bg-[#e50914] px-8 py-3 rounded-full"
                     onPress={() => navigation.goBack()}
@@ -31,35 +97,19 @@ export default function OccupancyScreen({ route, navigation }) {
         );
     }
 
-    const totalSeats = showtime.totalSeats || 80;
-    const capacity = totalSeats === 100 ? 100 : 80; // Standardize to 80 or 100
-    const cols = 10;
-    const rows = capacity / cols;
-
-    const vipRowsCount = capacity === 100 ? 3 : 2;
-
-    // Generate mock booked seats for demonstration
-    const bookedSeats = useMemo(() => {
-        const booked = new Set();
-        const bookedCount = showtime.bookedSeats || Math.floor(capacity * 0.4);
-        while (booked.size < bookedCount) {
-            const randomSeat = Math.floor(Math.random() * capacity);
-            booked.add(randomSeat);
-        }
-        return booked;
-    }, [capacity, showtime.bookedSeats]);
-
     const renderGrid = () => {
         const grid = [];
         const ICON_SIZE = Math.floor(SEAT_SIZE * 0.4);
         const TEXT_SIZE = Math.floor(SEAT_SIZE * 0.25);
 
         for (let r = 0; r < rows; r++) {
-            const rowLabel = String.fromCharCode(65 + r); // A, B, C...
+            const rowLabel = String.fromCharCode(65 + r);
             const rowSeats = [];
 
             for (let c = 0; c < cols; c++) {
                 const seatIndex = r * cols + c;
+                if (seatIndex >= capacity) break;
+
                 const isBooked = bookedSeats.has(seatIndex);
                 const isVIP = r < vipRowsCount;
 
@@ -78,8 +128,7 @@ export default function OccupancyScreen({ route, navigation }) {
                         >
                             <Text
                                 style={{ fontSize: TEXT_SIZE }}
-                                className={`font-bold ${isBooked ? 'text-gray-400' : 'text-gray-600'
-                                    }`}
+                                className={`font-bold ${isBooked ? 'text-gray-400' : 'text-gray-600'}`}
                             >
                                 {rowLabel}{c + 1}
                             </Text>
@@ -114,7 +163,7 @@ export default function OccupancyScreen({ route, navigation }) {
                         </View>
                         <Text className="text-gray-500 font-medium">{new Date(showtime.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                         <View className="flex-row items-center">
-                            <Text className="text-gray-900 font-bold">{showtime.bookedSeats || bookedSeats.size}</Text>
+                            <Text className="text-gray-900 font-bold">{showtime.bookedSeats || 0}</Text>
                             <Text className="text-gray-400">/{capacity} Booked</Text>
                         </View>
                     </View>
@@ -136,14 +185,13 @@ export default function OccupancyScreen({ route, navigation }) {
                     </View>
                 </View>
 
-                {/* Screen Indicator */}
-                <View className="items-center mb-10">
-                    <View className="w-3/4 h-1 bg-gray-300 rounded-full mb-2 shadow-sm" />
-                    <Text className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">Cinema Screen</Text>
-                </View>
-
-                {/* Seating Grid */}
+                {/* Seating Grid with screen indicator */}
                 <View className="items-center px-4">
+                    <View style={{ width: Math.min(width - 40, cols * SEAT_SIZE + 40), alignItems: 'center', marginBottom: 12 }}>
+                        <View style={{ width: '70%', height: 18, backgroundColor: '#d97706', borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>SCREEN</Text>
+                        </View>
+                    </View>
                     {renderGrid()}
                 </View>
 
@@ -159,23 +207,9 @@ export default function OccupancyScreen({ route, navigation }) {
                             <Text className="text-gray-600">Total Capacity</Text>
                             <Text className="font-bold text-gray-900">{capacity} Seats</Text>
                         </View>
-                        <View className="flex-row justify-between items-center py-2 border-b border-gray-50">
-                            <View className="flex-row items-center">
-                                <View className="w-2 h-2 rounded-full bg-amber-400 mr-2" />
-                                <Text className="text-gray-600">VIP Zone (Front)</Text>
-                            </View>
-                            <Text className="font-bold text-amber-600">{vipRowsCount * 10} Seats</Text>
-                        </View>
-                        <View className="flex-row justify-between items-center py-2 border-b border-gray-50">
-                            <View className="flex-row items-center">
-                                <View className="w-2 h-2 rounded-full bg-gray-300 mr-2" />
-                                <Text className="text-gray-600">Regular Zone</Text>
-                            </View>
-                            <Text className="font-bold text-gray-900">{capacity - (vipRowsCount * 10)} Seats</Text>
-                        </View>
                         <View className="flex-row justify-between items-center py-2 bg-red-50 p-3 rounded-xl mt-2">
-                            <Text className="text-[#e50914] font-bold">Current Occupancy</Text>
-                            <Text className="text-[#e50914] text-xl font-black">{Math.round((bookedSeats.size / capacity) * 100)}%</Text>
+                            <Text className="text-[#e50914] font-bold">Occupancy Rate</Text>
+                            <Text className="text-[#e50914] text-xl font-black">{capacity > 0 ? Math.round(((showtime.bookedSeats || 0) / capacity) * 100) : 0}%</Text>
                         </View>
                     </View>
                 </View>

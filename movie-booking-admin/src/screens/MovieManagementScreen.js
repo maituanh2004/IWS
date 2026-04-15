@@ -17,31 +17,42 @@ import * as discountService from '../services/discountService';
 
 export default function MovieManagementScreen({ navigation }) {
     const [movies, setMovies] = useState([]);
+    const [discounts, setDiscounts] = useState({});
     const [loading, setLoading] = useState(true);
-    const { signOut } = useAuth();
 
     useEffect(() => {
-        loadMovies();
+        loadData();
     }, []);
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            loadMovies();
+            loadData();
         });
         return unsubscribe;
     }, [navigation]);
 
-    const loadMovies = async () => {
+    const loadData = async () => {
         try {
-            const response = await movieApi.getMovies();
-            setMovies(response.data.data);
+            const [movieRes, discountRes] = await Promise.all([
+                movieApi.getMovies(),
+                discountService.getDiscounts()
+            ]);
+
+            setMovies(movieRes.data.data);
+            
+            // Convert discounts array to an object for fast lookup by code
+            const discountMap = {};
+            discountRes.data.data.forEach(d => {
+                discountMap[d.code] = d;
+            });
+            setDiscounts(discountMap);
         } catch (error) {
-            alert('Error: Failed to load movies');
+            console.error('Failed to load data:', error);
+            Alert.alert('Error', 'Failed to load movies or discounts');
         } finally {
             setLoading(false);
         }
     };
-
 
     const handleDelete = async (id, title) => {
         Alert.alert(
@@ -55,11 +66,10 @@ export default function MovieManagementScreen({ navigation }) {
                     onPress: async () => {
                         try {
                             await movieApi.deleteMovie(id);
-                            loadMovies();
-                            alert("Success: Movie deleted");
+                            loadData();
+                            Alert.alert("Success", "Movie deleted");
                         } catch (error) {
-                            console.log("Delete error:", error.response?.data || error);
-                            alert("Error: Failed to delete movie");
+                            Alert.alert("Error", "Failed to delete movie");
                         }
                     }
                 }
@@ -67,34 +77,24 @@ export default function MovieManagementScreen({ navigation }) {
         );
     };
 
-
-    const calculateDiscountedPrice = (price, voucherCode) => {
-        if (!price || !voucherCode || voucherCode === 'none') return price;
-        const discount = discountService.getDiscountByCode(voucherCode);
-        if (discount) {
-            return price * (1 - (discount.percentage / 100));
-        }
-        return price;
-    };
+    // Admin view should not apply discounts to the displayed price —
+    // discounts are for customer-side pricing only. Keep original price.
 
     const formatCurrency = (amount) => {
         return Math.round(amount).toLocaleString('vi-VN') + ' VND';
     };
 
     const renderMovie = ({ item }) => {
-        // Mock default price if missing for existing movies
-        const price = item.price || 95000;
-        const voucherCode = item.voucherCode || 'none';
-        const discountedPrice = calculateDiscountedPrice(price, voucherCode);
-        const hasDiscount = voucherCode !== 'none';
-        const discountObj = hasDiscount ? discountService.getDiscountByCode(voucherCode) : null;
+        const price = item.price || 0;
+        const available = item.availableVouchers || [];
+        const hasDiscount = available.length > 0;
 
         return (
             <View className="bg-white rounded-2xl p-4 mb-5 shadow-md border border-[#e50914]">
                 <View className="flex-row items-start mb-4">
                     <View className="w-24 h-36 bg-[#1f1f1f] rounded-xl overflow-hidden border border-[#444] shadow-md">
                         <Image
-                            source={{ uri: item.poster || 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg' }}
+                            source={{ uri: item.poster || 'https://via.placeholder.com/300x450?text=No+Poster' }}
                             className="w-full h-full"
                             resizeMode="cover"
                         />
@@ -105,10 +105,10 @@ export default function MovieManagementScreen({ navigation }) {
                                 {item.title}
                             </Text>
                             {hasDiscount && (
-                                <View className={`ml-2 px-2 py-1 rounded-md bg-[#e50914]/10 border border-[#e50914]/30`}>
-                                    <Text className={`text-[10px] font-bold uppercase text-[#e50914]`}>
-                                        {voucherCode}
-                                    </Text>
+                                <View className="ml-2 px-2 py-1 rounded-md bg-[#e50914]/10 border border-[#e50914]/30">
+                                            <Text className="text-[10px] font-bold uppercase text-[#e50914]">
+                                                {available.join(', ')}
+                                            </Text>
                                 </View>
                             )}
                         </View>
@@ -124,22 +124,11 @@ export default function MovieManagementScreen({ navigation }) {
                         </View>
 
                         <View className="mt-1">
-                            {hasDiscount ? (
-                                <View>
-                                    <View className="flex-row items-center">
-                                        <Text className="text-xs text-gray-400 line-through font-medium">
-                                            {formatCurrency(price)}
-                                        </Text>
-                                        <Text className="text-[10px] font-bold text-green-600 ml-2">-{discountObj?.percentage}%</Text>
-                                    </View>
-                                    <Text className="text-lg font-black text-[#e50914]">
-                                        {formatCurrency(discountedPrice)}
-                                    </Text>
-                                </View>
-                            ) : (
-                                <Text className="text-lg font-black text-gray-900">
-                                    {formatCurrency(price)}
-                                </Text>
+                            <Text className="text-lg font-black text-gray-900">
+                                {formatCurrency(price)}
+                            </Text>
+                            {hasDiscount && (
+                                <Text className="text-xs text-gray-500 mt-1">Discount available for customers: -{discountObj.percentage}%</Text>
                             )}
                         </View>
                     </View>
@@ -148,7 +137,7 @@ export default function MovieManagementScreen({ navigation }) {
                 <View className="flex-row gap-3">
                     <TouchableOpacity
                         className="flex-1 bg-[#333] py-2.5 rounded-xl flex-row justify-center items-center"
-                        onPress={() => navigation.navigate('AddEditMovie', { movie: { ...item, price, voucherCode } })}
+                        onPress={() => navigation.navigate('AddEditMovie', { movie: item })}
                     >
                         <Edit color="#fff" size={18} />
                         <Text className="text-white font-bold ml-2">Edit</Text>
@@ -165,7 +154,6 @@ export default function MovieManagementScreen({ navigation }) {
         );
     };
 
-
     if (loading) {
         return (
             <View className="flex-1 justify-center items-center bg-gray-50">
@@ -177,7 +165,6 @@ export default function MovieManagementScreen({ navigation }) {
     return (
         <View className="flex-1 bg-gray-50">
             <AdminHeader title="Movie Management" showBack={true} />
-
             <Navbar />
 
             <FlatList

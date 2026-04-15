@@ -12,7 +12,8 @@ import {
     Platform,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import * as api from '../services/api';
+import * as movieApi from '../services/movieService';
+import * as showtimeApi from '../services/showtimeService';
 
 const ROOMS = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
 
@@ -32,7 +33,7 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
         showtime?.endTime ? new Date(showtime.endTime).toISOString().split('T')[0] : ''
     );
     const [endTime, setEndTime] = useState(
-        showtime?.endTime ? new Date(showtime.endTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''
+        showtime?.endTime ? new Date(showtime.endTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '16:00'
     );
     const [room, setRoom] = useState(showtime?.room?.toString() || '1');
     const [totalSeats, setTotalSeats] = useState(showtime?.totalSeats?.toString() || '100');
@@ -77,7 +78,7 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
 
     const loadMovies = async () => {
         try {
-            const response = await api.getMovies();
+            const response = await movieApi.getMovies();
             setMovies(response.data.data);
             if (!selectedMovieId && response.data.data.length > 0) {
                 setSelectedMovieId(response.data.data[0]._id);
@@ -97,7 +98,7 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             movie: selectedMovieId,
             startTime: new Date(`${startDate}T${startTime}:00`),
             endTime: new Date(`${endDate}T${endTime}:00`),
-            room: parseInt(room),
+            room: room.toString(),
             totalSeats: parseInt(totalSeats),
             price: parseFloat(price),
         };
@@ -105,10 +106,10 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
         setLoading(true);
         try {
             if (isEdit) {
-                await api.updateShowtime(showtime._id, showtimeData);
+                await showtimeApi.updateShowtime(showtime._id, showtimeData);
                 Alert.alert('Success', 'Showtime updated');
             } else {
-                await api.createShowtime(showtimeData);
+                await showtimeApi.createShowtime(showtimeData);
                 Alert.alert('Success', 'Showtime created');
             }
             navigation.goBack();

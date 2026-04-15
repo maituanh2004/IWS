@@ -2,20 +2,24 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-// Use the local IP of your machine (192.168.1.7) for both emulator and physical device
-// 🌐 CONFIGURATION
-const LOCAL_IP = "10.165.5.122"; // ⚠️ Update this if your machine IP changes (Check with 'ipconfig')
-const PUBLIC_URL = "";           // 🚀 Use this for "Any Network" access (e.g., https://xyz.ngrok-free.app)
+
+const LOCAL_IP = "192.168.1.4"; 
+const PUBLIC_URL = "";
 
 const getBaseUrl = () => {
     if (PUBLIC_URL) return `${PUBLIC_URL}/api`;
-    
-    // For Web development
+
     if (Platform.OS === 'web') return `http://localhost:5000/api`;
-    
-    // For Android/iOS - Use machine IP
-    // Note: If using Android Emulator, 10.0.2.2 also works for localhost
-    return `http://${LOCAL_IP}:5000/api`;
+
+    if (Platform.OS === 'android') {
+        const isLanIp = typeof LOCAL_IP === 'string' && /^\d+\.\d+\.\d+\.\d+$/.test(LOCAL_IP) && !LOCAL_IP.startsWith('127.');
+        if (isLanIp) return `http://${LOCAL_IP}:5000/api`;
+        // default emulator host
+        return `http://10.0.2.2:5000/api`;
+    }
+
+    // iOS and other platforms: use LOCAL_IP if provided
+    return `http://${LOCAL_IP || 'localhost'}:5000/api`;
 };
 
 const API_BASE = getBaseUrl();
@@ -27,6 +31,31 @@ const api = axios.create({
     baseURL: API_BASE,
     timeout: 10000,
     headers: { "Content-Type": "application/json" }
+});
+
+// Automatic fallback: if requests to API_BASE fail with network error,
+// retry once using emulator loopback (Android) or localhost.
+api.interceptors.response.use(undefined, async (error) => {
+    // Only attempt fallback for network errors (no response)
+    if (!error.response && !error.config._retried) {
+        const origConfig = error.config;
+        origConfig._retried = true;
+
+        let fallbackBase = API_BASE;
+        try {
+            if (Platform.OS === 'android') {
+                fallbackBase = API_BASE.includes('10.0.2.2') ? (API_BASE.includes('192.168') ? API_BASE : `http://${LOCAL_IP}:5000/api`) : `http://10.0.2.2:5000/api`;
+            } else {
+                fallbackBase = `http://localhost:5000/api`;
+            }
+            console.log('📡 Falling back to', fallbackBase);
+            const instance = axios.create({ baseURL: fallbackBase, timeout: 10000, headers: origConfig.headers });
+            return instance.request({ ...origConfig, baseURL: fallbackBase });
+        } catch (fallErr) {
+            return Promise.reject(fallErr);
+        }
+    }
+    return Promise.reject(error);
 });
 
 import * as NavigationService from '../navigation/NavigationService';

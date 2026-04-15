@@ -31,36 +31,37 @@ export default function ShowtimeManagementScreen({ navigation }) {
     const loadShowtimes = async () => {
         try {
             const response = await showtimeApi.getShowtimes();
-            if (response.data?.data && response.data.data.length > 0) {
-                setShowtimes(response.data.data);
-            } else {
-                throw new Error("No showtimes found, showing mock");
-            }
+            setShowtimes(response.data.data);
         } catch (error) {
-            console.log("Using Mock Data for Showtimes:", error.message);
-            // Fallback mock data to display the UI if the backend DB is empty or connection fails
-            setShowtimes([
-                {
-                    _id: 'mock-1',
-                    movie: { title: 'Dune: Part Two' },
-                    startTime: new Date(Date.now() + 86400000).toISOString(),
-                    room: 'IMAX 1',
-                    price: 115000,
-                    totalSeats: 250,
-                    bookedSeats: 215
-                },
-                {
-                    _id: 'mock-2',
-                    movie: { title: 'Godzilla x Kong: The New Empire' },
-                    startTime: new Date(Date.now() + 120000000).toISOString(),
-                    room: 'Standard 4',
-                    price: 95000,
-                    totalSeats: 120,
-                    bookedSeats: 45
-                }
-            ]);
+            console.error('Failed to load showtimes:', error);
+            Alert.alert('Error', 'Failed to load showtimes');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleBooking = async (showtimeId) => {
+        const current = showtimes.find(s => s._id === showtimeId);
+        if (!current) return;
+        const start = new Date(current.startTime);
+        const msToStart = start.getTime() - Date.now();
+        const cutoffMs = 30 * 60 * 1000;
+
+        if (msToStart <= cutoffMs) {
+            Alert.alert('Không thể mở', 'Không thể mở đặt vé trong vòng 30 phút trước giờ chiếu');
+            return;
+        }
+
+        // Optimistic UI update: flip bookingOpen locally first
+        setShowtimes(prev => prev.map(s => s._id === showtimeId ? { ...s, bookingOpen: !s.bookingOpen } : s));
+
+        try {
+            const newState = !current.bookingOpen;
+            await showtimeApi.updateShowtime(showtimeId, { bookingOpen: newState });
+        } catch (err) {
+            // Revert on error and inform the user
+            loadShowtimes();
+            Alert.alert('Error', 'Failed to toggle booking');
         }
     };
 
@@ -75,9 +76,7 @@ export default function ShowtimeManagementScreen({ navigation }) {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            if (!id.startsWith('mock')) {
-                                await showtimeApi.deleteShowtime(id);
-                            }
+                            await showtimeApi.deleteShowtime(id);
                             loadShowtimes();
                             Alert.alert('Success', 'Showtime deleted');
                         } catch (error) {
@@ -96,12 +95,11 @@ export default function ShowtimeManagementScreen({ navigation }) {
     const renderShowtime = ({ item }) => {
         const startTime = new Date(item.startTime);
         
-        // Mock booked seats if it doesn't exist, to test the visual progress bar
-        const booked = item.bookedSeats !== undefined ? item.bookedSeats : Math.floor(Math.random() * ((item.totalSeats || 50) + 1));
+        // Use real values from item, with fallbacks to avoid crashes
+        const booked = item.bookedSeats || 0;
         const total = item.totalSeats || 50;
         const fillPercentage = Math.min(100, Math.max(0, (booked / total) * 100));
         
-        // Color coding for progress bar
         let progressColor = "bg-green-500";
         if (fillPercentage > 85) progressColor = "bg-red-500";
         else if (fillPercentage > 60) progressColor = "bg-yellow-500";
@@ -111,7 +109,7 @@ export default function ShowtimeManagementScreen({ navigation }) {
                 <View className="flex-row items-start mb-4">
                     <View className="w-24 h-36 bg-gray-50 rounded-xl overflow-hidden border border-gray-100 mr-5">
                         <Image 
-                            source={{ uri: item.movie?.poster || 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg' }} 
+                            source={{ uri: item.movie?.poster || 'https://via.placeholder.com/300x450?text=No+Poster' }} 
                             className="w-full h-full"
                             resizeMode="cover"
                         />
@@ -141,10 +139,9 @@ export default function ShowtimeManagementScreen({ navigation }) {
                     </View>
                 </View>
 
-                {/* Progress Bar Section (X/XX Seats) */}
                 <TouchableOpacity 
                     className="mt-2 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100 active:bg-gray-100"
-                    onPress={() => navigation.navigate('Occupancy', { showtime: { ...item, totalSeats: total, bookedSeats: booked } })}
+                    onPress={() => navigation.navigate('Occupancy', { showtimeId: item._id })}
                 >
                     <View className="flex-row justify-between items-center mb-2.5">
                         <View className="flex-row items-center">
@@ -163,8 +160,32 @@ export default function ShowtimeManagementScreen({ navigation }) {
                     </View>
                 </TouchableOpacity>
 
-
                 <View className="flex-row gap-3 mt-1">
+                    {
+                        (() => {
+                            const start = new Date(item.startTime);
+                            const msToStart = start.getTime() - Date.now();
+                            const cutoffMs = 30 * 60 * 1000;
+                            const isWithinCutoff = msToStart <= cutoffMs;
+                            const effectiveOpen = item.bookingOpen && !isWithinCutoff;
+
+                            return (
+                                <TouchableOpacity
+                                    className={`px-3 py-2 rounded-xl mr-2 flex-row items-center ${effectiveOpen ? 'bg-white border border-green-600' : 'bg-white border border-gray-300'}`}
+                                    onPress={() => {
+                                        if (isWithinCutoff) {
+                                            Alert.alert('Cannot change', 'Cannot open/close ticket bookings within 30 minutes of showtime');
+                                            return;
+                                        }
+                                        handleToggleBooking(item._id);
+                                    }}
+                                >
+                                    <View style={{ width: 10, height: 10, borderRadius: 6, marginRight: 8, backgroundColor: effectiveOpen ? '#16a34a' : '#9ca3af' }} />
+                                    <Text className={`${effectiveOpen ? 'text-gray-900' : 'text-gray-700'} font-bold`}>{effectiveOpen ? 'Bookings Open' : (isWithinCutoff ? 'Bookings Closed ' : 'Bookings Closed')}</Text>
+                                </TouchableOpacity>
+                            );
+                        })()
+                    }
                     <TouchableOpacity
                         className="flex-1 bg-[#333] py-3 rounded-xl flex-row justify-center items-center"
                         onPress={() => navigation.navigate('AddEditShowtime', { showtime: item })}

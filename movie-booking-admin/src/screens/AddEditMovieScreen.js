@@ -28,7 +28,7 @@ export default function AddEditMovieScreen({ route, navigation }) {
         movie?.releaseDate ? new Date(movie.releaseDate).toISOString().split('T')[0] : ''
     );
     const [price, setPrice] = useState(movie?.price?.toString() || '');
-    const [voucherCode, setVoucherCode] = useState(movie?.voucherCode || 'none');
+    const [availableVouchers, setAvailableVouchers] = useState(movie?.availableVouchers || []);
     const [discounts, setDiscounts] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -61,7 +61,7 @@ export default function AddEditMovieScreen({ route, navigation }) {
             genre,
             releaseDate: new Date(releaseDate),
             price: parseInt(price),
-            voucherCode: voucherCode
+            availableVouchers: availableVouchers
         };
 
         setLoading(true);
@@ -126,7 +126,7 @@ export default function AddEditMovieScreen({ route, navigation }) {
 
                             return (
                                 <TouchableOpacity
-                                    key={discount.id}
+                                    key={discount._id}
                                     onPress={() => eligible && setVoucherCode(discount.code)}
                                     className={`py-3 px-4 mr-2 rounded-xl items-center border ${isSelected
                                             ? 'bg-[#e50914] border-[#e50914]'
