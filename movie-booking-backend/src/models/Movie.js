@@ -26,6 +26,14 @@ const movieSchema = new mongoose.Schema({
         type: Date,
         required: [true, 'Please add release date']
     },
+    price: {
+        type: Number,
+        required: [true, 'Please add base price']
+    },
+    voucherCode: {
+        type: String,
+        default: 'none'
+    },
     createdAt: {
         type: Date,
         default: Date.now
