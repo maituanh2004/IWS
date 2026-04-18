@@ -1,5 +1,9 @@
 import { registerRootComponent } from 'expo';
+<<<<<<< Updated upstream
 
+=======
+import "./global.css";
+>>>>>>> Stashed changes
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);

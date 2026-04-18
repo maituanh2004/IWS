@@ -109,6 +109,7 @@ export default function AddEditMovieScreen({ route, navigation }) {
                     placeholderTextColor="#666"
                 />
 
+<<<<<<< Updated upstream
                 <Text style={styles.label}>Release Date* (YYYY-MM-DD)</Text>
                 <TextInput
                     style={styles.input}
@@ -117,6 +118,29 @@ export default function AddEditMovieScreen({ route, navigation }) {
                     placeholder="2024-01-01"
                     placeholderTextColor="#666"
                 />
+=======
+                            return (
+                                <TouchableOpacity
+                                    key={discount._id}
+                                    onPress={() => eligible && setVoucherCode(discount.code)}
+                                    className={`py-3 px-4 mr-2 rounded-xl items-center border ${isSelected
+                                            ? 'bg-[#e50914] border-[#e50914]'
+                                            : eligible
+                                                ? 'bg-white border-gray-200'
+                                                : 'bg-gray-100 border-gray-100 opacity-50'
+                                        }`}
+                                >
+                                    <Text className={`font-bold text-xs ${isSelected ? 'text-white' : eligible ? 'text-gray-700' : 'text-gray-400'}`}>
+                                        {discount.code} ({discount.percentage}%)
+                                    </Text>
+                                    {!eligible && (
+                                        <Text className="text-[10px] text-red-500 mt-1">Min {minPriceK}</Text>
+                                    )}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
+>>>>>>> Stashed changes
 
                 <TouchableOpacity
                     style={styles.saveButton}
