@@ -29,7 +29,7 @@ const showtimeSchema = new mongoose.Schema({
         required: [true, 'Please add total seats']
     },
     // Price per ticket, required
-    price: {
+    basePrice: {
         type: Number,
         required: [true, 'Please add a price']
     },

@@ -10,3 +10,9 @@ exports.generateSeats = () => {
 
     return seats;
 };
+
+// Validate seat format
+exports.validateSeats = (seats) => {
+  const allSeats = exports.generateAllSeats();
+  return seats.every((seat) => allSeats.includes(seat));
+};
