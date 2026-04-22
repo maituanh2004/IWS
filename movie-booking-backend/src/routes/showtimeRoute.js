@@ -6,7 +6,6 @@ const router = express.Router();
 
 router.get('/', getShowtimes);
 router.post('/', protect, authorize('admin'), createShowtime);
-router.get('/movie/:movieId', getShowtimesByMovie);
 router.get('/:showtimeId/seats', getSeats);
 
 module.exports = router;

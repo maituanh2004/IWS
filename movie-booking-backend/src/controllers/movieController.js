@@ -1,4 +1,5 @@
 const Movie = require('../models/Movie');
+const Showtime = require('../models/Showtime');
 
 // @desc    Get all movies
 // @route   GET /api/movies
@@ -73,4 +74,23 @@ exports.deleteMovie = async (req, res) => {
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
     }
+};
+
+exports.getShowtimesByMovie = async (req, res) => {
+  try {
+    const showtimes = await Showtime.find({
+      movie: req.params.id
+    }).populate('movie');
+
+    res.status(200).json({
+      success: true,
+      data: showtimes
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
 };

@@ -35,24 +35,24 @@ exports.createShowtime = async (req, res) => {
   }
 };
 
-// GET SHOWTIMES BY MOVIE
-exports.getShowtimesByMovie = async (req, res) => {
-  try {
-    const showtimes = await showtimeService.getShowtimesByMovie(
-      req.params.movieId
-    );
+// // GET SHOWTIMES BY MOVIE ----> move to movieController
+// exports.getShowtimesByMovie = async (req, res) => {
+//   try {
+//     const showtimes = await showtimeService.getShowtimesByMovie(
+//       req.params.movieId
+//     );
 
-    res.status(200).json({
-      success: true,
-      data: showtimes,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       data: showtimes,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
 
 // GET SEATS
 exports.getSeats = async (req, res) => {
