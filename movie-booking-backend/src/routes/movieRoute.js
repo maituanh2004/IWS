@@ -18,8 +18,8 @@ router.route('/')
 
 router.route('/:id')
     .get(getMovie)
-    .put(updateMovie)
-    .delete(deleteMovie);
+    .put(protect, authorize('admin'), updateMovie)
+    .delete(protect, authorize('admin'), deleteMovie);
 
 router.get('/:id/showtimes', getShowtimesByMovie);
 

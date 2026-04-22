@@ -60,12 +60,25 @@ const checkSeatAvailability = async (showtimeId, seats) => {
 };
 
 // =============================
-// 4. CALCULATE PRICE
+// 4. CALCULATE PRICE -- VIP LOGIC
 // =============================
 const calculatePrice = (seats, showtime) => {
-  return seats.length * showtime.basePrice; // FIXED
-};
+  const VIP_ROWS = ['C', 'D', 'E', 'F'];
 
+  let total = 0;
+
+  for (let seat of seats) {
+    const row = seat.charAt(0);
+
+    if (VIP_ROWS.includes(row)) {
+      total += showtime.basePrice + 5000;
+    } else {
+      total += showtime.basePrice;
+    }
+  }
+
+  return total;
+};
 // =============================
 // 5. CREATE BOOKING
 // =============================
