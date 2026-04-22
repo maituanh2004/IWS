@@ -21,11 +21,13 @@ const auth = require('./routes/auth');
 const movies = require('./routes/movies');
 
 const showtimes = require('./routes/showtimes');
+const discounts = require('./routes/discounts');
 
 // Mount routers
 app.use('/api/auth', auth);
 app.use('/api/movies', movies);
 app.use('/api/showtimes', showtimes);
+app.use('/api/discounts', discounts);
 
 app.get('/', (req, res) => {
     res.json({

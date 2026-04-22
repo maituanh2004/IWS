@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -31,6 +31,14 @@ export default function AddEditMovieScreen({ route, navigation }) {
     const [availableVouchers, setAvailableVouchers] = useState(movie?.availableVouchers || []);
     const [discounts, setDiscounts] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    // Focus Refs
+    const descRef = useRef(null);
+    const priceRef = useRef(null);
+    const posterRef = useRef(null);
+    const durationRef = useRef(null);
+    const genreRef = useRef(null);
+    const releaseDateRef = useRef(null);
 
     useEffect(() => {
         loadDiscounts();
@@ -97,37 +105,73 @@ export default function AddEditMovieScreen({ route, navigation }) {
             <ScrollView className="flex-1 bg-gray-50">
                 <View className="p-5 pb-10">
                     <Text className="text-base font-bold text-gray-900 mt-2 mb-1">Title*</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={title} onChangeText={setTitle} placeholder="Movie title" placeholderTextColor="#9ca3af" />
+                    <TextInput 
+                        className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" 
+                        value={title} 
+                        onChangeText={setTitle} 
+                        placeholder="Movie title" 
+                        placeholderTextColor="#9ca3af"
+                        returnKeyType="next"
+                        onSubmitEditing={() => descRef.current?.focus()}
+                        blurOnSubmit={false}
+                    />
 
                     <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Description*</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base h-24 text-top border border-gray-100" value={description} onChangeText={setDescription} placeholder="Movie description" placeholderTextColor="#9ca3af" multiline numberOfLines={4} />
+                    <TextInput 
+                        ref={descRef}
+                        className="bg-white text-gray-900 p-4 rounded-lg text-base h-24 text-top border border-gray-100" 
+                        value={description} 
+                        onChangeText={setDescription} 
+                        placeholder="Movie description" 
+                        placeholderTextColor="#9ca3af" 
+                        multiline 
+                        numberOfLines={4} 
+                    />
 
                     <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Price (VND)*</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={price} onChangeText={setPrice} placeholder="e.g. 120000" placeholderTextColor="#9ca3af" keyboardType="numeric" />
+                    <TextInput 
+                        ref={priceRef}
+                        className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" 
+                        value={price} 
+                        onChangeText={setPrice} 
+                        placeholder="e.g. 120000" 
+                        placeholderTextColor="#9ca3af" 
+                        keyboardType="numeric"
+                        returnKeyType="next"
+                        onSubmitEditing={() => posterRef.current?.focus()}
+                    />
 
-                    <Text className="text-base font-bold text-gray-900 mt-4 mb-2">Apply Voucher</Text>
+                    <Text className="text-base font-bold text-gray-900 mt-4 mb-2">Available Vouchers (Select Multiple)</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row mb-4">
                         <TouchableOpacity
-                            onPress={() => setVoucherCode('none')}
-                            className={`py-3 px-6 mr-2 rounded-xl items-center border ${voucherCode === 'none'
+                            onPress={() => setAvailableVouchers([])}
+                            className={`py-3 px-6 mr-2 rounded-xl items-center border ${availableVouchers.length === 0
                                     ? 'bg-[#e50914] border-[#e50914]'
                                     : 'bg-white border-gray-200'
                                 }`}
                         >
-                            <Text className={`font-bold text-xs ${voucherCode === 'none' ? 'text-white' : 'text-gray-700'}`}>
+                            <Text className={`font-bold text-xs ${availableVouchers.length === 0 ? 'text-white' : 'text-gray-700'}`}>
                                 None
                             </Text>
                         </TouchableOpacity>
 
                         {discounts.map((discount) => {
                             const eligible = isVoucherEligible(discount);
-                            const isSelected = voucherCode === discount.code;
+                            const isSelected = availableVouchers.includes(discount.code);
                             const minPriceK = (discount.minPrice / 1000) + 'K';
+
+                            const toggleVoucher = () => {
+                                if (isSelected) {
+                                    setAvailableVouchers(prev => prev.filter(c => c !== discount.code));
+                                } else {
+                                    setAvailableVouchers(prev => [...prev, discount.code]);
+                                }
+                            };
 
                             return (
                                 <TouchableOpacity
                                     key={discount._id}
-                                    onPress={() => eligible && setVoucherCode(discount.code)}
+                                    onPress={() => eligible && toggleVoucher()}
                                     className={`py-3 px-4 mr-2 rounded-xl items-center border ${isSelected
                                             ? 'bg-[#e50914] border-[#e50914]'
                                             : eligible
@@ -135,9 +179,11 @@ export default function AddEditMovieScreen({ route, navigation }) {
                                                 : 'bg-gray-100 border-gray-100 opacity-50'
                                         }`}
                                 >
-                                    <Text className={`font-bold text-xs ${isSelected ? 'text-white' : eligible ? 'text-gray-700' : 'text-gray-400'}`}>
-                                        {discount.code} ({discount.percentage}%)
-                                    </Text>
+                                    <View className="flex-row items-center">
+                                        <Text className={`font-bold text-xs ${isSelected ? 'text-white' : eligible ? 'text-gray-700' : 'text-gray-400'}`}>
+                                            {discount.code} ({discount.percentage}%)
+                                        </Text>
+                                    </View>
                                     {!eligible && (
                                         <Text className="text-[10px] text-red-500 mt-1">Min {minPriceK}</Text>
                                     )}
@@ -147,7 +193,16 @@ export default function AddEditMovieScreen({ route, navigation }) {
                     </ScrollView>
 
                     <Text className="text-base font-bold text-gray-900 mt-2 mb-1">Poster URL</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={poster} onChangeText={setPoster} placeholder="https://..." placeholderTextColor="#9ca3af" />
+                    <TextInput 
+                        ref={posterRef}
+                        className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" 
+                        value={poster} 
+                        onChangeText={setPoster} 
+                        placeholder="https://..." 
+                        placeholderTextColor="#9ca3af"
+                        returnKeyType="next"
+                        onSubmitEditing={() => durationRef.current?.focus()}
+                    />
 
                     {poster ? (
                         <View className="mt-3 items-center">
@@ -160,13 +215,41 @@ export default function AddEditMovieScreen({ route, navigation }) {
                     ) : null}
 
                     <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Duration (minutes)*</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={duration} onChangeText={setDuration} placeholder="120" placeholderTextColor="#9ca3af" keyboardType="numeric" />
+                    <TextInput 
+                        ref={durationRef}
+                        className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" 
+                        value={duration} 
+                        onChangeText={setDuration} 
+                        placeholder="120" 
+                        placeholderTextColor="#9ca3af" 
+                        keyboardType="numeric"
+                        returnKeyType="next"
+                        onSubmitEditing={() => genreRef.current?.focus()}
+                    />
 
                     <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Genre*</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={genre} onChangeText={setGenre} placeholder="Action, Comedy, etc." placeholderTextColor="#9ca3af" />
+                    <TextInput 
+                        ref={genreRef}
+                        className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" 
+                        value={genre} 
+                        onChangeText={setGenre} 
+                        placeholder="Action, Comedy, etc." 
+                        placeholderTextColor="#9ca3af"
+                        returnKeyType="next"
+                        onSubmitEditing={() => releaseDateRef.current?.focus()}
+                    />
 
                     <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Release Date* (YYYY-MM-DD)</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={releaseDate} onChangeText={setReleaseDate} placeholder="2024-01-01" placeholderTextColor="#9ca3af" />
+                    <TextInput 
+                        ref={releaseDateRef}
+                        className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" 
+                        value={releaseDate} 
+                        onChangeText={setReleaseDate} 
+                        placeholder="2024-01-01" 
+                        placeholderTextColor="#9ca3af"
+                        returnKeyType="go"
+                        onSubmitEditing={handleSave}
+                    />
 
                     <TouchableOpacity className="bg-[#e50914] p-4 rounded-lg items-center mt-8" onPress={handleSave} disabled={loading}>
                         {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-base font-bold">{isEdit ? 'Update Movie' : 'Create Movie'}</Text>}

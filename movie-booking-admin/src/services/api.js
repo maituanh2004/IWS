@@ -104,8 +104,12 @@ api.interceptors.response.use(
 
 // AUTH
 export const login = (email, password) =>
-    api.post("/auth/login", { email, password });
+    api.post("auth/login", { email, password });
 
-export const getMe = () => api.get("/auth/me");
+export const getMe = () => api.get("auth/me");
+
+export const updateDetails = (userData) => api.put("auth/updatedetails", userData);
+
+export const updatePassword = (passwordData) => api.put("auth/updatepassword", passwordData);
 
 export default api;

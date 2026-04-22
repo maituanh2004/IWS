@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Film, Calendar, Tag, LogOut } from 'lucide-react-native';
+import { Film, Calendar, Tag, User } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
@@ -15,6 +15,7 @@ export default function Navbar() {
         { name: 'MovieManagement', label: 'Movies', icon: Film },
         { name: 'ShowtimeManagement', label: 'Showtimes', icon: Calendar },
         { name: 'DiscountManagement', label: 'Discounts', icon: Tag },
+        { name: 'Profile', label: 'Profile', icon: User },
     ];
 
     const handlePress = (screenName) => {
@@ -52,11 +53,6 @@ export default function Navbar() {
                     </TouchableOpacity>
                 );
             })}
-
-            <TouchableOpacity onPress={signOut} className="items-center justify-center flex-1 py-2">
-                <LogOut size={24} color="#fff" strokeWidth={1.8} />
-                <Text className="text-xs mt-1" style={{ color: '#fff', opacity: 0.75, fontWeight: '500' }}>Logout</Text>
-            </TouchableOpacity>
         </View>
     );
 }

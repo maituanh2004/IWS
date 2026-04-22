@@ -74,6 +74,10 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const refreshUser = async () => {
+        await checkUser();
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -81,6 +85,7 @@ export const AuthProvider = ({ children }) => {
                 loading,
                 signIn,
                 signOut,
+                refreshUser,
             }}
         >
             {children}

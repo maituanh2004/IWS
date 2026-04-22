@@ -48,12 +48,12 @@ const SystemErrorScreen = ({ route, navigation }) => {
                     <Text className="text-4xl font-black text-gray-900 mb-3 text-center tracking-tighter">
                         {config.subtitle}
                     </Text>
-                    
+
                     <Text className="text-base text-gray-500 text-center mb-16 leading-6 font-medium px-4">
                         {config.message}
                     </Text>
 
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         className="bg-[#e50914] w-full py-4.5 rounded-2xl flex-row justify-center items-center shadow-lg mb-4"
                         style={{ shadowColor: '#e50914', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 15, elevation: 8 }}
                         onPress={() => navigation.navigate('MovieManagement')}
@@ -62,7 +62,7 @@ const SystemErrorScreen = ({ route, navigation }) => {
                         <Text className="text-white font-black text-xl ml-3">Take Me Home</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         className="bg-white border-2 border-gray-200 w-full py-4.5 rounded-2xl flex-row justify-center items-center"
                         onPress={() => navigation.goBack()}
                     >

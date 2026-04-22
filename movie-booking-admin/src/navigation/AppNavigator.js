@@ -11,6 +11,7 @@ import AddEditShowtimeScreen from '../screens/AddEditShowtimeScreen';
 import DiscountManagementScreen from '../screens/DiscountManagementScreen';
 import OccupancyScreen from '../screens/OccupancyScreen';
 import SystemErrorScreen from '../screens/SystemErrorScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 import { navigationRef } from './NavigationService';
 
@@ -66,6 +67,11 @@ function AppStack() {
             <Stack.Screen
                 name="DiscountManagement"
                 component={DiscountManagementScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="Profile"
+                component={ProfileScreen}
                 options={{ headerShown: false }}
             />
             <Stack.Screen

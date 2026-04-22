@@ -128,7 +128,7 @@ export default function MovieManagementScreen({ navigation }) {
                                 {formatCurrency(price)}
                             </Text>
                             {hasDiscount && (
-                                <Text className="text-xs text-gray-500 mt-1">Discount available for customers: -{discountObj.percentage}%</Text>
+                                <Text className="text-xs text-gray-500 mt-1">Multi-voucher mode enabled for this movie</Text>
                             )}
                         </View>
                     </View>
