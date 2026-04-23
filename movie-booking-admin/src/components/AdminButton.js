@@ -7,8 +7,7 @@ export default function AdminButton({ title, onPress, type = 'primary', loading 
         <TouchableOpacity
             className={`${bgClass} p-4 rounded-lg items-center flex-row justify-center ${disabled ? 'opacity-50' : ''} ${className}`}
             onPress={onPress}
-            disabled={disabled || loading}
-        >
+            disabled={disabled || loading}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold text-base">{title}</Text>}
         </TouchableOpacity>
     );

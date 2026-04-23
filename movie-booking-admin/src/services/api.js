@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 
-const LOCAL_IP = "192.168.1.4"; 
+const LOCAL_IP = "10.160.1.239"; // ← Update this whenever your machine's IP changes
 const PUBLIC_URL = "";
 
 const getBaseUrl = () => {
@@ -36,20 +36,28 @@ const api = axios.create({
 // Automatic fallback: if requests to API_BASE fail with network error,
 // retry once using emulator loopback (Android) or localhost.
 api.interceptors.response.use(undefined, async (error) => {
-    // Only attempt fallback for network errors (no response)
-    if (!error.response && !error.config._retried) {
+    // Only attempt fallback for network errors (no response) and only once
+    if (!error.response && !error.config?._retried) {
         const origConfig = error.config;
         origConfig._retried = true;
 
-        let fallbackBase = API_BASE;
+        let fallbackBase;
+        if (Platform.OS === 'android') {
+            // If primary used the LAN IP → try emulator loopback; and vice versa
+            fallbackBase = API_BASE.includes('10.0.2.2')
+                ? `http://${LOCAL_IP}:5000/api`
+                : `http://10.0.2.2:5000/api`;
+        } else {
+            fallbackBase = `http://localhost:5000/api`;
+        }
+
+        console.log('📡 Falling back to', fallbackBase);
         try {
-            if (Platform.OS === 'android') {
-                fallbackBase = API_BASE.includes('10.0.2.2') ? (API_BASE.includes('192.168') ? API_BASE : `http://${LOCAL_IP}:5000/api`) : `http://10.0.2.2:5000/api`;
-            } else {
-                fallbackBase = `http://localhost:5000/api`;
-            }
-            console.log('📡 Falling back to', fallbackBase);
-            const instance = axios.create({ baseURL: fallbackBase, timeout: 10000, headers: origConfig.headers });
+            const instance = axios.create({
+                baseURL: fallbackBase,
+                timeout: 10000,
+                headers: origConfig.headers,
+            });
             return instance.request({ ...origConfig, baseURL: fallbackBase });
         } catch (fallErr) {
             return Promise.reject(fallErr);

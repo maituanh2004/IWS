@@ -16,18 +16,33 @@ export default function SeatSelectionScreen({ route, navigation }) {
     const [bookedSeats, setBookedSeats] = useState([]);
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [discounts, setDiscounts] = useState([]);
+    const [selectedVoucher, setSelectedVoucher] = useState(null);
     const { user } = useAuth();
 
     useEffect(() => {
-        loadSeats();
+        loadSeatsAndDiscounts();
     }, []);
 
-    const loadSeats = async () => {
+    const loadSeatsAndDiscounts = async () => {
+        setLoading(true);
         try {
-            const response = await api.getAvailableSeats(showtime._id);
-            setBookedSeats(response.data.data.bookedSeats);
+            const [seatsRes, discountsRes] = await Promise.all([
+                api.getAvailableSeats(showtime._id),
+                api.getDiscounts()
+            ]);
+            
+            setBookedSeats(seatsRes.data.data.bookedSeats);
+            
+            // Filter only vouchers available for this movie and not expired
+            const movieVouchers = showtime.movie?.availableVouchers || [];
+            const activeDiscounts = (discountsRes.data.data || []).filter(d => 
+                movieVouchers.includes(d.code) && new Date(d.expiryDate) > new Date()
+            );
+            setDiscounts(activeDiscounts);
         } catch (error) {
-            Alert.alert('Error', 'Failed to load seats');
+            console.error(error);
+            Alert.alert('Error', 'Failed to load screen data');
         } finally {
             setLoading(false);
         }
@@ -51,7 +66,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
 
         setLoading(true);
         try {
-            await api.createBooking(showtime._id, selectedSeats);
+            await api.createBooking(showtime._id, selectedSeats, selectedVoucher?.code);
             Alert.alert('Success', 'Booking confirmed!', [
                 {
                     text: 'OK',
@@ -137,17 +152,76 @@ export default function SeatSelectionScreen({ route, navigation }) {
             </ScrollView>
 
             <View style={styles.footer}>
-                <View style={styles.priceInfo}>
-                    <Text style={styles.priceLabel}>Selected: {selectedSeats.length}</Text>
-                    <Text style={styles.priceValue}>${totalPrice}</Text>
+                <View style={styles.voucherSection}>
+                    <Text style={styles.voucherTitle}>Apply Voucher (Optional)</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.voucherList}>
+                        <TouchableOpacity
+                            style={[
+                                styles.voucherItem,
+                                !selectedVoucher && styles.voucherSelected
+                            ]}
+                            onPress={() => setSelectedVoucher(null)}
+                        >
+                            <Text style={[styles.voucherText, !selectedVoucher && styles.voucherSelectedText]}>None</Text>
+                        </TouchableOpacity>
+
+                        {discounts.map(discount => {
+                            const currentTotal = selectedSeats.length * showtime.price;
+                            const isEligible = currentTotal >= (discount.minPrice || 0);
+                            const isSelected = selectedVoucher?.code === discount.code;
+
+                            return (
+                                <TouchableOpacity
+                                    key={discount._id}
+                                    style={[
+                                        styles.voucherItem,
+                                        isSelected && styles.voucherSelected,
+                                        !isEligible && styles.voucherDisabled
+                                    ]}
+                                    onPress={() => isEligible && setSelectedVoucher(discount)}
+                                    disabled={!isEligible}
+                                >
+                                    <Text style={[
+                                        styles.voucherText, 
+                                        isSelected && styles.voucherSelectedText,
+                                        !isEligible && styles.voucherDisabledText
+                                    ]}>
+                                        {discount.code} ({discount.percentage}%)
+                                    </Text>
+                                    {!isEligible && <Text style={styles.minPriceText}>Min ${discount.minPrice}</Text>}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
                 </View>
-                <TouchableOpacity
-                    style={styles.bookButton}
-                    onPress={handleBooking}
-                    disabled={loading}
-                >
-                    <Text style={styles.bookButtonText}>Book Now</Text>
-                </TouchableOpacity>
+
+                <View style={styles.bottomBar}>
+                    <View style={styles.priceInfo}>
+                        <View>
+                            <Text style={styles.priceLabel}>Seats: {selectedSeats.length}</Text>
+                            {selectedVoucher && (
+                                <Text style={styles.discountLabel}>Discount: -{selectedVoucher.percentage}%</Text>
+                            )}
+                        </View>
+                        <View style={styles.priceContainer}>
+                            {selectedVoucher && (
+                                <Text style={styles.originalPrice}>${selectedSeats.length * showtime.price}</Text>
+                            )}
+                            <Text style={styles.priceValue}>
+                                ${selectedVoucher 
+                                    ? Math.floor(selectedSeats.length * showtime.price * (1 - selectedVoucher.percentage / 100))
+                                    : selectedSeats.length * showtime.price}
+                            </Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.bookButton}
+                        onPress={handleBooking}
+                        disabled={loading}
+                    >
+                        <Text style={styles.bookButtonText}>Book Now</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
     );
@@ -231,30 +305,99 @@ const styles = StyleSheet.create({
     },
     footer: {
         backgroundColor: '#fff',
-        padding: 15,
         borderTopWidth: 1,
         borderTopColor: '#ddd',
+    },
+    voucherSection: {
+        backgroundColor: '#fff',
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    voucherTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    voucherList: {
         flexDirection: 'row',
+    },
+    voucherItem: {
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        marginRight: 10,
+        backgroundColor: '#f9f9f9',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    voucherSelected: {
+        backgroundColor: '#e50914',
+        borderColor: '#e50914',
+    },
+    voucherDisabled: {
+        opacity: 0.5,
+        backgroundColor: '#eee',
+    },
+    voucherText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#666',
+    },
+    voucherSelectedText: {
+        color: '#fff',
+    },
+    voucherDisabledText: {
+        color: '#999',
+    },
+    minPriceText: {
+        fontSize: 8,
+        color: '#e50914',
+        marginTop: 2,
+    },
+    bottomBar: {
+        flexDirection: 'row',
+        padding: 15,
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     priceInfo: {
         flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginRight: 15,
     },
     priceLabel: {
-        fontSize: 14,
+        fontSize: 12,
         color: '#666',
     },
+    priceContainer: {
+        alignItems: 'flex-end',
+    },
+    originalPrice: {
+        fontSize: 12,
+        color: '#999',
+        textDecorationLine: 'line-through',
+    },
     priceValue: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: 'bold',
         color: '#333',
     },
+    discountLabel: {
+        fontSize: 10,
+        color: '#4caf50',
+        fontWeight: 'bold',
+    },
     bookButton: {
         backgroundColor: '#e50914',
-        padding: 15,
+        paddingVertical: 12,
+        paddingHorizontal: 25,
         borderRadius: 8,
-        paddingHorizontal: 40,
     },
     bookButtonText: {
         color: '#fff',

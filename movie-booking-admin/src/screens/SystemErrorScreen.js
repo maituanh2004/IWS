@@ -56,7 +56,7 @@ const SystemErrorScreen = ({ route, navigation }) => {
                     <TouchableOpacity
                         className="bg-[#e50914] w-full py-4.5 rounded-2xl flex-row justify-center items-center shadow-lg mb-4"
                         style={{ shadowColor: '#e50914', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 15, elevation: 8 }}
-                        onPress={() => navigation.navigate('MovieManagement')}
+                        onPress={() => navigation.navigate('App', { screen: 'MovieManagement' })}
                     >
                         <Home color="#fff" size={22} />
                         <Text className="text-white font-black text-xl ml-3">Take Me Home</Text>

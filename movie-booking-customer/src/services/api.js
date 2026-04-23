@@ -1,23 +1,21 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// API Configuration
-// For Android Emulator: use 10.0.2.2
-// For iOS Simulator: use localhost
-// For Physical Device: use your computer's IP address (192.168.1.13)
 import { Platform } from 'react-native';
 
+// ⚙️  Update LOCAL_IP to your machine's current IP whenever it changes.
+// Run `ipconfig` (Windows) or `ifconfig` (Mac/Linux) to find it.
+const LOCAL_IP = '10.160.1.239';
+
 const getApiUrl = () => {
-    // If running on Android emulator
+    if (Platform.OS === 'web') return 'http://localhost:5000/api';
+
     if (Platform.OS === 'android') {
-        return 'http://10.0.2.2:5000/api';
+        // Use LAN IP if set, otherwise fall back to Android emulator loopback
+        return LOCAL_IP ? `http://${LOCAL_IP}:5000/api` : 'http://10.0.2.2:5000/api';
     }
 
-    // For physical device OR web where localhost might not work
-    // return 'http://192.168.1.7:5000/api';
-
-    // Default for iOS simulator or web localhost
-    return 'http://localhost:5000/api';
+    // iOS simulator / other
+    return `http://${LOCAL_IP || 'localhost'}:5000/api`;
 };
 
 const API_URL = getApiUrl();
@@ -72,5 +70,8 @@ export const createBooking = (showtimeId, seats) =>
 
 export const getUserBookings = (userId) =>
     api.get(`/bookings/user/${userId}`);
+
+// Discount APIs
+export const getDiscounts = () => api.get('/discounts');
 
 export default api;

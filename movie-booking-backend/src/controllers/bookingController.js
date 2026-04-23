@@ -1,16 +1,17 @@
 const Booking = require('../models/Booking');
 const Showtime = require('../models/Showtime');
+const Discount = require('../models/Discount');
 const { generateSeats } = require('../utils/seatUtils');
 
 exports.createBooking = async (req, res) => {
     try {
-        const {showtimeId, seats} = req.body;
+        const {showtimeId, seats, discountCode} = req.body;
 
         if (!seats || seats.length === 0){
             return res.status(400).json({message: 'No seats seleted'});
         }
 
-        const showtime = await Showtime.findById(showtimeId);
+        const showtime = await Showtime.findById(showtimeId).populate('movie');
         if (!showtime) {
             return res.status(404).json({ message: 'Showtime not found' });
         }
@@ -47,13 +48,45 @@ exports.createBooking = async (req, res) => {
             });
         }
 
-        const totalPrice = seats.length * showtime.price;
+        const originalPrice = seats.length * showtime.price;
+        let totalPrice = originalPrice;
+        let appliedDiscountCode = null;
+
+        if (discountCode && discountCode !== 'none') {
+            const discount = await Discount.findOne({ code: discountCode.toUpperCase() });
+            
+            if (!discount) {
+                return res.status(404).json({ message: 'Discount code not found' });
+            }
+
+            // Check if expired
+            if (new Date(discount.expiryDate) < new Date()) {
+                return res.status(400).json({ message: 'Discount code has expired' });
+            }
+
+            // Check if available for this movie
+            const movieVouchers = showtime.movie.availableVouchers || [];
+            if (!movieVouchers.includes(discount.code)) {
+                return res.status(400).json({ message: 'Discount code is not applicable for this movie' });
+            }
+
+            // Check min price
+            if (originalPrice < discount.minPrice) {
+                return res.status(400).json({ message: `Minimum price for this voucher is ${discount.minPrice}` });
+            }
+
+            // Apply discount
+            totalPrice = Math.floor(originalPrice * (1 - discount.percentage / 100));
+            appliedDiscountCode = discount.code;
+        }
 
         const booking = await Booking.create ({
             user: req.user.id,
             showtime: showtimeId,
             seats,
+            originalPrice,
             totalPrice,
+            discountCode: appliedDiscountCode,
             status: 'CONFIRMED'
         });
 

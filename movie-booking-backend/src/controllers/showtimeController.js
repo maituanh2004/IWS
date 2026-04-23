@@ -1,4 +1,5 @@
 const Showtime = require('../models/Showtime');
+const Movie = require('../models/Movie');
 const Booking = require('../models/Booking');
 const { generateSeats } = require('../utils/seatUtils');
 
@@ -170,8 +171,11 @@ exports.getShowtimesByMovie = async (req, res) => {
         const showtimes = await Showtime.find({ movie: movieId })
             .populate('movie');
 
-        res.json(showtimes);
+        res.json({
+            success: true,
+            data: showtimes
+        });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ success: false, message: err.message });
     }
 };

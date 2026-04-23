@@ -16,18 +16,20 @@ app.use((req, res, next) => {
 });
 
 // Route files
-const auth = require('./routes/auth');
+const auth = require('./routes/authRouter');
 
-const movies = require('./routes/movies');
+const movies = require('./routes/movieRouter');
 
-const showtimes = require('./routes/showtimes');
+const showtimes = require('./routes/showtimeRouter');
 
-const bookingRoutes = require('./routes/bookings');
+const bookingRoutes = require('./routes/bookingRouter');
+const discounts = require('./routes/discountRouter');
 
 // Mount routers
 app.use('/api/auth', auth);
 app.use('/api/movies', movies);
 app.use('/api/showtimes', showtimes);
+app.use('/api/discounts', discounts);
 
 app.get('/', (req, res) => {
     res.json({

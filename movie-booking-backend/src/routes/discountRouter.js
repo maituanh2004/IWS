@@ -5,7 +5,7 @@ const {
     createDiscount,
     updateDiscount,
     deleteDiscount
-} = require('../controllers/discounts');
+} = require('../controllers/discountController');
 
 const { protect, authorize } = require('../middleware/auth');
 

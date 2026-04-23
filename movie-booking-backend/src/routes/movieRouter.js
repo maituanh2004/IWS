@@ -5,7 +5,7 @@ const {
     createMovie,
     deleteMovie,
     updateMovie
-} = require('../controllers/movies');
+} = require('../controllers/movieController');
 const { protect, authorize } = require('../middleware/auth');
 const router = express.Router();
 
