@@ -24,11 +24,15 @@ const showtimeRoutes = require('./routes/showtimeRoute');
 
 const bookingRoutes = require('./routes/bookingRoute');
 
+const paymentRoutes = require('./routes/paymentRoute');
+
+
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/showtimes', showtimeRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
     res.json({
