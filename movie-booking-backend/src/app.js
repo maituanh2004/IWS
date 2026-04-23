@@ -28,7 +28,6 @@ const bookingRoutes = require('./routes/bookings');
 app.use('/api/auth', auth);
 app.use('/api/movies', movies);
 app.use('/api/showtimes', showtimes);
-app.use('/api/bookings', bookingRoutes);
 
 app.get('/', (req, res) => {
     res.json({

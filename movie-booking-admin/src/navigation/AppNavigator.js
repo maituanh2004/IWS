@@ -8,8 +8,80 @@ import MovieManagementScreen from '../screens/MovieManagementScreen';
 import AddEditMovieScreen from '../screens/AddEditMovieScreen';
 import ShowtimeManagementScreen from '../screens/ShowtimeManagementScreen';
 import AddEditShowtimeScreen from '../screens/AddEditShowtimeScreen';
+import DiscountManagementScreen from '../screens/DiscountManagementScreen';
+import OccupancyScreen from '../screens/OccupancyScreen';
+import SystemErrorScreen from '../screens/SystemErrorScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+
+import { navigationRef } from './NavigationService';
 
 const Stack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
+
+function AuthStack() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen
+                name="Login"
+                component={LoginScreen}
+                options={{ headerShown: false }}
+            />
+        </Stack.Navigator>
+    );
+}
+
+function AppStack() {
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerStyle: { backgroundColor: '#e50914' },
+                headerTintColor: '#000',
+                headerTitleStyle: { fontWeight: '900', color: '#000' },
+                headerTitleAlign: 'center',
+            }}
+        >
+            <Stack.Screen
+                name="MovieManagement"
+                component={MovieManagementScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AddEditMovie"
+                component={AddEditMovieScreen}
+                options={({ route }) => ({
+                    title: route.params?.movie ? 'Edit Movie' : 'Add Movie',
+                })}
+            />
+            <Stack.Screen
+                name="ShowtimeManagement"
+                component={ShowtimeManagementScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AddEditShowtime"
+                component={AddEditShowtimeScreen}
+                options={({ route }) => ({
+                    title: route.params?.showtime ? 'Edit Showtime' : 'Add Showtime',
+                })}
+            />
+            <Stack.Screen
+                name="DiscountManagement"
+                component={DiscountManagementScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="Profile"
+                component={ProfileScreen}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="Occupancy"
+                component={OccupancyScreen}
+                options={{ title: 'Theater Occupancy' }}
+            />
+        </Stack.Navigator>
+    );
+}
 
 export default function AppNavigator() {
     const { user, loading } = useAuth();
@@ -19,49 +91,22 @@ export default function AppNavigator() {
     }
 
     return (
-        <NavigationContainer>
-            {user ? (
-                <Stack.Navigator
-                    screenOptions={{
-                        headerStyle: { backgroundColor: '#e50914' },
-                        headerTintColor: '#fff',
-                        headerTitleStyle: { fontWeight: 'bold' },
-                    }}
-                >
-                    <Stack.Screen
-                        name="MovieManagement"
-                        component={MovieManagementScreen}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                        name="AddEditMovie"
-                        component={AddEditMovieScreen}
-                        options={({ route }) => ({
-                            title: route.params?.movie ? 'Edit Movie' : 'Add Movie',
-                        })}
-                    />
-                    <Stack.Screen
-                        name="ShowtimeManagement"
-                        component={ShowtimeManagementScreen}
-                        options={{ title: 'Showtime Management' }}
-                    />
-                    <Stack.Screen
-                        name="AddEditShowtime"
-                        component={AddEditShowtimeScreen}
-                        options={({ route }) => ({
-                            title: route.params?.showtime ? 'Edit Showtime' : 'Add Showtime',
-                        })}
-                    />
-                </Stack.Navigator>
-            ) : (
-                <Stack.Navigator>
-                    <Stack.Screen
-                        name="Login"
-                        component={LoginScreen}
-                        options={{ headerShown: false }}
-                    />
-                </Stack.Navigator>
-            )}
+        <NavigationContainer ref={navigationRef}>
+            {/* RootStack holds SystemError at the top level so it's
+                reachable from both the unauthenticated (Login) and
+                authenticated (App) stacks */}
+            <RootStack.Navigator screenOptions={{ headerShown: false }}>
+                {user ? (
+                    <RootStack.Screen name="App" component={AppStack} />
+                ) : (
+                    <RootStack.Screen name="Auth" component={AuthStack} />
+                )}
+                <RootStack.Screen
+                    name="SystemError"
+                    component={SystemErrorScreen}
+                    options={{ headerShown: false }}
+                />
+            </RootStack.Navigator>
         </NavigationContainer>
     );
 }
