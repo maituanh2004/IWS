@@ -3,14 +3,12 @@ const Showtime = require('../models/Showtime');
 const { validateSeats } = require('../utils/seatUtils');
 
 // =============================
-// 1. VALIDATE SHOWTIME
+// VALIDATE SHOWTIME
 // =============================
 const validateShowtime = async (showtimeId) => {
   const showtime = await Showtime.findById(showtimeId);
 
-  if (!showtime) {
-    throw new Error('Showtime not found');
-  }
+  if (!showtime) throw new Error('Showtime not found');
 
   if (new Date() >= new Date(showtime.startTime)) {
     throw new Error('Showtime already started');
@@ -20,37 +18,33 @@ const validateShowtime = async (showtimeId) => {
 };
 
 // =============================
-// 2. VALIDATE SEATS INPUT
+// VALIDATE SEATS INPUT
 // =============================
 const validateSeatInput = (seats) => {
-  if (!seats || seats.length === 0) {
+  if (!Array.isArray(seats) || seats.length === 0) {
     throw new Error('Seats are required');
   }
 
-  // check duplicate
   const uniqueSeats = new Set(seats);
   if (uniqueSeats.size !== seats.length) {
     throw new Error('Duplicate seats not allowed');
   }
 
-  // check format
   if (!validateSeats(seats)) {
     throw new Error('Invalid seat format');
   }
 };
 
 // =============================
-// 3. CHECK AVAILABILITY
+// CHECK AVAILABILITY (optimized)
 // =============================
 const checkSeatAvailability = async (showtimeId, seats) => {
-  const bookings = await Booking.find({
+  const bookedSeats = await Booking.distinct('seats', {
     showtime: showtimeId,
-    status: 'CONFIRMED', // IMPORTANT
+    status: 'CONFIRMED',
   });
 
-  const bookedSeats = bookings.flatMap((b) => b.seats);
-
-  const conflictSeat = seats.find((seat) =>
+  const conflictSeat = seats.find(seat =>
     bookedSeats.includes(seat)
   );
 
@@ -60,27 +54,36 @@ const checkSeatAvailability = async (showtimeId, seats) => {
 };
 
 // =============================
-// 4. CALCULATE PRICE -- VIP LOGIC
+// FINAL DB CHECK (anti-race)
+// =============================
+const checkSeatConflictInDB = async (showtimeId, seats) => {
+  const existing = await Booking.findOne({
+    showtime: showtimeId,
+    seats: { $in: seats },
+    status: 'CONFIRMED'
+  });
+
+  if (existing) {
+    throw new Error('One or more seats already booked');
+  }
+};
+
+// =============================
+// CALCULATE PRICE
 // =============================
 const calculatePrice = (seats, showtime) => {
   const VIP_ROWS = ['C', 'D', 'E', 'F'];
 
-  let total = 0;
-
-  for (let seat of seats) {
-    const row = seat.charAt(0);
-
-    if (VIP_ROWS.includes(row)) {
-      total += showtime.basePrice + 5000;
-    } else {
-      total += showtime.basePrice;
-    }
-  }
-
-  return total;
+  return seats.reduce((total, seat) => {
+    const row = seat[0];
+    return total + (VIP_ROWS.includes(row)
+      ? showtime.basePrice + 5000
+      : showtime.basePrice);
+  }, 0);
 };
+
 // =============================
-// 5. CREATE BOOKING
+// CREATE BOOKING
 // =============================
 const createBooking = async (userId, showtimeId, seats) => {
   const showtime = await validateShowtime(showtimeId);
@@ -89,9 +92,11 @@ const createBooking = async (userId, showtimeId, seats) => {
 
   await checkSeatAvailability(showtimeId, seats);
 
+  await checkSeatConflictInDB(showtimeId, seats);
+
   const totalPrice = calculatePrice(seats, showtime);
 
-  const booking = await Booking.create({
+  return await Booking.create({
     user: userId,
     showtime: showtimeId,
     seats,
@@ -99,12 +104,10 @@ const createBooking = async (userId, showtimeId, seats) => {
     status: 'CONFIRMED',
     paymentStatus: 'SUCCESS',
   });
-
-  return booking;
 };
 
 // =============================
-// 6. GET MY BOOKINGS
+// GET MY BOOKINGS
 // =============================
 const getMyBookings = async (userId) => {
   return await Booking.find({ user: userId })
@@ -112,11 +115,12 @@ const getMyBookings = async (userId) => {
       path: 'showtime',
       populate: { path: 'movie' },
     })
-    .sort('-createdAt');
+    .sort('-createdAt')
+    .lean();
 };
 
 // =============================
-// 7. GET BOOKING BY ID
+// GET BOOKING BY ID
 // =============================
 const getBookingById = async (bookingId) => {
   return await Booking.findById(bookingId)
@@ -124,12 +128,10 @@ const getBookingById = async (bookingId) => {
     .populate({
       path: 'showtime',
       populate: { path: 'movie' },
-    });
+    })
+    .lean();
 };
 
-// =============================
-// EXPORT
-// =============================
 module.exports = {
   createBooking,
   getMyBookings,

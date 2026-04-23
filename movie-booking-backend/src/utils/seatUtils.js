@@ -13,6 +13,6 @@ exports.generateSeats = () => {
 
 // Validate seat format
 exports.validateSeats = (seats) => {
-  const allSeats = exports.generateAllSeats();
+  const allSeats = exports.generateSeats();
   return seats.every((seat) => allSeats.includes(seat));
 };

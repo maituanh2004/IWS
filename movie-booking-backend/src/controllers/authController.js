@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const formatUser = require('../utils/formatUser');
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -61,16 +62,28 @@ exports.login = async (req, res, next) => {
 // @desc    Get current logged in user
 // @route   GET /api/auth/me
 // @access  Private
-exports.getMe = async (req, res, next) => {
-    try {
-        const user = await User.findById(req.user.id);
-        res.status(200).json({
-            success: true,
-            data: user
-        });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
     }
+
+    res.status(200).json({
+      success: true,
+      data: formatUser(user)
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
 };
 
 // Get token from model, create cookie and send response

@@ -21,6 +21,7 @@ router.route('/:id')
     .put(protect, authorize('admin'), updateMovie)
     .delete(protect, authorize('admin'), deleteMovie);
 
+// Get showtimes of a movie
 router.get('/:id/showtimes', getShowtimesByMovie);
 
 module.exports = router;
