@@ -9,7 +9,9 @@ import MovieListScreen from '../screens/MovieListScreen';
 import MovieDetailScreen from '../screens/MovieDetailScreen';
 import ShowtimeListScreen from '../screens/ShowtimeListScreen';
 import SeatSelectionScreen from '../screens/SeatSelectionScreen';
+import BookingConfirmScreen from '../screens/BookingConfirm';
 import BookingHistoryScreen from '../screens/BookingHistoryScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +35,7 @@ export default function AppNavigator() {
                         name="MovieDetail"
                         component={MovieDetailScreen}
                         options={{ title: 'Movie Details' }}
+                        options={{ headerShown: false }}
                     />
                     <Stack.Screen
                         name="ShowtimeList"
@@ -43,11 +46,23 @@ export default function AppNavigator() {
                         name="SeatSelection"
                         component={SeatSelectionScreen}
                         options={{ title: 'Select Seats' }}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="BookingConfirm"
+                        component={BookingConfirmScreen}
+                        options={{ headerShown: false }}
                     />
                     <Stack.Screen
                         name="BookingHistory"
                         component={BookingHistoryScreen}
                         options={{ title: 'My Bookings' }}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="Profile"
+                        component={ProfileScreen}
+                        options={{ headerShown: false }}
                     />
                 </Stack.Navigator>
             ) : (
@@ -61,6 +76,7 @@ export default function AppNavigator() {
                         name="Register"
                         component={RegisterScreen}
                         options={{ title: 'Create Account' }}
+                        options={{ headerShown: false }}
                     />
                 </Stack.Navigator>
             )}
