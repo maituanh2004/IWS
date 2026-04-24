@@ -125,18 +125,44 @@ const NAV_ITEMS = [
 export default function MovieListScreen({ navigation }) {
   const { user, signOut } = useAuth();
 
-  const [movies, setMovies]               = useState(NOW_PLAYING);
-  const [filteredMovies, setFilteredMovies] = useState(NOW_PLAYING);
+  const [movies, setMovies]               = useState([]);
+  const [filteredMovies, setFilteredMovies] = useState([]);
   const [loading, setLoading]             = useState(false);
   const [searchQuery, setSearchQuery]     = useState('');
-
-  // Thêm state này:
   const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   const [heroIndex, setHeroIndex]         = useState(0);
   const [activeNav, setActiveNav]         = useState('home');
 
   const heroScrollRef = useRef(null);
+
+  // Fetch movies from API
+  useEffect(() => {
+    const fetchMovies = async () => {
+      setLoading(true);
+      try {
+        const res = await api.getMovies();
+        if (res.data && res.data.success) {
+          const apiMovies = res.data.data.map(movie => ({
+            ...movie,
+            // Map backend fields or provide defaults for UI features
+            rating: movie.rating || 8.5,
+            gradientColors: movie.gradientColors || ['#1A4A8B', '#0A1A2C'],
+            titleAccent: '', // Backend doesn't have titleAccent, can leave empty or split title
+          }));
+          setMovies(apiMovies);
+          setFilteredMovies(apiMovies);
+        }
+      } catch (error) {
+        console.error('Error fetching movies:', error);
+        Alert.alert('Lỗi', 'Không thể tải danh sách phim.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovies();
+  }, []);
 
   // Search filter
   useEffect(() => {

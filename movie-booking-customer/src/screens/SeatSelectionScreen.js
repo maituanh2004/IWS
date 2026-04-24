@@ -46,18 +46,45 @@ const formatVND = (n) =>
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function SeatSelectionScreen({ route, navigation }) {
-  const { movie, cinema, time, date } = route.params ?? {
+  const { movie, cinema, time, date, showtimeId } = route.params ?? {
     movie: { title: 'Avengers: Doomsday' },
     cinema: { name: 'CGV Vincom Bà Triệu' },
     time: '14:00',
     date: 18,
+    showtimeId: null,
   };
 
   const { user } = useAuth();
 
-  const [bookedSeats, setBookedSeats] = useState(DEMO_BOOKED);
+  const [bookedSeats, setBookedSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]); // No pre-selected seats
+  const [showtime, setShowtime] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!showtimeId) return;
+      setLoading(true);
+      try {
+        const [seatsRes, showtimeRes] = await Promise.all([
+          api.getAvailableSeats(showtimeId),
+          api.getShowtime(showtimeId)
+        ]);
+        
+        if (seatsRes.data) {
+          setBookedSeats(seatsRes.data.bookedSeats || []);
+        }
+        if (showtimeRes.data && showtimeRes.data.success) {
+          setShowtime(showtimeRes.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [showtimeId]);
 
   // ── Toggle seat ──────────────────────────────────────────────────────────
   const toggleSeat = (seatId, type) => {
@@ -72,17 +99,20 @@ export default function SeatSelectionScreen({ route, navigation }) {
 
   // ── Price calculation ─────────────────────────────────────────────────────
   const totalPrice = selectedSeats.reduce((sum, seatId) => {
+    const basePrice = showtime?.price || PRICE_REGULAR;
     const row = seatId[0];
     const cfg = ROW_CONFIG.find((r) => r.row === row);
-    if (!cfg) return sum + PRICE_REGULAR;
-    if (cfg.type === 'couple') return sum + PRICE_COUPLE;
+    
+    if (!cfg) return sum + basePrice;
+    if (cfg.type === 'couple') return sum + (basePrice * 1.5); // Example: couple is 1.5x
+    
     // VIP seats: only center seats in D/E
     if (cfg.type === 'vip' && cfg.vipRange) {
       const col = parseInt(seatId.slice(1), 10);
-      if (col >= cfg.vipRange[0] && col <= cfg.vipRange[1]) return sum + PRICE_VIP;
-      return sum + PRICE_REGULAR;
+      if (col >= cfg.vipRange[0] && col <= cfg.vipRange[1]) return sum + (basePrice * 1.2); // VIP is 1.2x
+      return sum + basePrice;
     }
-    return sum + PRICE_REGULAR;
+    return sum + basePrice;
   }, 0);
 
   // ── Handle booking ────────────────────────────────────────────────────────
@@ -98,6 +128,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
       date,
       seats: selectedSeats,
       totalPrice,
+      showtimeId,
     });
   };
 

@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 
 // ⚙️  Update LOCAL_IP to your machine's current IP whenever it changes.
 // Run `ipconfig` (Windows) or `ifconfig` (Mac/Linux) to find it.
-const LOCAL_IP = '10.160.1.239';
+const LOCAL_IP = '192.168.1.4';
 
 const getApiUrl = () => {
     if (Platform.OS === 'web') return 'http://localhost:5000/api';

@@ -17,6 +17,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as api from '../services/api';
+import { useEffect } from 'react';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -58,15 +60,68 @@ export default function MovieDetailScreen({ route, navigation }) {
     },
   };
 
-  const [selectedDate,   setSelectedDate]   = useState(18);
-  const [selectedCinema, setSelectedCinema] = useState('cgv');
-  const [selectedTime,   setSelectedTime]   = useState('14:00');
-  const [expanded,       setExpanded]       = useState(false);
+  const [showtimes, setShowtimes] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedCinema, setSelectedCinema] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedShowtimeId, setSelectedShowtimeId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    const fetchShowtimes = async () => {
+      if (!movie._id) return;
+      setLoading(true);
+      try {
+        const res = await api.getShowtimesByMovie(movie._id);
+        if (res.data) {
+          setShowtimes(res.data);
+          
+          // Set initial selection if showtimes exist
+          if (res.data.length > 0) {
+            const first = res.data[0];
+            const dateStr = new Date(first.startTime).toLocaleDateString('vi-VN');
+            setSelectedDate(dateStr);
+            setSelectedCinema(first.cinema);
+            setSelectedTime(new Date(first.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+            setSelectedShowtimeId(first._id);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching showtimes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchShowtimes();
+  }, [movie._id]);
+
+  // Derived data for UI
+  const availableDates = [...new Set(showtimes.map(s => 
+    new Date(s.startTime).toLocaleDateString('vi-VN')
+  ))];
+
+  const cinemasForDate = showtimes
+    .filter(s => new Date(s.startTime).toLocaleDateString('vi-VN') === selectedDate)
+    .reduce((acc, s) => {
+      if (!acc.find(c => c === s.cinema)) acc.push(s.cinema);
+      return acc;
+    }, []);
+
+  const timesForCinema = showtimes
+    .filter(s => 
+      new Date(s.startTime).toLocaleDateString('vi-VN') === selectedDate && 
+      s.cinema === selectedCinema
+    )
+    .map(s => ({
+      id: s._id,
+      time: new Date(s.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+    }));
 
   const genres = (movie.genre || 'Hành Động').split(',').map((g) => g.trim());
-  const selectedCinemaObj = CINEMAS.find((c) => c.id === selectedCinema);
-  // Short cinema name for CTA: "CGV Vincom"
-  const cinemaShort = selectedCinemaObj?.name.split(' ').slice(0, 2).join(' ') ?? '';
+  
+  // For CTA
+  const cinemaShort = selectedCinema?.split(' ').slice(0, 2).join(' ') ?? '';
 
   const DESC =
     movie.description ||
@@ -79,11 +134,16 @@ export default function MovieDetailScreen({ route, navigation }) {
   };
 
   const handleBooking = () => {
+    if (!selectedShowtimeId) {
+      Alert.alert('Thông báo', 'Vui lòng chọn suất chiếu');
+      return;
+    }
     navigation.navigate('SeatSelection', {
       movie,
-      cinema: selectedCinemaObj,
+      cinema: { name: selectedCinema },
       time: selectedTime,
       date: selectedDate,
+      showtimeId: selectedShowtimeId,
     });
   };
 
@@ -188,24 +248,34 @@ export default function MovieDetailScreen({ route, navigation }) {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.dateRow}
           >
-            {DATES.map((d) => {
-              const active = d.date === selectedDate;
+            {availableDates.map((dateStr) => {
+              const active = dateStr === selectedDate;
+              const [dayNum, monthNum] = dateStr.split('/');
+              // Simple day name calculation if needed, or just show the date
               return (
                 <TouchableOpacity
-                  key={d.date}
+                  key={dateStr}
                   style={[styles.datePill, active && styles.datePillActive]}
-                  onPress={() => setSelectedDate(d.date)}
+                  onPress={() => {
+                    setSelectedDate(dateStr);
+                    setSelectedCinema(null);
+                    setSelectedTime(null);
+                    setSelectedShowtimeId(null);
+                  }}
                   activeOpacity={0.75}
                 >
                   <Text style={[styles.dateDayText, active && styles.dateDayTextActive]}>
-                    {d.day}
+                    THG {monthNum}
                   </Text>
                   <Text style={[styles.dateNumText, active && styles.dateNumTextActive]}>
-                    {d.date}
+                    {dayNum}
                   </Text>
                 </TouchableOpacity>
               );
             })}
+            {availableDates.length === 0 && (
+              <Text style={{ color: '#666', fontStyle: 'italic' }}>Không có suất chiếu</Text>
+            )}
           </ScrollView>
         </View>
 
@@ -213,36 +283,46 @@ export default function MovieDetailScreen({ route, navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Chọn Rạp & Suất Chiếu</Text>
 
-          {CINEMAS.map((cinema) => (
-            <View key={cinema.id} style={styles.cinemaCard}>
-              <Text style={styles.cinemaName}>{cinema.name}</Text>
+          {cinemasForDate.map((cinemaName) => (
+            <View key={cinemaName} style={styles.cinemaCard}>
+              <Text style={styles.cinemaName}>{cinemaName}</Text>
               <View style={styles.cinemaDistRow}>
                 <Ionicons name="location-outline" size={12} color="#666" />
-                <Text style={styles.cinemaDist}>{cinema.distance}</Text>
+                <Text style={styles.cinemaDist}>Rạp CineViet</Text>
               </View>
 
               <View style={styles.timesGrid}>
-                {cinema.times.map((t) => {
-                  const active = selectedCinema === cinema.id && selectedTime === t;
-                  return (
-                    <TouchableOpacity
-                      key={t}
-                      style={[styles.timePill, active && styles.timePillActive]}
-                      onPress={() => {
-                        setSelectedCinema(cinema.id);
-                        setSelectedTime(t);
-                      }}
-                      activeOpacity={0.75}
-                    >
-                      <Text style={[styles.timeText, active && styles.timeTextActive]}>
-                        {t}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                {showtimes
+                  .filter(s => 
+                    new Date(s.startTime).toLocaleDateString('vi-VN') === selectedDate && 
+                    s.cinema === cinemaName
+                  )
+                  .map((s) => {
+                    const t = new Date(s.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                    const active = selectedShowtimeId === s._id;
+                    return (
+                      <TouchableOpacity
+                        key={s._id}
+                        style={[styles.timePill, active && styles.timePillActive]}
+                        onPress={() => {
+                          setSelectedCinema(cinemaName);
+                          setSelectedTime(t);
+                          setSelectedShowtimeId(s._id);
+                        }}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.timeText, active && styles.timeTextActive]}>
+                          {t}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
               </View>
             </View>
           ))}
+          {selectedDate && cinemasForDate.length === 0 && (
+            <Text style={{ color: '#666', fontStyle: 'italic' }}>Không có rạp nào có suất chiếu vào ngày này</Text>
+          )}
         </View>
 
         {/* Spacer for sticky bar */}

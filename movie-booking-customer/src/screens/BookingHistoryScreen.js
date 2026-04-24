@@ -320,18 +320,50 @@ export default function BookingHistoryScreen({ navigation }) {
 
   // Load from API (falls back to demo data)
   useEffect(() => {
-    (async () => {
+    const fetchBookings = async () => {
       setLoading(true);
       try {
         const res = await api.getUserBookings(user?.id);
-        if (res?.data?.data?.length) setBookings(res.data.data);
-      } catch {
-        // Use demo data silently
+        const apiBookings = res.data; // It's an array directly
+        
+        if (apiBookings && Array.isArray(apiBookings)) {
+          const mappedBookings = apiBookings.map(b => {
+            const startTime = new Date(b.showtime?.startTime);
+            const isPast = startTime < new Date();
+            
+            let status = 'upcoming';
+            if (b.status === 'CANCELLED') status = 'cancelled';
+            else if (isPast) status = 'watched';
+
+            return {
+              _id: b._id,
+              status: status,
+              movie: {
+                title: b.showtime?.movie?.title || 'Unknown Movie',
+                genres: (b.showtime?.movie?.genre || '').split(',').map(g => g.trim().toUpperCase()),
+                poster: b.showtime?.movie?.poster
+              },
+              format: '2D', // Default
+              date: startTime.toLocaleDateString('vi-VN'),
+              time: startTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+              cinema: b.showtime?.cinema || 'Rạp CineViet',
+              room: b.showtime?.room || 'Phòng 1',
+              seats: b.seats || [],
+              bookingCode: b._id.slice(-8).toUpperCase(),
+              totalPrice: b.totalPrice || 0
+            };
+          });
+          setBookings(mappedBookings);
+        }
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
       } finally {
         setLoading(false);
       }
-    })();
-  }, []);
+    };
+
+    if (user?.id) fetchBookings();
+  }, [user?.id]);
 
   // Filter by tab
   const filtered = bookings.filter((b) =>

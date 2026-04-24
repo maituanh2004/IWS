@@ -29,6 +29,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
     date     = 18,
     seats    = ['A4', 'A5', 'A6'],
     totalPrice = 360000,
+    showtimeId = null,
   } = route.params ?? {};
 
   const [loading, setLoading]       = useState(false);
@@ -39,18 +40,22 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
   // ── Payment ──────────────────────────────────────────────────────────────
   const handlePayment = async () => {
+    if (!showtimeId) {
+      Alert.alert('Lỗi', 'Thiếu thông tin suất chiếu');
+      return;
+    }
     setLoading(true);
     try {
-      // Replace with real API call when available
-      // await api.createBooking({ ... });
-      await new Promise((r) => setTimeout(r, 1200)); // simulated delay
+      const res = await api.createBooking(showtimeId, seats);
+      const booking = res.data;
       Alert.alert(
         '🎉 Đặt vé thành công!',
-        `Vé của bạn đã được xác nhận.\nMã: ${BOOKING_CODE}`,
+        `Vé của bạn đã được xác nhận.\nMã: ${booking._id.slice(-8).toUpperCase()}`,
         [{ text: 'Xem vé', onPress: () => navigation.navigate('BookingHistory') }]
       );
     } catch (e) {
-      Alert.alert('Lỗi', 'Thanh toán thất bại. Vui lòng thử lại.');
+      console.error('Payment error:', e);
+      Alert.alert('Lỗi', e.response?.data?.message || 'Thanh toán thất bại. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }

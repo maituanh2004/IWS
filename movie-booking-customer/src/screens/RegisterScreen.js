@@ -46,6 +46,7 @@ export default function RegisterScreen({ navigation }) {
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [currentStep, setCurrentStep] = useState(0); // 0 = Tài khoản
+  const [name,        setName]        = useState('');
   const [email,        setEmail]       = useState('');
   const [phone,        setPhone]       = useState('');
   const [password,     setPassword]    = useState('');
@@ -59,6 +60,7 @@ export default function RegisterScreen({ navigation }) {
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
+    if (!name.trim())    { Alert.alert('Lỗi', 'Vui lòng nhập họ và tên'); return false; }
     if (!email.trim())   { Alert.alert('Lỗi', 'Vui lòng nhập email'); return false; }
     if (!phone.trim())   { Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại'); return false; }
     if (password.length < 6) { Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự'); return false; }
@@ -72,7 +74,7 @@ export default function RegisterScreen({ navigation }) {
     if (!validate()) return;
     setLoading(true);
     try {
-      await signUp('', email, password); // name filled in step 2 (CÁ NHÂN)
+      await signUp(name, email, password); 
     } catch (error) {
       Alert.alert('Đăng ký thất bại', error.response?.data?.message || 'Vui lòng thử lại');
     } finally {
@@ -176,6 +178,21 @@ export default function RegisterScreen({ navigation }) {
             {/* Title */}
             <Text style={styles.cardTitle}>Tạo tài khoản mới 🎬</Text>
             <Text style={styles.cardSub}>Bước 1: Thông tin đăng nhập</Text>
+
+            {/* HỌ VÀ TÊN */}
+            <Text style={styles.fieldLabel}>HỌ VÀ TÊN</Text>
+            <View style={styles.inputBox}>
+              <Ionicons name="person-outline" size={18} color="#666" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Nguyễn Văn A"
+                placeholderTextColor="#444"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+                returnKeyType="next"
+              />
+            </View>
 
             {/* EMAIL */}
             <Text style={styles.fieldLabel}>EMAIL</Text>
