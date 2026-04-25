@@ -101,8 +101,8 @@ const createBooking = async (userId, showtimeId, seats) => {
     showtime: showtimeId,
     seats,
     totalPrice,
-    status: 'CONFIRMED',
-    paymentStatus: 'SUCCESS',
+    status: 'PENDING',
+    paymentStatus: 'PENDING',
   });
 };
 

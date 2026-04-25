@@ -25,11 +25,15 @@ const bookingRoutes = require('./routes/bookingRoutes');
 
 const discounts = require('./routes/discountRoutes');
 
+const paymentRoutes = require('./routes/paymentRoutes');
+
+
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/showtimes', showtimeRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/discounts', discounts);
 
 app.get('/', (req, res) => {

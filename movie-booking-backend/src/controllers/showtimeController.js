@@ -1,64 +1,112 @@
 const showtimeService = require('../services/showtimeService');
 
-// GET ALL
+// GET ALL SHOWTIMES
 exports.getShowtimes = async (req, res) => {
   try {
-    const data = await showtimeService.getAllShowtimes();
+    const showtimes = await showtimeService.getAllShowtimes();
 
-    res.json({
+    res.status(200).json({
       success: true,
-      count: data.length,
-      data,
+      count: showtimes.length,
+      data: showtimes,
     });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// GET ONE
+// GET SINGLE SHOWTIME
 exports.getShowtime = async (req, res) => {
   try {
-    const data = await showtimeService.getShowtimeById(req.params.id);
+    const showtime = await showtimeService.getShowtimeById(req.params.id);
 
-    res.json({ success: true, data });
+    if (!showtime) {
+      return res.status(404).json({
+        success: false,
+        message: 'Showtime not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: showtime,
+    });
   } catch (err) {
-    res.status(404).json({ success: false, message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// CREATE
+// CREATE SHOWTIME
 exports.createShowtime = async (req, res) => {
   try {
-    const data = await showtimeService.createShowtime(req.body);
+    const showtime = await showtimeService.createShowtime(req.body);
 
-    res.status(201).json({ success: true, data });
+    res.status(201).json({
+      success: true,
+      data: showtime,
+    });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// UPDATE
+// UPDATE SHOWTIME
 exports.updateShowtime = async (req, res) => {
   try {
-    const data = await showtimeService.updateShowtime(
+    const showtime = await showtimeService.updateShowtime(
       req.params.id,
       req.body
     );
 
-    res.json({ success: true, data });
+    if (!showtime) {
+      return res.status(404).json({
+        success: false,
+        message: 'Showtime not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: showtime,
+    });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-// DELETE
+// DELETE SHOWTIME
 exports.deleteShowtime = async (req, res) => {
   try {
-    await showtimeService.deleteShowtime(req.params.id);
+    const showtime = await showtimeService.deleteShowtime(req.params.id);
 
-    res.json({ success: true, message: 'Deleted' });
+    if (!showtime) {
+      return res.status(404).json({
+        success: false,
+        message: 'Showtime not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Showtime deleted',
+    });
   } catch (err) {
-    res.status(404).json({ success: false, message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -69,21 +117,14 @@ exports.getSeats = async (req, res) => {
       req.params.showtimeId
     );
 
-    res.json({ success: true, data });
+    res.status(200).json({
+      success: true,
+      data,
+    });
   } catch (err) {
-    res.status(404).json({ success: false, message: err.message });
-  }
-};
-
-// GET BY MOVIE
-exports.getShowtimesByMovie = async (req, res) => {
-  try {
-    const data = await showtimeService.getShowtimesByMovie(
-      req.params.movieId
-    );
-
-    res.json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(404).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
