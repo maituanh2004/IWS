@@ -15,14 +15,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// Route files
-const authRoutes = require('./routes/authRoute');
+const authRoutes = require('./routes/authRoutes');
 
-const movieRoutes = require('./routes/movieRoute');
+const movieRoutes = require('./routes/movieRoutes');
 
-const showtimeRoutes = require('./routes/showtimeRoute');
+const showtimeRoutes = require('./routes/showtimeRoutes');
 
-const bookingRoutes = require('./routes/bookingRoute');
+const bookingRoutes = require('./routes/bookingRoutes');
+
+const discounts = require('./routes/discountRoutes');
 
 const paymentRoutes = require('./routes/paymentRoute');
 
@@ -33,6 +34,7 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/showtimes', showtimeRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/discounts', discounts);
 
 app.get('/', (req, res) => {
     res.json({

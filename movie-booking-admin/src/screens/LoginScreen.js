@@ -7,6 +7,8 @@ import {
     StyleSheet,
     ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
@@ -60,80 +62,52 @@ export default function LoginScreen() {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Admin Panel</Text>
-            <Text style={styles.subtitle}>Movie Booking System</Text>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+        >
+            <View className="flex-1 justify-center p-5 bg-gray-50">
+                <View className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <Text className="text-4xl font-extrabold text-gray-900 text-center mb-2 tracking-tight">Admin Portal</Text>
+                    <Text className="text-base text-gray-500 text-center mb-10 font-medium">Movie Booking System</Text>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Admin Email"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-            />
+                    <View className="mb-4">
+                        <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Email Address</Text>
+                        <TextInput
+                            className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100"
+                            placeholder="admin@example.com"
+                            value={email}
+                            onChangeText={setEmail}
+                            autoCapitalize="none"
+                            placeholderTextColor="#9ca3af"
+                        />
+                    </View>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
+                    <View className="mb-6">
+                        <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Password</Text>
+                        <TextInput
+                            className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100"
+                            placeholder="••••••••"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            placeholderTextColor="#9ca3af"
+                        />
+                    </View>
 
-            <TouchableOpacity
-                style={styles.button}
-                onPress={handleLogin}
-                disabled={loading}
-            >
-                {loading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.buttonText}>Login</Text>
-                )}
-            </TouchableOpacity>
-        </View>
+                    <TouchableOpacity
+                        className="bg-[#e50914] p-4 rounded-xl items-center shadow-md active:opacity-90"
+                        onPress={handleLogin}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text className="text-white text-lg font-bold">Sign In</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </KeyboardAvoidingView>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 20,
-        backgroundColor: '#c04444ff',
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#fff',
-        textAlign: 'center',
-        marginBottom: 10,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#f1f1f1ff',
-        textAlign: 'center',
-        marginBottom: 30,
-    },
-    input: {
-        backgroundColor: '#faf5f5ff',
-        padding: 15,
-        borderRadius: 8,
-        marginBottom: 15,
-        fontSize: 16,
-        color: '#403737ff',
-    },
-    button: {
-        backgroundColor: '#e50914',
-        padding: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-});

@@ -31,38 +31,40 @@ export const AuthProvider = ({ children }) => {
         }
     };
     const signIn = async (email, password) => {
-        const response = await api.login(email, password);
-
-        console.log("LOGIN RESPONSE:", response.data);  // kiểm tra
-
-        const user =
-            response.data.user ||
-            response.data.data?.user ||
-            response.data.data;
-
-        const token =
-            response.data.token ||
-            response.data.data?.token;
-
-        if (!user || !token) {
-            throw new Error("Invalid API response format");
-        }
-
-        if (user.role !== 'admin') {
-            throw new Error("Access denied. Admin only.");
-        }
-
-        await AsyncStorage.setItem('token', token);
-        setUser(user);
-
-        return { user, token };
-    };
-    const onSubmit = async () => {
         try {
-            const res = await signIn(email, password);
-            console.log("SIGNIN RESULT:", res);
+            const response = await api.login(email, password);
+
+            console.log("🟢 FULL RESPONSE:", JSON.stringify(response.data, null, 2));
+
+            const user =
+                response.data.user ||
+                response.data.data?.user ||
+                response.data.data;
+
+            const token =
+                response.data.token ||
+                response.data.data?.token;
+
+            console.log("👤 USER:", user);
+            console.log("🔑 TOKEN:", token);
+
+            if (!user || !token) {
+                console.log("❌ FORMAT ERROR:", response.data);
+                throw new Error("Invalid API response format");
+            }
+
+            if (user.role !== 'admin') {
+                throw new Error("Access denied. Admin only.");
+            }
+
+            await AsyncStorage.setItem('token', token);
+            setUser(user);
+
+            return { user, token };
+
         } catch (err) {
-            console.log("SIGNIN ERROR:", err.message);
+            console.log("❌ SIGNIN ERROR (DETAIL):", err.response?.data || err.message);
+            throw err;
         }
     };
 
@@ -72,6 +74,10 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const refreshUser = async () => {
+        await checkUser();
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -79,6 +85,7 @@ export const AuthProvider = ({ children }) => {
                 loading,
                 signIn,
                 signOut,
+                refreshUser,
             }}
         >
             {children}
