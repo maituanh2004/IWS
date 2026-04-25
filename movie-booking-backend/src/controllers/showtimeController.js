@@ -1,59 +1,66 @@
-<<<<<<< HEAD
 const showtimeService = require('../services/showtimeService');
 
-// GET ALL SHOWTIMES
+// GET ALL
 exports.getShowtimes = async (req, res) => {
   try {
-    const showtimes = await showtimeService.getAllShowtimes();
+    const data = await showtimeService.getAllShowtimes();
 
-    res.status(200).json({
+    res.json({
       success: true,
-      count: showtimes.length,
-      data: showtimes,
+      count: data.length,
+      data,
     });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-// CREATE SHOWTIME
+// GET ONE
+exports.getShowtime = async (req, res) => {
+  try {
+    const data = await showtimeService.getShowtimeById(req.params.id);
+
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(404).json({ success: false, message: err.message });
+  }
+};
+
+// CREATE
 exports.createShowtime = async (req, res) => {
   try {
-    const showtime = await showtimeService.createShowtime(req.body);
+    const data = await showtimeService.createShowtime(req.body);
 
-    res.status(201).json({
-      success: true,
-      data: showtime,
-    });
+    res.status(201).json({ success: true, data });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-// // GET SHOWTIMES BY MOVIE ----> move to movieController
-// exports.getShowtimesByMovie = async (req, res) => {
-//   try {
-//     const showtimes = await showtimeService.getShowtimesByMovie(
-//       req.params.movieId
-//     );
+// UPDATE
+exports.updateShowtime = async (req, res) => {
+  try {
+    const data = await showtimeService.updateShowtime(
+      req.params.id,
+      req.body
+    );
 
-//     res.status(200).json({
-//       success: true,
-//       data: showtimes,
-//     });
-//   } catch (err) {
-//     res.status(500).json({
-//       success: false,
-//       message: err.message,
-//     });
-//   }
-// };
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// DELETE
+exports.deleteShowtime = async (req, res) => {
+  try {
+    await showtimeService.deleteShowtime(req.params.id);
+
+    res.json({ success: true, message: 'Deleted' });
+  } catch (err) {
+    res.status(404).json({ success: false, message: err.message });
+  }
+};
 
 // GET SEATS
 exports.getSeats = async (req, res) => {
@@ -62,196 +69,21 @@ exports.getSeats = async (req, res) => {
       req.params.showtimeId
     );
 
-    res.status(200).json({
-      success: true,
-      data,
-    });
+    res.json({ success: true, data });
   } catch (err) {
-    res.status(404).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(404).json({ success: false, message: err.message });
   }
-=======
-const Showtime = require('../models/Showtime');
-const Movie = require('../models/Movie');
-const Booking = require('../models/Booking');
-const { generateSeats } = require('../utils/seatUtils');
-
-// @desc    Get all showtimes
-// @route   GET /api/showtimes
-// @access  Public
-exports.getShowtimes = async (req, res, next) => {
-    try {
-        const showtimes = await Showtime.find().populate('movie');
-        res.status(200).json({
-            success: true,
-            count: showtimes.length,
-            data: showtimes
-        });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
-    }
 };
 
-// @desc    Get single showtime
-// @route   GET /api/showtimes/:id
-// @access  Public
-exports.getShowtime = async (req, res) => {
-    try {
-        const showtime = await Showtime.findById(req.params.id).populate('movie');
-
-        if (!showtime) {
-            return res.status(404).json({
-                success: false,
-                error: 'Showtime not found'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            data: showtime
-        });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
-    }
-};
-
-// @desc    Create showtime
-// @route   POST /api/showtimes
-// @access  Private/Admin
-exports.createShowtime = async (req, res, next) => {
-    try {
-        const { movie, startTime, endTime, room, totalSeats, price } = req.body;
-
-        const movieExists = await Movie.findById(movie);
-        if (!movieExists) {
-            return res.status(404).json({
-                success: false,
-                error: 'Movie not found'
-            });
-        }
-
-        const showtime = await Showtime.create({
-            movie,
-            startTime,
-            endTime,
-            room,
-            totalSeats,
-            price
-        });
-
-        const populatedShowtime = await Showtime.findById(showtime._id).populate('movie');
-
-        res.status(201).json({
-            success: true,
-            data: populatedShowtime
-        });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
-    }
-};
-// @desc    Update showtime
-// @route   PUT /api/showtimes/:id
-// @access  Private/Admin
-exports.updateShowtime = async (req, res) => {
-    try {
-        if (req.body.movie) {
-            const movieExists = await Movie.findById(req.body.movie);
-            if (!movieExists) {
-                return res.status(404).json({
-                    success: false,
-                    error: 'Movie not found'
-                });
-            }
-        }
-
-        const showtime = await Showtime.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        }).populate('movie');
-
-        if (!showtime) {
-            return res.status(404).json({
-                success: false,
-                error: 'Showtime not found'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            data: showtime
-        });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
-    }
-};
-
-// @desc    Delete showtime
-// @route   DELETE /api/showtimes/:id
-// @access  Private/Admin
-exports.deleteShowtime = async (req, res) => {
-    try {
-        const showtime = await Showtime.findByIdAndDelete(req.params.id);
-
-        if (!showtime) {
-            return res.status(404).json({
-                success: false,
-                error: 'Showtime not found'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'Showtime deleted'
-        });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
-    }
-};
-
-exports.getSeats = async (req, res) => {
-    try {
-        const { showtimeId } = req.params;
-
-        const allSeats = generateSeats();
-
-        const bookings = await Booking.find({
-            showtime: showtimeId,
-            status: 'CONFIRMED'
-        });
-
-        const bookedSeats = bookings.flatMap(b => b.seats);
-
-        const availableSeats = allSeats.filter(
-            seat => !bookedSeats.includes(seat)
-        );
-
-        res.json({
-            totalSeats: allSeats.length,
-            bookedSeats,
-            availableSeats,
-            allSeats
-        });
-
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
+// GET BY MOVIE
 exports.getShowtimesByMovie = async (req, res) => {
-    try {
-        const { movieId } = req.params;
+  try {
+    const data = await showtimeService.getShowtimesByMovie(
+      req.params.movieId
+    );
 
-        const showtimes = await Showtime.find({ movie: movieId })
-            .populate('movie');
-
-        res.json({
-            success: true,
-            data: showtimes
-        });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
->>>>>>> 60dd4911ff6d926d796ba6c51247757237b08935
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 };

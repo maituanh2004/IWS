@@ -24,6 +24,6 @@ router.route('/:id')
     .put(protect, authorize('admin'), updateShowtime)
     .delete(protect, authorize('admin'), deleteShowtime);
 
-router.get('/:id/seats', getSeats);
+router.get('/:showtimeId/seats', getSeats);
 
 module.exports = router;

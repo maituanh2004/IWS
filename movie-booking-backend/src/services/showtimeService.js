@@ -1,82 +1,79 @@
 const Showtime = require('../models/Showtime');
 const Booking = require('../models/Booking');
+const Movie = require('../models/Movie');
 const { generateSeats } = require('../utils/seatUtils');
 
-// =============================
-// GET ALL SHOWTIMES
-// =============================
+// GET ALL
 const getAllShowtimes = async () => {
   return await Showtime.find().populate('movie');
 };
 
-// =============================
-// CREATE SHOWTIME
-// =============================
-// =============================
-// CREATE SHOWTIME (with validation)
-// =============================
+// GET ONE
+const getShowtimeById = async (id) => {
+  const showtime = await Showtime.findById(id).populate('movie');
+  if (!showtime) throw new Error('Showtime not found');
+  return showtime;
+};
+
+// CREATE
 const createShowtime = async (data) => {
-  const { movieId, roomId, startTime, endTime, basePrice } = data;
+  const { movieId, roomId, totalSeats, startTime, endTime, basePrice } = data;
 
-  // 1. Check movie exists
   const movie = await Movie.findById(movieId);
-  if (!movie) {
-    throw new Error('Movie not found');
-  }
+  if (!movie) throw new Error('Movie not found');
 
-  // 2. Check time logic
   if (new Date(startTime) >= new Date(endTime)) {
     throw new Error('Invalid time range');
   }
 
-  // 3. Check overlapping showtime in same room
   const overlap = await Showtime.findOne({
     roomId,
-    $or: [
-      {
-        startTime: { $lt: endTime },
-        endTime: { $gt: startTime }
-      }
-    ]
+    startTime: { $lt: endTime },
+    endTime: { $gt: startTime }
   });
 
-  if (overlap) {
-    throw new Error('Showtime overlaps in same room');
-  }
+  if (overlap) throw new Error('Showtime overlaps in same room');
 
-  // 4. Create showtime
-  const showtime = await Showtime.create({
+  return await Showtime.create({
     movie: movieId,
-    roomId,
+    room: roomId,
+    totalSeats,
     startTime,
     endTime,
     basePrice
   });
+};
 
+// UPDATE
+const updateShowtime = async (id, data) => {
+  const showtime = await Showtime.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true
+  });
+
+  if (!showtime) throw new Error('Showtime not found');
   return showtime;
 };
 
-// =============================
-// GET SHOWTIMES BY MOVIE
-// =============================
+// DELETE
+const deleteShowtime = async (id) => {
+  const showtime = await Showtime.findByIdAndDelete(id);
+  if (!showtime) throw new Error('Showtime not found');
+  return true;
+};
+
+// GET BY MOVIE
 const getShowtimesByMovie = async (movieId) => {
   return await Showtime.find({ movie: movieId }).populate('movie');
 };
 
-// =============================
-// GET SEAT AVAILABILITY
-// =============================
+// GET SEATS
 const getSeatAvailability = async (showtimeId) => {
-  // 1. Check showtime
   const showtime = await Showtime.findById(showtimeId);
-  if (!showtime) {
-    throw new Error('Showtime not found');
-  }
+  if (!showtime) throw new Error('Showtime not found');
 
-  // 2. Generate seats
   const allSeats = generateSeats();
 
-  // 3. Get booked seats (CONFIRMED only)
   const bookings = await Booking.find({
     showtime: showtimeId,
     status: 'CONFIRMED',
@@ -84,7 +81,6 @@ const getSeatAvailability = async (showtimeId) => {
 
   const bookedSeats = bookings.flatMap((b) => b.seats);
 
-  // 4. Available seats
   const availableSeats = allSeats.filter(
     (seat) => !bookedSeats.includes(seat)
   );
@@ -98,7 +94,10 @@ const getSeatAvailability = async (showtimeId) => {
 
 module.exports = {
   getAllShowtimes,
+  getShowtimeById,
   createShowtime,
+  updateShowtime,
+  deleteShowtime,
   getShowtimesByMovie,
   getSeatAvailability,
 };
