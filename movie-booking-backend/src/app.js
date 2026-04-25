@@ -25,7 +25,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 
 const discounts = require('./routes/discountRoutes');
 
-const paymentRoutes = require('./routes/paymentRoute');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 
 // Mount routers

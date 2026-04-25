@@ -46,26 +46,29 @@ const seedData = async () => {
             {
                 title: 'Avengers: Endgame',
                 description: 'Avengers assemble to undo Thanos.',
-                poster: 'https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg',
+                poster: '...',
                 duration: 181,
                 genre: 'Action, Adventure, Sci-Fi',
-                releaseDate: new Date('2019-04-26')
+                releaseDate: new Date('2019-04-26'),
+                price: 100000   // ✅ THÊM
             },
             {
                 title: 'The Shawshank Redemption',
                 description: 'Two prisoners find redemption.',
-                poster: 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg',
+                poster: '...',
                 duration: 142,
                 genre: 'Drama',
-                releaseDate: new Date('1994-09-23')
+                releaseDate: new Date('1994-09-23'),
+                price: 90000    // ✅ THÊM
             },
             {
                 title: 'Inception',
                 description: 'Dream invasion mission.',
-                poster: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg',
+                poster: '...',
                 duration: 148,
                 genre: 'Action, Sci-Fi, Thriller',
-                releaseDate: new Date('2010-07-16')
+                releaseDate: new Date('2010-07-16'),
+                price: 95000    // ✅ THÊM
             }
         ]);
 
