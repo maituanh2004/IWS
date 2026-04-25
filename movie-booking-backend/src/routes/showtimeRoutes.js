@@ -14,15 +14,15 @@ const router = express.Router();
 
 router.route('/')
     .get(getShowtimes)
-    .post(createShowtime);
+    .post(protect, authorize('admin'), createShowtime);
 
 // Specific named paths BEFORE the generic /:id param to avoid Express matching 'movie' as an id
-router.get('/movie/:movieId', getShowtimesByMovie);
+// router.get('/movie/:movieId', getShowtimesByMovie); --- Đã có bên movieRoutes rồi, xoá đi
 
 router.route('/:id')
     .get(getShowtime)
-    .put(updateShowtime)
-    .delete(deleteShowtime);
+    .put(protect, authorize('admin'), updateShowtime)
+    .delete(protect, authorize('admin'), deleteShowtime);
 
 router.get('/:id/seats', getSeats);
 
