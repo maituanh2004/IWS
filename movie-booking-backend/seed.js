@@ -5,7 +5,7 @@ const User = require('./src/models/User');
 const Movie = require('./src/models/Movie');
 const Showtime = require('./src/models/Showtime');
 const connectDB = require('./src/config/database');
-
+const Discount = require('./src/models/Discount');
 const seedData = async () => {
     try {
         await connectDB();
@@ -15,6 +15,7 @@ const seedData = async () => {
         await User.deleteMany({});
         await Movie.deleteMany({});
         await Showtime.deleteMany({});
+        await Discount.deleteMany({});
 
         // =============================
         // USERS
