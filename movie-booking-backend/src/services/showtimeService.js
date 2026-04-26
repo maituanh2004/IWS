@@ -1,7 +1,7 @@
 const Showtime = require('../models/Showtime');
 const Booking = require('../models/Booking');
 const Movie = require('../models/Movie');
-const { generateSeats } = require('../utils/seatUtils');
+const { getFixedSeats } = require('../utils/seatUtils');
 
 // GET ALL
 const getAllShowtimes = async () => {
@@ -72,24 +72,29 @@ const getSeatAvailability = async (showtimeId) => {
   const showtime = await Showtime.findById(showtimeId);
   if (!showtime) throw new Error('Showtime not found');
 
-  const allSeats = generateSeats();
+  const seats = getFixedSeats(showtime.totalSeats);
+
+  const now = new Date();
 
   const bookings = await Booking.find({
     showtime: showtimeId,
-    status: 'CONFIRMED',
-  });
+    $or: [
+      { status: 'CONFIRMED' },
+      {
+        status: 'PENDING',
+        expiresAt: { $gt: now }
+      }
+    ]
+  }).select('seat');
 
-  const bookedSeats = bookings.flatMap((b) => b.seats);
+  const bookedSet = new Set(bookings.map(b => b.seat));
 
-  const availableSeats = allSeats.filter(
-    (seat) => !bookedSeats.includes(seat)
-  );
+  const result = seats.map(seat => ({
+    ...seat,
+    isBooked: bookedSet.has(seat.code)
+  }));
 
-  return {
-    totalSeats: allSeats.length,
-    bookedSeats,
-    availableSeats,
-  };
+  return result;
 };
 
 module.exports = {

@@ -3,18 +3,31 @@ const { createPaymentUrl } = require("../services/paymentService");
 
 exports.createPayment = async (req, res) => {
   try {
-    const { bookingId } = req.body;
+    const { bookingGroupId } = req.body;
 
-    const booking = await Booking.findById(bookingId);
+    // 👉 get ALL seats in this booking
+    const bookings = await Booking.find({ bookingGroupId });
 
-    if (!booking) {
+    if (!bookings.length) {
       return res.status(404).json({
         success: false,
         message: "Booking not found",
       });
     }
 
-    const paymentUrl = await createPaymentUrl(booking, req.ip);
+    // 👉 calculate total price
+    const totalPrice = bookings.reduce(
+      (sum, b) => sum + b.totalPrice,
+      0
+    );
+
+    const paymentUrl = await createPaymentUrl(
+      {
+        bookingGroupId,
+        totalPrice,
+      },
+      req.ip
+    );
 
     res.json({
       success: true,
@@ -32,25 +45,55 @@ exports.vnpayReturn = async (req, res) => {
   try {
     const { vnp_ResponseCode, vnp_TxnRef } = req.query;
 
-    console.log(req.query); // 👈 DEBUG
+    console.log("VNPay Return:", req.query);
 
-    const booking = await Booking.findById(vnp_TxnRef);
+    const bookingGroupId = vnp_TxnRef;
 
-    if (!booking) {
+    // 👉 find all bookings in group
+    const bookings = await Booking.find({ bookingGroupId });
+
+    if (!bookings.length) {
       return res.send("Booking not found");
     }
 
-    if (vnp_ResponseCode === "00") {
-      booking.status = "CONFIRMED";
-      booking.paymentStatus = "SUCCESS";
-    } else {
-      booking.paymentStatus = "FAILED";
+    const now = new Date();
+
+    // 👉 check expired BEFORE processing payment
+    if (bookings[0].expiresAt && bookings[0].expiresAt <= now) {
+      // 🔥 booking hết hạn → xoá luôn để release ghế
+      await Booking.deleteMany({ bookingGroupId });
+
+      return res.send("Booking expired ⏰");
     }
 
-    await booking.save();
+    // =============================
+    // PAYMENT SUCCESS
+    // =============================
+    if (vnp_ResponseCode === "00") {
+      await Booking.updateMany(
+        { bookingGroupId },
+        {
+          status: "CONFIRMED",
+          paymentStatus: "SUCCESS",
+          expiresAt: null // 🔥 clear expiry
+        }
+      );
 
-    res.send("Payment processed");
+      return res.send("Payment success ✅");
+    }
+
+    // =============================
+    // PAYMENT FAILED
+    // =============================
+    else {
+      // 🔥 IMPORTANT: delete to free seats
+      await Booking.deleteMany({ bookingGroupId });
+
+      return res.send("Payment failed ❌ (Seats released)");
+    }
+
   } catch (err) {
-    res.send("Error");
+    console.error(err);
+    res.send("Error processing payment");
   }
 };

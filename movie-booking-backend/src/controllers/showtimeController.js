@@ -112,10 +112,9 @@ exports.deleteShowtime = async (req, res) => {
 
 // GET SEATS
 exports.getSeats = async (req, res) => {
+  const showtimeId = req.params.showtimeId || req.params.id;
   try {
-    const data = await showtimeService.getSeatAvailability(
-      req.params.showtimeId
-    );
+    const data = await showtimeService.getSeatAvailability(showtimeId);
 
     res.status(200).json({
       success: true,

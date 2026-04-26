@@ -1,20 +1,31 @@
 const bookingService = require('../services/bookingService');
+const Booking = require('../models/Booking');
+const { groupBookings } = require('../utils/bookingUtils');
 
 // CREATE BOOKING
 exports.createBooking = async (req, res) => {
   try {
-    const { showtimeId, seats } = req.body;
+    const { showtimeId, seats, discountCode } = req.body;
 
-    const booking = await bookingService.createBooking(
+    if (!showtimeId || !seats) {
+      return res.status(400).json({
+        success: false,
+        message: 'showtimeId and seats are required'
+      });
+    }
+
+    const result = await bookingService.createBooking(
       req.user._id,
       showtimeId,
-      seats
+      seats,
+      discountCode,
     );
 
     res.status(201).json({
       success: true,
-      data: booking,
+      data: result
     });
+
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -26,51 +37,80 @@ exports.createBooking = async (req, res) => {
 // GET MY BOOKINGS
 exports.getMyBookings = async (req, res) => {
   try {
-    const bookings = await bookingService.getMyBookings(req.user._id);
+    const bookings = await Booking.find({ user: req.user._id })
+      .populate({
+        path: 'showtime',
+        populate: { path: 'movie' },
+      })
+      .lean();
+
+    const grouped = groupBookings(bookings);
 
     res.status(200).json({
       success: true,
-      data: bookings,
+      data: grouped
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: err.message
     });
   }
 };
 
 // GET BOOKING DETAIL
-exports.getBookingById = async (req, res) => {
+exports.getBookingsByUserId = async (req, res) => {
   try {
-    const booking = await bookingService.getBookingById(req.params.id);
+    const { userId } = req.params;
+    const bookings = await Booking.find({ user: userId })
+      .populate({
+        path: 'showtime',
+        populate: { path: 'movie' },
+      })
+      .sort({ createdAt: -1 })
+      .lean();
 
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found',
-      });
-    }
-
-    // ownership check
-    if (
-      req.user.role !== 'admin' &&
-      booking.user._id.toString() !== req.user._id.toString()
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized',
-      });
-    }
+    const grouped = groupBookings(bookings);
 
     res.status(200).json({
       success: true,
-      data: booking,
+      data: grouped
     });
-  } catch (error) {
+
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: err.message
+    });
+  }
+};
+
+// Preview booking page
+exports.previewBooking = async (req, res) => {
+  try {
+    const { showtimeId, seats, discountCode } = req.body;
+
+    if (!showtimeId || !seats) {
+      return res.status(400).json({
+        success: false,
+        message: 'showtimeId and seats are required'
+      });
+    }
+
+    const result = await bookingService.previewBooking(
+      showtimeId,
+      seats,
+      discountCode
+    );
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
     });
   }
 };

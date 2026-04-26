@@ -13,8 +13,13 @@ const bookingSchema = new mongoose.Schema({
         required: true
     },
 
-    seats: {
-        type: [String],
+    seat: { //change from seats -> seat
+        type: String,
+        required: true
+    },
+
+    bookingGroupId: {
+        type: mongoose.Schema.ObjectId,
         required: true
     },
 
@@ -34,19 +39,32 @@ const bookingSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['CONFIRMED', 'PENDING'],
-        default: 'CONFIRMED'
+        default: 'PENDING'
     },
 
     paymentStatus: {
         type: String,
         enum: ['PENDING', 'SUCCESS', "FAILED"],
-        default: 'SUCCESS'
+        default: 'PENDING'
     },
     
     createdAt: {
         type: Date,
         default: Date.now
+    },
+
+    expiresAt: {
+    type: Date,
+    default: null
     }
 });
+
+// prevent duplicate seats - 1 seat belongs to 1 showtime and booking only
+bookingSchema.index(
+  { showtime: 1, seat: 1 },
+  { unique: true }
+);
+
+bookingSchema.index({ bookingGroupId: 1 });
 
 module.exports = mongoose.model('Booking', bookingSchema);
