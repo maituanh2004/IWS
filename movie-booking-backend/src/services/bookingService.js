@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Showtime = require('../models/Showtime');
 const Discount = require('../models/Discount');
-const { validateSeats } = require('../utils/seatUtils');
+const { validateSeats, validateAndExpandSeats, getFixedSeats } = require('../utils/seatUtils');
 
 // =============================
 // VALIDATE SHOWTIME
@@ -22,7 +22,7 @@ const validateShowtime = async (showtimeId) => {
 // =============================
 // VALIDATE SEATS INPUT
 // =============================
-const validateSeatInput = (seats) => {
+const validateSeatInput = (seats, totalSeats) => {
   if (!seats) {
     throw new Error('Seats field is required');
   }
@@ -40,7 +40,7 @@ const validateSeatInput = (seats) => {
     throw new Error('Duplicate seats not allowed');
   }
 
-  if (!validateSeats(seats)) {
+  if (!validateSeats(seats, totalSeats)) {
     throw new Error('Invalid seat format');
   }
 };
@@ -85,13 +85,22 @@ const checkSeatAvailability = async (showtimeId, seats) => {
 // CALCULATE PRICE
 // =============================
 const calculatePrice = (seats, showtime) => {
-  const VIP_ROWS = ['C', 'D', 'E', 'F'];
+  const seatMap = new Map(
+    getFixedSeats(showtime.totalSeats).map(s => [s.code, s])
+  );
 
   return seats.reduce((total, seat) => {
-    const row = seat[0];
-    return total + (VIP_ROWS.includes(row)
-      ? showtime.basePrice + 5000
-      : showtime.basePrice);
+    const seatInfo = seatMap.get(seat);
+
+    if (seatInfo.type === 'VIP') {
+      return total + showtime.basePrice + 5000;
+    }
+
+    if (seatInfo.type === 'COUPLE') {
+      return total + showtime.basePrice + 20000;
+    }
+
+    return total + showtime.basePrice;
   }, 0);
 };
 
@@ -101,20 +110,34 @@ const calculatePrice = (seats, showtime) => {
 const createBooking = async (userId, showtimeId, seats, discountCode) => {
   const bookingGroupId = new mongoose.Types.ObjectId();
 
-  const { originalPrice, finalPrice } = await previewBooking(
-    showtimeId,
+  const showtime = await validateShowtime(showtimeId);
+
+  validateSeatInput(seats, showtime.totalSeats);
+
+  const expandedSeats = validateAndExpandSeats(
     seats,
-    discountCode
+    showtime.totalSeats
   );
 
+  const { originalPrice, finalPrice } = await previewBooking(
+    showtimeId,
+    expandedSeats,
+    discountCode
+  );
+  // const { originalPrice, finalPrice } = await previewBooking(
+  //   showtimeId,
+  //   seats,
+  //   discountCode
+  // );
+
   // use floor + distribute remainder
-  const basePrice = Math.floor(finalPrice / seats.length);
-  let remainder = finalPrice - basePrice * seats.length;
+  const basePrice = Math.floor(finalPrice / expandedSeats.length);
+  let remainder = finalPrice - basePrice * expandedSeats.length;
 
-  const baseOriginal = Math.floor(originalPrice / seats.length);
-  let originalRemainder = originalPrice - baseOriginal * seats.length;
+  const baseOriginal = Math.floor(originalPrice / expandedSeats.length);
+  let originalRemainder = originalPrice - baseOriginal * expandedSeats.length;
 
-  const bookings = seats.map(seat => {
+  const bookings = expandedSeats.map(seat => {
     const extra = remainder > 0 ? 1 : 0;
     if (remainder > 0) remainder--;
 
@@ -156,13 +179,24 @@ const createBooking = async (userId, showtimeId, seats, discountCode) => {
 // Preview booking page
 const previewBooking = async (showtimeId, seats, discountCode) => {
   const showtime = await validateShowtime(showtimeId);
-  // 🔥 FIX 1: thêm totalSeats
+
   validateSeatInput(seats, showtime.totalSeats);
 
-  // 🔥 FIX 2: check ghế đã bị giữ
-  await checkSeatAvailability(showtimeId, seats);
-  
-  let totalPrice = calculatePrice(seats, showtime);
+  const expandedSeats = validateAndExpandSeats(
+    seats,
+    showtime.totalSeats
+  );
+
+  await checkSeatAvailability(showtimeId, expandedSeats);
+
+  let totalPrice = calculatePrice(expandedSeats, showtime);
+
+  // // 🔥 FIX 1: thêm totalSeats
+  // validateSeatInput(seats, showtime.totalSeats);
+
+  // // 🔥 FIX 2: check ghế đã bị giữ
+  // await checkSeatAvailability(showtimeId, seats);
+  // let totalPrice = calculatePrice(seats, showtime);  
   let finalPrice = totalPrice;
   let appliedDiscount = null;
 

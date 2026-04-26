@@ -16,9 +16,11 @@
 //   const allSeats = exports.generateSeats();
 //   return seats.every((seat) => allSeats.includes(seat));
 // };
-
 const seatCache = {};
 
+// =============================
+// GET FIXED SEATS
+// =============================
 const getFixedSeats = (totalSeats) => {
   if (seatCache[totalSeats]) {
     return seatCache[totalSeats];
@@ -41,14 +43,15 @@ const getFixedSeats = (totalSeats) => {
       }
 
       // 🎯 VIP
-      if (totalSeats === 100) {
-        if (r >= 2 && r <= rows - 3 && c >= 3 && c <= cols - 2) {
-          type = 'VIP';
-        }
-      } else {
-        // room 80 special rule
-        if (r >= 2 && r <= rows - 2 && c >= 3 && c <= cols - 2) {
-          type = 'VIP';
+      if (type !== 'COUPLE') {
+        if (totalSeats === 100) {
+          if (r >= 2 && r <= rows - 3 && c >= 3 && c <= cols - 2) {
+            type = 'VIP';
+          }
+        } else {
+          if (r >= 2 && r <= rows - 2 && c >= 3 && c <= cols - 2) {
+            type = 'VIP';
+          }
         }
       }
 
@@ -62,21 +65,78 @@ const getFixedSeats = (totalSeats) => {
   }
 
   seatCache[totalSeats] = seats;
-
   return seats;
 };
 
-const validateSeats = (seats, totalSeats) => {
-  if (!seats || !Array.isArray(seats)) return false;
 
-  const validSeats = new Set(
-    getFixedSeats(totalSeats).map(s => s.code)
-  );
 
-  return seats.every(seat => validSeats.has(seat));
+// =============================
+// GET COUPLE PAIR
+// =============================
+const getCouplePair = (seatCode) => {
+  const row = seatCode[0];
+  const number = parseInt(seatCode.slice(1));
+
+  if (number % 2 === 0) {
+    return [`${row}${number - 1}`, seatCode];
+  } else {
+    return [seatCode, `${row}${number + 1}`];
+  }
 };
+
+
+
+// =============================
+// VALIDATE + EXPAND SEATS
+// =============================
+const validateAndExpandSeats = (seats, totalSeats) => {
+  if (!Array.isArray(seats) || seats.length === 0) {
+    throw new Error('Seats are required');
+  }
+
+  const fixedSeats = getFixedSeats(totalSeats);
+  const seatMap = new Map(fixedSeats.map(s => [s.code, s]));
+
+  const result = new Set();
+
+  for (const seat of seats) {
+    const seatInfo = seatMap.get(seat);
+
+    if (!seatInfo) {
+      throw new Error(`Invalid seat ${seat}`);
+    }
+
+    // 🎯 COUPLE → expand
+    if (seatInfo.type === 'COUPLE') {
+      const pair = getCouplePair(seat);
+      pair.forEach(s => result.add(s));
+    } else {
+      result.add(seat);
+    }
+  }
+
+  return Array.from(result);
+};
+
+
+
+// =============================
+// SIMPLE VALIDATE (optional)
+// =============================
+const validateSeats = (seats, totalSeats) => {
+  try {
+    validateAndExpandSeats(seats, totalSeats);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+
 
 module.exports = {
   getFixedSeats,
+  getCouplePair,
+  validateAndExpandSeats,
   validateSeats
 };
