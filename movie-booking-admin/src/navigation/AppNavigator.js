@@ -12,6 +12,7 @@ import DiscountManagementScreen from '../screens/DiscountManagementScreen';
 import OccupancyScreen from '../screens/OccupancyScreen';
 import SystemErrorScreen from '../screens/SystemErrorScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import BookingListScreen from '../screens/BookingListScreen';
 
 import { navigationRef } from './NavigationService';
 
@@ -34,10 +35,11 @@ function AppStack() {
     return (
         <Stack.Navigator
             screenOptions={{
-                headerStyle: { backgroundColor: '#e50914' },
-                headerTintColor: '#000',
-                headerTitleStyle: { fontWeight: '900', color: '#000' },
+                headerStyle: { backgroundColor: '#0a0a0a' },
+                headerTintColor: '#fff',
+                headerTitleStyle: { fontWeight: '900', color: '#fff' },
                 headerTitleAlign: 'center',
+                headerShadowVisible: false,
             }}
         >
             <Stack.Screen
@@ -78,6 +80,11 @@ function AppStack() {
                 name="Occupancy"
                 component={OccupancyScreen}
                 options={{ title: 'Theater Occupancy' }}
+            />
+            <Stack.Screen
+                name="BookingList"
+                component={BookingListScreen}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     );

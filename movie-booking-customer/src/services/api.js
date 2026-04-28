@@ -61,6 +61,9 @@ export const getShowtimes = () => api.get('/showtimes');
 export const getShowtimesByMovie = (movieId) =>
     api.get(`/showtimes/movie/${movieId}`);
 
+export const getShowtime = (id) =>
+    api.get(`/showtimes/${id}`);
+
 export const getAvailableSeats = (showtimeId) =>
     api.get(`/showtimes/${showtimeId}/seats`);
 

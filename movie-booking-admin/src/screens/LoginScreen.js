@@ -66,44 +66,45 @@ export default function LoginScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ flex: 1 }}
         >
-            <View className="flex-1 justify-center p-5 bg-gray-50">
-                <View className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                    <Text className="text-4xl font-extrabold text-gray-900 text-center mb-2 tracking-tight">Admin Portal</Text>
-                    <Text className="text-base text-gray-500 text-center mb-10 font-medium">Movie Booking System</Text>
+            <View className="flex-1 justify-center p-6 bg-[#0a0a0a]">
+                <View className="bg-[#1a1a1a] p-10 rounded-[40px] shadow-2xl border border-white/5">
+                    <Text className="text-4xl font-black text-white text-center mb-2 tracking-tighter italic">ADMIN</Text>
+                    <Text className="text-sm text-[#c04444] text-center mb-12 font-black uppercase tracking-[4px]">Movie System</Text>
 
-                    <View className="mb-4">
-                        <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Email Address</Text>
+                    <View className="mb-6">
+                        <Text className="text-xs font-black text-gray-500 mb-3 ml-1 uppercase tracking-widest">Email Address</Text>
                         <TextInput
-                            className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100"
+                            className="bg-white/5 p-5 rounded-2xl text-base text-white border border-white/10 focus:border-[#c04444]"
                             placeholder="admin@example.com"
                             value={email}
                             onChangeText={setEmail}
                             autoCapitalize="none"
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor="#4b5563"
                         />
                     </View>
 
-                    <View className="mb-6">
-                        <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Password</Text>
+                    <View className="mb-10">
+                        <Text className="text-xs font-black text-gray-500 mb-3 ml-1 uppercase tracking-widest">Security Code</Text>
                         <TextInput
-                            className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100"
+                            className="bg-white/5 p-5 rounded-2xl text-base text-white border border-white/10 focus:border-[#c04444]"
                             placeholder="••••••••"
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor="#4b5563"
                         />
                     </View>
 
                     <TouchableOpacity
-                        className="bg-[#e50914] p-4 rounded-xl items-center shadow-md active:opacity-90"
+                        className="bg-[#c04444] p-5 rounded-2xl items-center shadow-2xl active:opacity-90 overflow-hidden"
+                        style={{ shadowColor: '#c04444', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 }}
                         onPress={handleLogin}
                         disabled={loading}
                     >
                         {loading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text className="text-white text-lg font-bold">Sign In</Text>
+                            <Text className="text-white text-lg font-black uppercase tracking-widest">Authorize Access</Text>
                         )}
                     </TouchableOpacity>
                 </View>

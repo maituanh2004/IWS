@@ -4,7 +4,6 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
     ScrollView,
     Alert,
     ActivityIndicator,
@@ -14,6 +13,8 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import * as movieApi from '../services/movieService';
 import * as showtimeApi from '../services/showtimeService';
+import AdminHeader from '../components/AdminHeader';
+import BackgroundWrapper from '../components/BackgroundWrapper';
 
 const ROOMS = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
 
@@ -126,62 +127,83 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             style={{ flex: 1 }}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         >
-            <ScrollView className="flex-1 bg-gray-50">
-                <View className="p-5">
-                    <Text className="text-base font-bold text-gray-900 mt-2 mb-1">Movie*</Text>
-                    <View className="bg-white rounded-lg overflow-hidden border border-gray-100">
-                        <Picker selectedValue={selectedMovieId} onValueChange={setSelectedMovieId} style={{ color: '#111827' }} dropdownIconColor="#111827">
-                            {movies.map((movie) => <Picker.Item key={movie._id} label={`${movie.title} (${movie.duration}m)`} value={movie._id} />)}
+            <BackgroundWrapper>
+                <AdminHeader title={isEdit ? 'Edit Showtime' : 'New Showtime'} showClose={true} />
+                
+                <ScrollView className="flex-1" contentContainerClassName="p-6 pb-20">
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Select Movie*</Text>
+                    <View className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 mb-6">
+                        <Picker 
+                            selectedValue={selectedMovieId} 
+                            onValueChange={setSelectedMovieId} 
+                            style={{ color: '#fff' }} 
+                            dropdownIconColor="#fff"
+                        >
+                            {movies.map((movie) => <Picker.Item key={movie._id} label={`${movie.title} (${movie.duration}m)`} value={movie._id} color={Platform.OS === 'ios' ? '#fff' : '#111827'} />)}
                         </Picker>
                     </View>
 
-                    <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Start Date* (YYYY-MM-DD)</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={startDate} onChangeText={setStartDate} placeholder="2024-01-01" placeholderTextColor="#9ca3af" />
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Start Date* (YYYY-MM-DD)</Text>
+                    <TextInput className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6 focus:border-[#c04444]" value={startDate} onChangeText={setStartDate} placeholder="2024-01-01" placeholderTextColor="#4b5563" />
 
-                    <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Start Time* (HH:MM)</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={startTime} onChangeText={setStartTime} placeholder="14:30" placeholderTextColor="#9ca3af" />
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Start Time* (HH:MM)</Text>
+                    <TextInput className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6 focus:border-[#c04444]" value={startTime} onChangeText={setStartTime} placeholder="14:30" placeholderTextColor="#4b5563" />
 
-                    <View className="flex-row gap-4 mt-4">
+                    <View className="flex-row gap-4 mb-6">
                         <View className="flex-1">
-                            <Text className="text-base font-bold text-gray-900 mb-1">End Date (Auto)</Text>
+                            <Text className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">End Date (Auto)</Text>
                             <TextInput 
-                                className="bg-gray-100 text-gray-500 p-4 rounded-lg text-base border border-gray-200" 
+                                className="bg-white/5 text-white/40 p-5 rounded-2xl border border-white/5 font-black italic" 
                                 value={endDate} 
                                 editable={false}
-                                placeholder="Auto-calculated" 
-                                placeholderTextColor="#9ca3af" 
+                                placeholder="Auto" 
+                                placeholderTextColor="#4b5563" 
                             />
                         </View>
                         <View className="flex-1">
-                            <Text className="text-base font-bold text-gray-900 mb-1">End Time (Auto)</Text>
+                            <Text className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">End Time (Auto)</Text>
                             <TextInput 
-                                className="bg-gray-100 text-gray-500 p-4 rounded-lg text-base border border-gray-200" 
+                                className="bg-white/5 text-white/40 p-5 rounded-2xl border border-white/5 font-black italic" 
                                 value={endTime} 
                                 editable={false}
-                                placeholder="Auto-calculated" 
-                                placeholderTextColor="#9ca3af" 
+                                placeholder="Auto" 
+                                placeholderTextColor="#4b5563" 
                             />
                         </View>
                     </View>
 
-                    <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Room* (1-10)</Text>
-                    <View className="bg-white rounded-lg overflow-hidden border border-gray-100">
-                        <Picker selectedValue={room} onValueChange={setRoom} style={{ color: '#111827' }} dropdownIconColor="#111827">
-                            {ROOMS.map((r) => <Picker.Item key={r} label={`Room ${r}`} value={r} />)}
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Theater Room*</Text>
+                    <View className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 mb-6">
+                        <Picker 
+                            selectedValue={room} 
+                            onValueChange={setRoom} 
+                            style={{ color: '#fff' }} 
+                            dropdownIconColor="#fff"
+                        >
+                            {ROOMS.map((r) => <Picker.Item key={r} label={`Room ${r}`} value={r} color={Platform.OS === 'ios' ? '#fff' : '#111827'} />)}
                         </Picker>
                     </View>
 
-                    <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Total Seats*</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={totalSeats} onChangeText={setTotalSeats} keyboardType="numeric" placeholderTextColor="#9ca3af" />
+                    <View className="flex-row gap-4 mb-10">
+                        <View className="flex-1">
+                            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Total Seats*</Text>
+                            <TextInput className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic focus:border-[#c04444]" value={totalSeats} onChangeText={setTotalSeats} keyboardType="numeric" placeholderTextColor="#4b5563" />
+                        </View>
+                        <View className="flex-1">
+                            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Price (VND)*</Text>
+                            <TextInput className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic focus:border-[#c04444]" value={price} onChangeText={setPrice} keyboardType="numeric" placeholder="95000" placeholderTextColor="#4b5563" />
+                        </View>
+                    </View>
 
-                    <Text className="text-base font-bold text-gray-900 mt-4 mb-1">Price (VND)*</Text>
-                    <TextInput className="bg-white text-gray-900 p-4 rounded-lg text-base border border-gray-100" value={price} onChangeText={setPrice} keyboardType="numeric" placeholder="e.g. 95000" placeholderTextColor="#9ca3af" />
-
-                    <TouchableOpacity className="bg-[#e50914] p-4 rounded-lg items-center mt-8 mb-5" onPress={handleSave} disabled={loading}>
-                        {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-base font-bold">{isEdit ? 'Update Showtime' : 'Create Showtime'}</Text>}
+                    <TouchableOpacity 
+                        className="bg-[#c04444] p-6 rounded-[24px] items-center shadow-2xl shadow-[#c04444]/40 mb-10" 
+                        onPress={handleSave} 
+                        disabled={loading}
+                    >
+                        {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase italic tracking-widest">{isEdit ? 'Update Schedule' : 'Create Schedule'}</Text>}
                     </TouchableOpacity>
-                </View>
-            </ScrollView>
+                </ScrollView>
+            </BackgroundWrapper>
         </KeyboardAvoidingView>
     );
 }

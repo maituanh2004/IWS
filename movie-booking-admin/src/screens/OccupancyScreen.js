@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import { Inbox, Info, Armchair } from 'lucide-react-native';
 import * as showtimeApi from '../services/showtimeService';
+import AdminHeader from '../components/AdminHeader';
+import Navbar from '../components/Navbar';
+import BackgroundWrapper from '../components/BackgroundWrapper';
 
 const { width } = Dimensions.get('window');
 const SEAT_SIZE = (width - 60) / 10;
@@ -26,7 +29,6 @@ export default function OccupancyScreen({ route, navigation }) {
     const loadShowtime = async () => {
         setLoading(true);
         if (!showtimeId) {
-            // No showtime selected — leave data empty so UI renders an empty state
             setShowtime(null);
             setLoading(false);
             return;
@@ -44,29 +46,28 @@ export default function OccupancyScreen({ route, navigation }) {
 
     const capacity = useMemo(() => {
         if (!showtime) return 80;
+        const roomNum = parseInt(showtime.room);
+        if (roomNum >= 1 && roomNum <= 5) return 80;
+        if (roomNum >= 6 && roomNum <= 10) return 100;
         return showtime.totalSeats || 80;
     }, [showtime]);
 
     const cols = 10;
     const rows = Math.ceil(capacity / cols);
-    const vipRowsCount = capacity >= 100 ? 3 : 2;
+    const startVipRow = Math.floor((rows - 4) / 2);
+    const endVipRow = startVipRow + 3;
 
-  
     const bookedSeats = useMemo(() => {
         const booked = new Set();
         if (!showtime) return booked;
-        
         const bookedCount = showtime.bookedSeats || 0;
         const seedValue = showtime._id ? showtime._id.slice(-4) : '0';
         const seed = parseInt(seedValue, 16) || 123;
-        
-        // Simple LCG PRNG for consistency
         let m_w = seed;
         const random = () => {
             m_w = (1103515245 * m_w + 12345) & 0x7fffffff;
             return m_w / 0x7fffffff;
         };
-
         while (booked.size < bookedCount) {
             const randomSeat = Math.floor(random() * capacity);
             booked.add(randomSeat);
@@ -76,24 +77,29 @@ export default function OccupancyScreen({ route, navigation }) {
 
     if (loading) {
         return (
-            <View className="flex-1 justify-center items-center bg-gray-50">
-                <ActivityIndicator size="large" color="#e50914" />
-            </View>
+            <BackgroundWrapper>
+                <View className="flex-1 justify-center items-center">
+                    <ActivityIndicator size="large" color="#c04444" />
+                </View>
+            </BackgroundWrapper>
         );
     }
 
     if (!showtime) {
         return (
-            <View className="flex-1 justify-center items-center bg-gray-50 p-6">
-                <Inbox color="#e50914" size={64} />
-                <Text className="text-xl font-bold text-gray-900 mt-4 text-center">Showtime not found</Text>
-                <TouchableOpacity
-                    className="mt-6 bg-[#e50914] px-8 py-3 rounded-full"
-                    onPress={() => navigation.goBack()}
-                >
-                    <Text className="text-white font-bold">Go Back</Text>
-                </TouchableOpacity>
-            </View>
+            <BackgroundWrapper>
+                <AdminHeader title="Theater Layout" showBack={true} />
+                <View className="flex-1 justify-center items-center p-6">
+                    <Inbox color="#c04444" size={64} />
+                    <Text className="text-xl font-black text-white mt-4 text-center italic">DATA UNAVAILABLE</Text>
+                    <TouchableOpacity
+                        className="mt-8 bg-[#c04444] px-10 py-4 rounded-2xl"
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Text className="text-white font-black uppercase tracking-widest">Return Home</Text>
+                    </TouchableOpacity>
+                </View>
+            </BackgroundWrapper>
         );
     }
 
@@ -105,46 +111,50 @@ export default function OccupancyScreen({ route, navigation }) {
         for (let r = 0; r < rows; r++) {
             const rowLabel = String.fromCharCode(65 + r);
             const rowSeats = [];
+            const isLastRow = r === rows - 1;
 
-            for (let c = 0; c < cols; c++) {
-                const seatIndex = r * cols + c;
-                if (seatIndex >= capacity) break;
-
-                const isBooked = bookedSeats.has(seatIndex);
-                const isVIP = r < vipRowsCount;
-
-                rowSeats.push(
-                    <View
-                        key={`${rowLabel}${c + 1}`}
-                        className="m-0.5"
-                        style={{ width: SEAT_SIZE, height: SEAT_SIZE }}
-                    >
-                        <View
-                            className="w-full h-full rounded-md items-center justify-between py-1 border"
-                            style={{
-                                backgroundColor: isBooked ? '#333' : isVIP ? '#fef3c7' : '#fff',
-                                borderColor: isBooked ? '#111' : isVIP ? '#fbbf24' : '#e5e7eb'
-                            }}
-                        >
-                            <Text
-                                style={{ fontSize: TEXT_SIZE }}
-                                className={`font-bold ${isBooked ? 'text-gray-400' : 'text-gray-600'}`}
-                            >
-                                {rowLabel}{c + 1}
-                            </Text>
-                            <Armchair
-                                size={ICON_SIZE}
-                                color={isBooked ? '#555' : isVIP ? '#d97706' : '#9ca3af'}
-                            />
+            if (isLastRow) {
+                for (let c = 0; c < cols / 2; c++) {
+                    const seatIndex1 = r * cols + c * 2;
+                    const seatIndex2 = seatIndex1 + 1;
+                    const isBooked = bookedSeats.has(seatIndex1) || bookedSeats.has(seatIndex2);
+                    rowSeats.push(
+                        <View key={`${rowLabel}${c}`} className="m-0.5" style={{ width: SEAT_SIZE * 2 + 4, height: SEAT_SIZE }}>
+                            <View className={`w-full h-full rounded-lg items-center justify-between py-1 border ${isBooked ? 'bg-[#c04444] border-[#c04444]/20' : 'bg-pink-900/10 border-pink-500/30'}`}>
+                                <Text style={{ fontSize: TEXT_SIZE - 1 }} className={`font-black ${isBooked ? 'text-white/40' : 'text-pink-400'}`}>
+                                    {rowLabel}{c * 2 + 1}-{c * 2 + 2}
+                                </Text>
+                                <View className="flex-row">
+                                    <Armchair size={ICON_SIZE} color={isBooked ? 'rgba(255,255,255,0.2)' : '#ec4899'} />
+                                    <Armchair size={ICON_SIZE} color={isBooked ? 'rgba(255,255,255,0.2)' : '#ec4899'} />
+                                </View>
+                            </View>
                         </View>
-                    </View>
-                );
+                    );
+                }
+            } else {
+                for (let c = 0; c < cols; c++) {
+                    const seatIndex = r * cols + c;
+                    if (seatIndex >= capacity) break;
+                    const isBooked = bookedSeats.has(seatIndex);
+                    const isVIP = r >= startVipRow && r <= endVipRow && c >= 2 && c <= cols - 3;
+                    rowSeats.push(
+                        <View key={`${rowLabel}${c}`} className="m-0.5" style={{ width: SEAT_SIZE, height: SEAT_SIZE }}>
+                            <View className={`w-full h-full rounded-lg items-center justify-between py-1 border ${isBooked ? 'bg-[#c04444] border-[#c04444]/20' : isVIP ? 'bg-amber-900/10 border-amber-500/30' : 'bg-white/5 border-white/10'}`}>
+                                <Text style={{ fontSize: TEXT_SIZE }} className={`font-black ${isBooked ? 'text-white/40' : isVIP ? 'text-amber-500' : 'text-gray-400'}`}>
+                                    {rowLabel}{c + 1}
+                                </Text>
+                                <Armchair size={ICON_SIZE} color={isBooked ? 'rgba(255,255,255,0.2)' : isVIP ? '#f59e0b' : '#6b7280'} />
+                            </View>
+                        </View>
+                    );
+                }
             }
             grid.push(
                 <View key={rowLabel} className="flex-row items-center justify-center">
-                    <Text className="w-5 text-gray-400 font-bold text-center text-xs">{rowLabel}</Text>
+                    <Text className="w-6 text-gray-500 font-black text-center text-[10px]">{rowLabel}</Text>
                     {rowSeats}
-                    <Text className="w-5 text-gray-400 font-bold text-center text-xs">{rowLabel}</Text>
+                    <Text className="w-6 text-gray-500 font-black text-center text-[10px]">{rowLabel}</Text>
                 </View>
             );
         }
@@ -152,68 +162,72 @@ export default function OccupancyScreen({ route, navigation }) {
     };
 
     return (
-        <View className="flex-1 bg-gray-50">
-            <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-                {/* Movie Info Header */}
-                <View className="bg-white p-5 border-b border-gray-100 shadow-sm">
-                    <Text className="text-xl font-black text-gray-900 mb-2">{showtime.movie?.title}</Text>
-                    <View className="flex-row items-center gap-4">
-                        <View className="bg-red-50 px-3 py-1 rounded-full border border-red-100">
-                            <Text className="text-[#e50914] font-bold text-xs uppercase">Room {showtime.room}</Text>
+        <BackgroundWrapper>
+            <AdminHeader title="Theater Layout" showBack={true} />
+            
+            <ScrollView contentContainerClassName="pb-32">
+                {/* Showtime Header Card */}
+                <View className="bg-black/40 mx-5 mt-6 p-6 rounded-[32px] border border-white/10 shadow-2xl">
+                    <View className="flex-row justify-between items-start mb-4">
+                        <View className="flex-1">
+                            <Text className="text-[#c04444] text-[10px] font-black uppercase tracking-[3px] mb-2" numberOfLines={1}>
+                                {showtime.movie?.title || 'Unknown Movie'}
+                            </Text>
+                            <Text className="text-3xl font-black text-white italic">ROOM {showtime.room}</Text>
                         </View>
-                        <Text className="text-gray-500 font-medium">{new Date(showtime.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                        <View className="flex-row items-center">
-                            <Text className="text-gray-900 font-bold">{showtime.bookedSeats || 0}</Text>
-                            <Text className="text-gray-400">/{capacity} Booked</Text>
+                        <View className="bg-[#c04444] px-4 py-2 rounded-2xl shadow-lg shadow-[#c04444]/40">
+                            <Text className="text-white font-black text-xs italic">
+                                {Math.round(((showtime.bookedSeats || 0) / capacity) * 100)}%
+                            </Text>
+                        </View>
+                    </View>
+                    <View className="flex-row items-center pt-4 border-t border-white/5">
+                        <View className="flex-1 flex-row items-center">
+                            <Info color="#6b7280" size={14} />
+                            <Text className="text-gray-400 text-[10px] font-black uppercase ml-2 tracking-widest">
+                                {showtime.bookedSeats || 0} / {capacity} SEATS BOOKED
+                            </Text>
                         </View>
                     </View>
                 </View>
 
-                {/* Legend */}
-                <View className="flex-row justify-center py-6 px-4 flex-wrap gap-4">
-                    <View className="flex-row items-center">
-                        <View className="w-4 h-4 rounded bg-amber-100 border border-amber-400 mr-2" />
-                        <Text className="text-xs text-gray-600 font-bold">VIP (+5K)</Text>
+                {/* Seating Grid Area */}
+                <View className="mt-10 px-4 items-center">
+                    {/* Screen Indicator */}
+                    <View className="w-full max-w-[300px] mb-12">
+                        <View className="w-full h-1 bg-[#c04444] rounded-full shadow-lg shadow-[#c04444]/50" />
+                        <Text className="text-center text-[#c04444] text-[10px] font-black uppercase tracking-[8px] mt-2">SCREEN</Text>
                     </View>
-                    <View className="flex-row items-center">
-                        <View className="w-4 h-4 rounded bg-white border border-gray-200 mr-2" />
-                        <Text className="text-xs text-gray-600 font-bold">Regular</Text>
-                    </View>
-                    <View className="flex-row items-center">
-                        <View className="w-4 h-4 rounded bg-[#333] border border-[#111] mr-2" />
-                        <Text className="text-xs text-gray-600 font-bold">Booked</Text>
+                    
+                    <View className="items-center">
+                        {renderGrid()}
                     </View>
                 </View>
 
-                {/* Seating Grid with screen indicator */}
-                <View className="items-center px-4">
-                    <View style={{ width: Math.min(width - 40, cols * SEAT_SIZE + 40), alignItems: 'center', marginBottom: 12 }}>
-                        <View style={{ width: '70%', height: 18, backgroundColor: '#d97706', borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>SCREEN</Text>
+                {/* Legend Area */}
+                <View className="mt-10 mx-5 bg-black/40 p-8 rounded-[40px] border border-white/10">
+                    <Text className="text-xs font-black text-gray-500 mb-6 uppercase tracking-widest text-center">Legend</Text>
+                    <View className="flex-row justify-around flex-wrap gap-y-6">
+                        <View className="items-center w-1/4">
+                            <View className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 mb-2" />
+                            <Text className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Open</Text>
                         </View>
-                    </View>
-                    {renderGrid()}
-                </View>
-
-                {/* Detailed Info */}
-                <View className="mt-10 mx-5 bg-white p-6 rounded-3xl border border-gray-100 shadow-xl">
-                    <View className="flex-row items-center mb-4">
-                        <Info color="#e50914" size={20} />
-                        <Text className="text-lg font-black text-gray-900 ml-2">Capacity Details</Text>
-                    </View>
-
-                    <View className="space-y-4">
-                        <View className="flex-row justify-between items-center py-2 border-b border-gray-50">
-                            <Text className="text-gray-600">Total Capacity</Text>
-                            <Text className="font-bold text-gray-900">{capacity} Seats</Text>
+                        <View className="items-center w-1/4">
+                            <View className="w-8 h-8 rounded-xl bg-[#c04444] mb-2" />
+                            <Text className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Sold</Text>
                         </View>
-                        <View className="flex-row justify-between items-center py-2 bg-red-50 p-3 rounded-xl mt-2">
-                            <Text className="text-[#e50914] font-bold">Occupancy Rate</Text>
-                            <Text className="text-[#e50914] text-xl font-black">{capacity > 0 ? Math.round(((showtime.bookedSeats || 0) / capacity) * 100) : 0}%</Text>
+                        <View className="items-center w-1/4">
+                            <View className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 mb-2" />
+                            <Text className="text-[8px] text-gray-500 font-black uppercase tracking-widest">VIP</Text>
+                        </View>
+                        <View className="items-center w-1/4">
+                            <View className="w-8 h-8 rounded-xl bg-pink-500/10 border border-pink-500/30 mb-2" />
+                            <Text className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Couple</Text>
                         </View>
                     </View>
                 </View>
             </ScrollView>
-        </View>
+            <Navbar />
+        </BackgroundWrapper>
     );
 }

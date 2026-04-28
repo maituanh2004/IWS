@@ -9,9 +9,10 @@ import MovieListScreen from '../screens/MovieListScreen';
 import MovieDetailScreen from '../screens/MovieDetailScreen';
 import ShowtimeListScreen from '../screens/ShowtimeListScreen';
 import SeatSelectionScreen from '../screens/SeatSelectionScreen';
-import BookingConfirmScreen from '../screens/BookingConfirm';
+import BookingConfirmScreen from '../screens/BookingConfirmScreen';
 import BookingHistoryScreen from '../screens/BookingHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import SystemErrorScreen from '../screens/SystemErrorScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,59 +26,20 @@ export default function AppNavigator() {
     return (
         <NavigationContainer>
             {user ? (
-                <Stack.Navigator>
-                    <Stack.Screen
-                        name="MovieList"
-                        component={MovieListScreen}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                        name="MovieDetail"
-                        component={MovieDetailScreen}
-                        options={{ title: 'Movie Details' }}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                        name="ShowtimeList"
-                        component={ShowtimeListScreen}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                        name="SeatSelection"
-                        component={SeatSelectionScreen}
-                        options={{ title: 'Select Seats' }}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                        name="BookingConfirm"
-                        component={BookingConfirmScreen}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                        name="BookingHistory"
-                        component={BookingHistoryScreen}
-                        options={{ title: 'My Bookings' }}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                        name="Profile"
-                        component={ProfileScreen}
-                        options={{ headerShown: false }}
-                    />
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="MovieList" component={MovieListScreen} />
+                    <Stack.Screen name="MovieDetail" component={MovieDetailScreen} />
+                    <Stack.Screen name="ShowtimeList" component={ShowtimeListScreen} />
+                    <Stack.Screen name="SeatSelection" component={SeatSelectionScreen} />
+                    <Stack.Screen name="BookingConfirm" component={BookingConfirmScreen} />
+                    <Stack.Screen name="BookingHistory" component={BookingHistoryScreen} />
+                    <Stack.Screen name="Profile" component={ProfileScreen} />
+                    <Stack.Screen name="SystemError" component={SystemErrorScreen} />
                 </Stack.Navigator>
             ) : (
-                <Stack.Navigator>
-                    <Stack.Screen
-                        name="Login"
-                        component={LoginScreen}
-                        options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                        name="Register"
-                        component={RegisterScreen}
-                        options={{ title: 'Create Account' }}
-                        options={{ headerShown: false }}
-                    />
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="Login" component={LoginScreen} />
+                    <Stack.Screen name="Register" component={RegisterScreen} />
                 </Stack.Navigator>
             )}
         </NavigationContainer>

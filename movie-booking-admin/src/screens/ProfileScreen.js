@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
 import AdminHeader from '../components/AdminHeader';
 import Navbar from '../components/Navbar';
+import BackgroundWrapper from '../components/BackgroundWrapper';
 
 export default function ProfileScreen() {
     const { user, signOut, refreshUser } = useAuth();
@@ -76,71 +77,71 @@ export default function ProfileScreen() {
     };
 
     return (
-        <View className="flex-1 bg-gray-50">
-            <AdminHeader title="Admin Profile" showBack={true} />
-            <Navbar />
-
+        <BackgroundWrapper>
+            <AdminHeader title="Profile" showBack={true} />
+            
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 className="flex-1"
             >
-                <ScrollView className="flex-1 px-5 pt-6" contentContainerStyle={{ paddingBottom: 100 }}>
+                <ScrollView className="flex-1 px-5 pt-8" contentContainerStyle={{ paddingBottom: 180 }}>
                     
                     {/* Header Card */}
-                    <View className="bg-[#e50914] rounded-3xl p-6 mb-8 shadow-xl flex-row items-center border border-white/20">
-                        <View className="w-16 h-16 bg-white/20 rounded-2xl items-center justify-center border border-white/30">
-                            <User color="#fff" size={32} />
+                    <View className="bg-black/40 rounded-[40px] p-8 mb-10 shadow-2xl flex-row items-center border border-white/10">
+                        <View className="w-20 h-20 bg-[#c04444]/10 rounded-3xl items-center justify-center border border-[#c04444]/20 shadow-lg">
+                            <User color="#c04444" size={40} />
                         </View>
-                        <View className="ml-5 flex-1">
-                            <Text className="text-white text-2xl font-black tracking-tight">{user?.name}</Text>
-                            <View className="flex-row items-center mt-1">
-                                <View className="bg-white/20 px-2 py-0.5 rounded-md border border-white/30">
-                                    <Text className="text-white text-[10px] font-bold uppercase tracking-wider">{user?.role}</Text>
+                        <View className="ml-6 flex-1">
+                            <Text className="text-white text-3xl font-black tracking-tighter italic">{user?.name}</Text>
+                            <View className="flex-row items-center mt-2">
+                                <View className="bg-[#c04444] px-3 py-1 rounded-xl shadow-lg shadow-[#c04444]/30">
+                                    <Text className="text-white text-[8px] font-black uppercase tracking-widest italic">{user?.role}</Text>
                                 </View>
-                                <Text className="text-white/70 text-xs ml-3 font-medium">{user?.email}</Text>
+                                <Text className="text-gray-400 text-[10px] ml-4 font-black uppercase tracking-widest">{user?.email}</Text>
                             </View>
                         </View>
                     </View>
 
                     {/* Section: Personal Information */}
-                    <View className="mb-8">
-                        <View className="flex-row items-center mb-4 ml-1">
-                            <User color="#e50914" size={20} strokeWidth={2.5} />
-                            <Text className="text-lg font-black text-gray-900 ml-2.5 uppercase tracking-tight">Personal Information</Text>
+                    <View className="mb-10">
+                        <View className="flex-row items-center mb-6 ml-2">
+                            <User color="#c04444" size={20} />
+                            <Text className="text-xs font-black text-gray-500 ml-3 uppercase tracking-[4px] italic">Identity</Text>
                         </View>
                         
-                        <View className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <View className="mb-4">
-                                <Text className="text-xs font-bold text-gray-400 mb-2 uppercase ml-1">Full Name</Text>
+                        <View className="bg-black/40 p-8 rounded-[40px] shadow-2xl border border-white/10">
+                            <View className="mb-6">
+                                <Text className="text-[10px] font-black text-gray-600 mb-3 uppercase tracking-widest ml-1">Full Name</Text>
                                 <TextInput
-                                    className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100 font-medium"
+                                    className="bg-white/5 p-5 rounded-2xl text-base text-white border border-white/10 font-black italic focus:border-[#c04444]"
                                     value={name}
                                     onChangeText={setName}
                                     placeholder="Enter your name"
+                                    placeholderTextColor="#4b5563"
                                 />
                             </View>
-                            <View className="mb-6">
-                                <Text className="text-xs font-bold text-gray-400 mb-2 uppercase ml-1">Email Address</Text>
+                            <View className="mb-8">
+                                <Text className="text-[10px] font-black text-gray-600 mb-3 uppercase tracking-widest ml-1">Email Address</Text>
                                 <TextInput
-                                    className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100 font-medium"
+                                    className="bg-white/5 p-5 rounded-2xl text-base text-white border border-white/10 font-black italic focus:border-[#c04444]"
                                     value={email}
                                     onChangeText={setEmail}
                                     placeholder="Enter your email"
                                     keyboardType="email-address"
                                     autoCapitalize="none"
+                                    placeholderTextColor="#4b5563"
                                 />
                             </View>
                             
                             <TouchableOpacity
-                                className="bg-[#e50914] p-4.5 rounded-2xl items-center shadow-lg active:opacity-90 flex-row justify-center"
+                                className="bg-[#c04444] p-6 rounded-[24px] items-center shadow-2xl shadow-[#c04444]/30 flex-row justify-center"
                                 onPress={handleUpdateProfile}
                                 disabled={profileLoading}
-                                style={{ shadowColor: '#e50914', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15 }}
                             >
                                 {profileLoading ? <ActivityIndicator color="#fff" /> : (
                                     <>
                                         <CheckCircle2 color="#fff" size={20} />
-                                        <Text className="text-white text-lg font-black ml-2 uppercase tracking-tighter">Save Changes</Text>
+                                        <Text className="text-white text-lg font-black ml-3 uppercase tracking-[2px]">Update Identity</Text>
                                     </>
                                 )}
                             </TouchableOpacity>
@@ -148,53 +149,56 @@ export default function ProfileScreen() {
                     </View>
 
                     {/* Section: Security */}
-                    <View className="mb-8">
-                        <View className="flex-row items-center mb-4 ml-1">
-                            <Lock color="#e50914" size={20} strokeWidth={2.5} />
-                            <Text className="text-lg font-black text-gray-900 ml-2.5 uppercase tracking-tight">Security & Password</Text>
+                    <View className="mb-10">
+                        <View className="flex-row items-center mb-6 ml-2">
+                            <Lock color="#c04444" size={20} />
+                            <Text className="text-xs font-black text-gray-500 ml-3 uppercase tracking-[4px] italic">Security</Text>
                         </View>
                         
-                        <View className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <View className="bg-black/40 p-8 rounded-[40px] shadow-2xl border border-white/10">
                             <View className="mb-4">
-                                <Text className="text-xs font-bold text-gray-400 mb-2 uppercase ml-1">Current Password</Text>
+                                <Text className="text-[10px] font-black text-gray-600 mb-3 uppercase tracking-widest ml-1">Current Password</Text>
                                 <TextInput
-                                    className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100 font-medium"
+                                    className="bg-white/5 p-5 rounded-2xl text-base text-white border border-white/10 font-black italic focus:border-[#c04444]"
                                     value={currentPassword}
                                     onChangeText={setCurrentPassword}
                                     placeholder="••••••••"
                                     secureTextEntry
+                                    placeholderTextColor="#4b5563"
                                 />
                             </View>
                             <View className="mb-4">
-                                <Text className="text-xs font-bold text-gray-400 mb-2 uppercase ml-1">New Password</Text>
+                                <Text className="text-[10px] font-black text-gray-600 mb-3 uppercase tracking-widest ml-1">New Password</Text>
                                 <TextInput
-                                    className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100 font-medium"
+                                    className="bg-white/5 p-5 rounded-2xl text-base text-white border border-white/10 font-black italic focus:border-[#c04444]"
                                     value={newPassword}
                                     onChangeText={setNewPassword}
                                     placeholder="Min 6 characters"
                                     secureTextEntry
+                                    placeholderTextColor="#4b5563"
                                 />
                             </View>
-                            <View className="mb-6">
-                                <Text className="text-xs font-bold text-gray-400 mb-2 uppercase ml-1">Confirm New Password</Text>
+                            <View className="mb-8">
+                                <Text className="text-[10px] font-black text-gray-600 mb-3 uppercase tracking-widest ml-1">Confirm New Password</Text>
                                 <TextInput
-                                    className="bg-gray-50 p-4 rounded-xl text-base text-gray-900 border border-gray-100 font-medium"
+                                    className="bg-white/5 p-5 rounded-2xl text-base text-white border border-white/10 font-black italic focus:border-[#c04444]"
                                     value={confirmPassword}
                                     onChangeText={setConfirmPassword}
                                     placeholder="Re-type new password"
                                     secureTextEntry
+                                    placeholderTextColor="#4b5563"
                                 />
                             </View>
                             
                             <TouchableOpacity
-                                className="bg-[#333] p-4.5 rounded-2xl items-center shadow-md active:opacity-90 flex-row justify-center"
+                                className="bg-white/5 border border-white/10 p-6 rounded-[24px] items-center flex-row justify-center active:bg-white/10"
                                 onPress={handleChangePassword}
                                 disabled={passwordLoading}
                             >
                                 {passwordLoading ? <ActivityIndicator color="#fff" /> : (
                                     <>
-                                        <Lock color="#fff" size={20} />
-                                        <Text className="text-white text-lg font-black ml-2 uppercase tracking-tighter">Update Password</Text>
+                                        <Lock color="#c04444" size={20} />
+                                        <Text className="text-white text-lg font-black ml-3 uppercase tracking-[2px]">Update Vault</Text>
                                     </>
                                 )}
                             </TouchableOpacity>
@@ -203,23 +207,24 @@ export default function ProfileScreen() {
 
                     {/* Section: Account Actions */}
                     <TouchableOpacity
-                        className="bg-white border-2 border-red-100 p-5 rounded-3xl flex-row items-center justify-between shadow-sm active:bg-red-50"
+                        className="bg-[#c04444]/10 border border-[#c04444]/20 p-8 rounded-[40px] flex-row items-center justify-between shadow-2xl active:bg-[#c04444]/20"
                         onPress={signOut}
                     >
                         <View className="flex-row items-center">
-                            <View className="bg-red-100 p-3 rounded-2xl mr-4 uppercase">
-                                <LogOut color="#e50914" size={24} />
+                            <View className="bg-[#c04444] p-4 rounded-2xl mr-6 shadow-lg shadow-[#c04444]/40">
+                                <LogOut color="#fff" size={24} />
                             </View>
                             <View>
-                                <Text className="text-lg font-black text-gray-900">Sign Out</Text>
-                                <Text className="text-gray-400 text-xs font-medium">End your current session</Text>
+                                <Text className="text-xl font-black text-white italic tracking-tighter">Sign Out</Text>
+                                <Text className="text-gray-600 text-[10px] font-black uppercase tracking-widest mt-1">End Session</Text>
                             </View>
                         </View>
-                        <ChevronRight color="#d1d5db" size={24} />
+                        <ChevronRight color="#4b5563" size={24} />
                     </TouchableOpacity>
 
                 </ScrollView>
             </KeyboardAvoidingView>
-        </View>
+            <Navbar />
+        </BackgroundWrapper>
     );
 }

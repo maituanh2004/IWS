@@ -103,7 +103,11 @@ api.interceptors.response.use(
             }
         } else if (error.request) {
             // The request was made but no response was received (Network Error)
-            NavigationService.navigate('SystemError', { errorType: 'generic' });
+            // Skip navigating to SystemError for auth requests to let the screen handle it
+            const isAuthRequest = error.config?.url?.includes('auth/login') || error.config?.url?.includes('auth/me');
+            if (!isAuthRequest) {
+                NavigationService.navigate('SystemError', { errorType: 'generic' });
+            }
         }
 
         return Promise.reject(error);

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Search, ServerCrash, AlertTriangle, Home, RefreshCcw } from 'lucide-react-native';
+import BackgroundWrapper from '../components/BackgroundWrapper';
 
 const SystemErrorScreen = ({ route, navigation }) => {
     const { errorType = 'generic' } = route.params || {};
@@ -11,21 +12,21 @@ const SystemErrorScreen = ({ route, navigation }) => {
             subtitle: 'Scene Not Found',
             message: "The reel you're looking for seems to have been misplaced by our projectionist.",
             icon: Search,
-            color: '#e50914',
+            color: '#c04444',
         },
         '500': {
             title: '500',
             subtitle: 'Projector Malfunction',
             message: "Our servers hit a technical snag. We're working on fixing the light bulbs.",
             icon: ServerCrash,
-            color: '#e50914',
+            color: '#c04444',
         },
         'generic': {
             title: 'Error',
             subtitle: 'Unexpected Plot Twist',
             message: "Something went wrong in the middle of the show. Please try again later.",
             icon: AlertTriangle,
-            color: '#e50914',
+            color: '#c04444',
         }
     };
 
@@ -33,45 +34,44 @@ const SystemErrorScreen = ({ route, navigation }) => {
     const IconComponent = config.icon;
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50">
+        <BackgroundWrapper>
             <View className="flex-1 justify-center items-center px-8">
                 {/* Background Large Text Decor */}
-                <Text style={{ position: 'absolute', fontSize: 150, fontWeight: '900', color: '#f3f4f6', top: '25%', opacity: 0.6 }}>
+                <Text style={{ position: 'absolute', fontSize: 180, fontWeight: '900', color: '#fff', top: '20%', opacity: 0.03 }}>
                     {config.title}
                 </Text>
 
                 <View className="items-center z-10 w-full">
-                    <View className="bg-white p-7 rounded-[40px] shadow-2xl border border-gray-100 mb-8" style={{ shadowColor: '#e50914', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.1, shadowRadius: 30, elevation: 15 }}>
-                        <IconComponent color={config.color} size={72} strokeWidth={1.5} />
+                    <View className="bg-black/40 p-10 rounded-[50px] shadow-2xl border border-white/10 mb-10">
+                        <IconComponent color={config.color} size={84} strokeWidth={1.5} />
                     </View>
 
-                    <Text className="text-4xl font-black text-gray-900 mb-3 text-center tracking-tighter">
+                    <Text className="text-4xl font-black text-white mb-4 text-center tracking-tighter italic">
                         {config.subtitle}
                     </Text>
 
-                    <Text className="text-base text-gray-500 text-center mb-16 leading-6 font-medium px-4">
+                    <Text className="text-base text-gray-400 text-center mb-16 leading-6 font-black uppercase tracking-widest px-4 opacity-60">
                         {config.message}
                     </Text>
 
                     <TouchableOpacity
-                        className="bg-[#e50914] w-full py-4.5 rounded-2xl flex-row justify-center items-center shadow-lg mb-4"
-                        style={{ shadowColor: '#e50914', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 15, elevation: 8 }}
-                        onPress={() => navigation.navigate('App', { screen: 'MovieManagement' })}
+                        className="bg-[#c04444] w-full py-6 rounded-[24px] flex-row justify-center items-center shadow-2xl shadow-[#c04444]/40 mb-5"
+                        onPress={() => navigation.navigate('MovieManagement')}
                     >
                         <Home color="#fff" size={22} />
-                        <Text className="text-white font-black text-xl ml-3">Take Me Home</Text>
+                        <Text className="text-white font-black text-xl ml-3 uppercase tracking-widest">Return Base</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        className="bg-white border-2 border-gray-200 w-full py-4.5 rounded-2xl flex-row justify-center items-center"
+                        className="bg-white/5 border border-white/10 w-full py-6 rounded-[24px] flex-row justify-center items-center active:bg-white/10"
                         onPress={() => navigation.goBack()}
                     >
-                        <RefreshCcw color="#6b7280" size={22} />
-                        <Text className="text-gray-600 font-bold text-xl ml-3">Retry Action</Text>
+                        <RefreshCcw color="#fff" size={22} />
+                        <Text className="text-white font-black text-xl ml-3 uppercase tracking-widest">Retry Scene</Text>
                     </TouchableOpacity>
                 </View>
             </View>
-        </SafeAreaView>
+        </BackgroundWrapper>
     );
 };
 
