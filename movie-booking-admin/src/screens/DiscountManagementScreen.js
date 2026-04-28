@@ -4,7 +4,10 @@ import { Tag, Edit, Trash2, Calendar, Plus, X } from 'lucide-react-native';
 import AdminHeader from '../components/AdminHeader';
 import EmptyState from '../components/EmptyState';
 import Navbar from '../components/Navbar';
+import BackgroundWrapper from '../components/BackgroundWrapper';
 import * as discountService from '../services/discountService';
+import { BlurView } from 'expo-blur';
+import AnimatedCard from '../components/AnimatedCard';
 
 export default function DiscountManagementScreen({ navigation }) {
     const [discounts, setDiscounts] = useState([]);
@@ -30,7 +33,7 @@ export default function DiscountManagementScreen({ navigation }) {
             setDiscounts(response.data.data);
         } catch (error) {
             console.error('Failed to load discounts:', error);
-            Alert.alert('Error', 'Failed to load discounts');
+            navigation.navigate('SystemError');
         } finally {
             setLoading(false);
         }
@@ -111,139 +114,136 @@ export default function DiscountManagementScreen({ navigation }) {
     };
 
 
-    const renderDiscount = ({ item }) => {
+    const renderDiscount = ({ item, index }) => {
         const isExpired = new Date(item.expiryDate) < new Date();
 
         return (
-            <View className={`bg-white rounded-2xl p-5 mb-5 shadow-md border ${isExpired ? 'border-red-500/50' : 'border-[#e50914]'}`}>
-                <View className="flex-row justify-between items-start mb-3">
-                    <View className="flex-1 pr-3">
-                        <View className="flex-row items-center mb-2">
-                            <Tag color={isExpired ? "#ef4444" : "#4caf50"} size={24} />
-                            <Text className={`text-2xl font-extrabold ml-3 tracking-tight ${isExpired ? 'text-red-400' : 'text-gray-900'}`}>
-                                {item.code}
+            <AnimatedCard index={index}>
+                <View className={`bg-black/40 rounded-[32px] p-6 mb-6 shadow-2xl border ${isExpired ? 'border-red-500/20' : 'border-white/10'}`}>
+                    <View className="flex-row justify-between items-start mb-4">
+                        <View className="flex-1 pr-3">
+                            <View className="flex-row items-center mb-3">
+                                <Tag color={isExpired ? "#ef4444" : "#c04444"} size={22} />
+                                <Text className={`text-2xl font-black ml-3 tracking-tighter italic ${isExpired ? 'text-red-400' : 'text-white'}`}>
+                                    {item.code}
+                                </Text>
+                            </View>
+
+                            <View className="flex-row items-center mb-2">
+                                <Calendar color="#6b7280" size={14} />
+                                <Text className="text-[10px] text-gray-400 ml-2 font-black uppercase tracking-widest">
+                                    Valid until: {new Date(item.expiryDate).toLocaleDateString()}
+                                </Text>
+                            </View>
+                            <Text className="text-[10px] text-[#c04444] font-black uppercase ml-6 tracking-[2px]">
+                                Min Invest: {Math.round(item.minPrice).toLocaleString()} VND
                             </Text>
                         </View>
-
-                        <View className="flex-row items-center mb-1">
-                            <Calendar color="#6b7280" size={18} />
-                            <Text className="text-base text-gray-600 ml-2.5 font-medium">
-                                Expires: {new Date(item.expiryDate).toLocaleDateString()}
+                        <View className={`px-4 py-3 rounded-2xl border flex-row items-center ${isExpired ? 'bg-red-500/10 border-red-500/20' : 'bg-[#c04444]/10 border-[#c04444]/20'}`}>
+                            <Text className={`font-black text-xl italic ${isExpired ? 'text-red-400' : 'text-[#c04444]'}`}>
+                                -{item.percentage}%
                             </Text>
                         </View>
-                        <Text className="text-xs text-gray-400 font-bold uppercase ml-7">
-                            Min Price: {Math.round(item.minPrice).toLocaleString()} VND
-                        </Text>
                     </View>
-                    <View className={`px-4 py-2 rounded-lg border flex-row items-center ${isExpired ? 'bg-red-500/10 border-red-500/20' : 'bg-[#e50914]/10 border-[#e50914]/20'}`}>
-                        <Text className={`font-bold text-xl ${isExpired ? 'text-red-400' : 'text-[#e50914]'}`}>
-                            {item.percentage}% OFF
-                        </Text>
-                    </View>
-                </View>
 
-                <View className="flex-row gap-3 mt-2">
-                    <TouchableOpacity
-                        className="flex-1 bg-[#333] py-2.5 rounded-xl flex-row justify-center items-center"
-                        onPress={() => openModal(item)}
-                    >
-                        <Edit color="#fff" size={18} />
-                        <Text className="text-white font-bold ml-2">Edit</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        className="flex-1 bg-[#e50914] py-2.5 rounded-xl flex-row justify-center items-center"
-                        onPress={() => handleDelete(item._id, item.code)}
-                    >
-                        <Trash2 color="#fff" size={18} />
-                        <Text className="text-white font-bold ml-2">Delete</Text>
-                    </TouchableOpacity>
+                    <View className="flex-row gap-3 mt-4">
+                        <TouchableOpacity
+                            className="flex-1 bg-white/5 border border-white/10 py-3 rounded-2xl flex-row justify-center items-center"
+                            onPress={() => openModal(item)}
+                        >
+                            <Edit color="#fff" size={16} />
+                            <Text className="text-white font-black ml-2 uppercase tracking-widest text-[10px]">Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            className="flex-1 bg-[#c04444] py-3 rounded-2xl flex-row justify-center items-center shadow-lg shadow-[#c04444]/20"
+                            onPress={() => handleDelete(item._id, item.code)}
+                        >
+                            <Trash2 color="#fff" size={16} />
+                            <Text className="text-white font-black ml-2 uppercase tracking-widest text-[10px]">Delete</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
+            </AnimatedCard>
         );
     };
 
     return (
-        <View className="flex-1 bg-gray-50">
-            <AdminHeader title="Discount Management" showBack={true} />
-            <Navbar />
+        <BackgroundWrapper>
+            <AdminHeader 
+                title="Vouchers" 
+                showBack={true} 
+                rightButtons={[
+                    { title: "NEW", onPress: () => openModal() }
+                ]}
+            />
             
             {loading ? (
                 <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#e50914" />
+                    <ActivityIndicator size="large" color="#c04444" />
                 </View>
             ) : (
                 <FlatList
                     data={discounts}
-                    renderItem={renderDiscount}
+                    renderItem={({ item, index }) => renderDiscount({ item, index })}
                     keyExtractor={(item) => item._id}
-                    contentContainerClassName="px-3 py-4 flex-grow"
-                    ListEmptyComponent={<EmptyState message="No discounts found" />}
+                    contentContainerClassName="px-4 py-8 pb-32 flex-grow"
+                    ListEmptyComponent={<EmptyState message="No vouchers found" />}
                 />
             )}
 
-            <View className="absolute bottom-6 w-full items-center z-40">
-                <TouchableOpacity
-                    className="flex-row items-center bg-[#e50914] px-6 py-3.5 rounded-full"
-                    style={{ shadowColor: '#e50914', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 10 }}
-                    onPress={() => openModal()}
-                >
-                    <Plus color="#fff" size={28} strokeWidth={3} />
-                    <Text className="text-white font-extrabold ml-3 text-xl uppercase tracking-widest">Add Discount</Text>
-                </TouchableOpacity>
-            </View>
+            <Navbar />
 
-            {/* Add/Edit Modal */}
             <Modal visible={modalVisible} animationType="slide" transparent={true}>
-                <View className="flex-1 justify-end bg-black/50">
-                    <View className="bg-white rounded-t-3xl p-6 h-[80%]">
-                        <View className="flex-row justify-between items-center mb-6">
-                            <Text className="text-2xl font-black text-gray-900">{editingDiscount ? 'Edit Discount' : 'New Discount'}</Text>
-                            <TouchableOpacity onPress={() => setModalVisible(false)} className="p-2 bg-gray-100 rounded-full">
-                                <X color="#333" size={20} />
+                <View className="flex-1 justify-end bg-black/60">
+                    <View className="rounded-t-[40px] p-8 h-[80%] border-t border-white/10 bg-[#121212]">
+                        <View className="flex-row justify-between items-center mb-8">
+                            <Text className="text-3xl font-black text-white italic tracking-tighter uppercase">Voucher Info</Text>
+                            <TouchableOpacity onPress={() => setModalVisible(false)} className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                                <X color="#fff" size={20} />
                             </TouchableOpacity>
                         </View>
 
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            <Text className="text-base font-bold text-gray-900 mb-2">Voucher Code*</Text>
+                            <Text className="text-xs font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Voucher Code*</Text>
                             <TextInput 
-                                className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-gray-900 font-bold mb-4"
-                                value={code} onChangeText={setCode} placeholder="e.g. SUMMER50" autoCapitalize="characters"
+                                className="bg-white/5 p-5 rounded-2xl border border-white/10 text-white font-black italic mb-6 focus:border-[#c04444]"
+                                value={code} onChangeText={setCode} placeholder="e.g. SUMMER50" autoCapitalize="characters" placeholderTextColor="#4b5563"
                             />
 
-                            <View className="flex-row gap-4 mb-4">
+                            <View className="flex-row gap-4 mb-6">
                                 <View className="flex-1">
-                                    <Text className="text-base font-bold text-gray-900 mb-2">Discount %*</Text>
+                                    <Text className="text-xs font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Discount %*</Text>
                                     <TextInput 
-                                        className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-gray-900 font-bold"
-                                        value={percentage} onChangeText={setPercentage} keyboardType="numeric" placeholder="15"
+                                        className="bg-white/5 p-5 rounded-2xl border border-white/10 text-white font-black italic focus:border-[#c04444]"
+                                        value={percentage} onChangeText={setPercentage} keyboardType="numeric" placeholder="15" placeholderTextColor="#4b5563"
                                     />
                                 </View>
                                 <View className="flex-1">
-                                    <Text className="text-base font-bold text-gray-900 mb-2">Min Price (VND)</Text>
+                                    <Text className="text-xs font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Min Price (VND)</Text>
                                     <TextInput 
-                                        className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-gray-900 font-bold"
-                                        value={minPrice} onChangeText={setMinPrice} keyboardType="numeric" placeholder="100000"
+                                        className="bg-white/5 p-5 rounded-2xl border border-white/10 text-white font-black italic focus:border-[#c04444]"
+                                        value={minPrice} onChangeText={setMinPrice} keyboardType="numeric" placeholder="100000" placeholderTextColor="#4b5563"
                                     />
                                 </View>
                             </View>
 
-                            <Text className="text-base font-bold text-gray-900 mb-2">Expiry Date* (YYYY-MM-DD)</Text>
+                            <Text className="text-xs font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Expiry Date* (YYYY-MM-DD)</Text>
                             <TextInput 
-                                className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-gray-900 font-bold mb-6"
-                                value={expiryDate} onChangeText={setExpiryDate} placeholder="2024-12-31"
+                                className="bg-white/5 p-5 rounded-2xl border border-white/10 text-white font-black italic mb-10 focus:border-[#c04444]"
+                                value={expiryDate} onChangeText={setExpiryDate} placeholder="2024-12-31" placeholderTextColor="#4b5563"
                             />
 
                             <TouchableOpacity 
-                                className="bg-[#e50914] p-5 rounded-2xl items-center shadow-lg" 
+                                className="bg-[#c04444] p-6 rounded-[24px] items-center shadow-2xl shadow-[#c04444]/40" 
                                 onPress={handleSave} 
                                 disabled={submitting}
                             >
-                                {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase tracking-tighter">{editingDiscount ? 'Update' : 'Create'}</Text>}
+                                {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase italic tracking-widest">{editingDiscount ? 'Update Voucher' : 'Create Voucher'}</Text>}
                             </TouchableOpacity>
                         </ScrollView>
                     </View>
                 </View>
             </Modal>
-        </View>
+        </BackgroundWrapper>
     );
 }

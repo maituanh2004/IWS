@@ -63,6 +63,9 @@ export const getShowtimes = () => api.get('/showtimes');
 export const getShowtimesByMovie = (movieId) =>
     api.get(`/showtimes/movie/${movieId}`);
 
+export const getShowtime = (id) =>
+    api.get(`/showtimes/${id}`);
+
 export const getAvailableSeats = (showtimeId) =>
     api.get(`/showtimes/${showtimeId}/seats`);
 
@@ -72,5 +75,8 @@ export const createBooking = (showtimeId, seats) =>
 
 export const getUserBookings = (userId) =>
     api.get(`/bookings/user/${userId}`);
+
+// Discount APIs
+export const getDiscounts = () => api.get('/discounts');
 
 export default api;
