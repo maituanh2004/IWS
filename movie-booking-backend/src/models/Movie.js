@@ -37,8 +37,13 @@ const movieSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Please add base price']
     },
-    availableVouchers: {
-        type: [String],
+    // availableVouchers: {
+    //     type: [String],
+    //     default: []
+    // },
+    availableDiscounts: {
+        type: [mongoose.Schema.ObjectId],
+        ref: 'Discount',
         default: []
     },
     // Timestamp when the movie was created, defaults to current date

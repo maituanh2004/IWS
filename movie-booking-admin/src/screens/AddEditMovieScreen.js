@@ -28,7 +28,7 @@ export default function AddEditMovieScreen({ route, navigation }) {
         movie?.releaseDate ? new Date(movie.releaseDate).toISOString().split('T')[0] : ''
     );
     const [price, setPrice] = useState(movie?.price?.toString() || '');
-    const [selectedVouchers, setSelectedVouchers] = useState(movie?.availableVouchers || []);
+    const [selectedDiscounts, setSelectedDiscounts] = useState(movie?.availableDiscounts || []);
     const [discounts, setDiscounts] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -67,7 +67,7 @@ export default function AddEditMovieScreen({ route, navigation }) {
             genre,
             releaseDate: new Date(releaseDate),
             price: parseInt(price),
-            availableVouchers: selectedVouchers
+            availableDiscounts: selectedDiscounts
         };
 
         setLoading(true);
@@ -87,7 +87,7 @@ export default function AddEditMovieScreen({ route, navigation }) {
         }
     };
 
-    const isVoucherEligible = (discount) => {
+    const isDiscountEligible = (discount) => {
         if (!discount || discount.code === 'none') return true;
         const currentPrice = parseInt(price) || 0;
         return currentPrice >= (discount.minPrice || 0);
@@ -141,13 +141,13 @@ export default function AddEditMovieScreen({ route, navigation }) {
                     <Text className="text-[10px] font-black text-gray-500 mb-4 uppercase tracking-widest ml-1">Eligible Vouchers</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row mb-8">
                         <TouchableOpacity
-                            onPress={() => setAvailableVouchers([])}
-                            className={`py-4 px-8 mr-3 rounded-2xl items-center border ${availableVouchers.length === 0
+                            onPress={() => setSelectedDiscounts([])}
+                            className={`py-4 px-8 mr-3 rounded-2xl items-center border ${selectedDiscounts.length === 0
                                 ? 'bg-[#c04444] border-[#c04444] shadow-lg shadow-[#c04444]/30'
                                 : 'bg-white/5 border-white/10'
                                 }`}
                         >
-                            <Text className={`font-black text-[10px] uppercase tracking-widest ${availableVouchers.length === 0 ? 'text-white' : 'text-gray-500'}`}>
+                            <Text className={`font-black text-[10px] uppercase tracking-widest ${selectedDiscounts.length === 0 ? 'text-white' : 'text-gray-500'}`}>
                                 None
                             </Text>
                         </TouchableOpacity>
@@ -155,34 +155,34 @@ export default function AddEditMovieScreen({ route, navigation }) {
                         <TouchableOpacity
                             onPress={() => {
                                 const allCodes = discounts.map(d => d.code);
-                                setSelectedVouchers(allCodes);
+                                setSelectedDiscounts(allCodes);
                             }}
-                            className={`py-3 px-6 mr-2 rounded-xl items-center border ${selectedVouchers.length > 0 && selectedVouchers.length === discounts.length
+                            className={`py-3 px-6 mr-2 rounded-xl items-center border ${selectedDiscounts.length > 0 && selectedDiscounts.length === discounts.length
                                 ? 'bg-[#e50914] border-[#e50914]'
                                 : 'bg-white border-gray-200'
                                 }`}
                         >
-                            <Text className={`font-bold text-xs ${selectedVouchers.length > 0 && selectedVouchers.length === discounts.length ? 'text-white' : 'text-gray-700'}`}>
+                            <Text className={`font-bold text-xs ${selectedDiscounts.length > 0 && selectedDiscounts.length === discounts.length ? 'text-white' : 'text-gray-700'}`}>
                                 Select All
                             </Text>
                         </TouchableOpacity>
 
                         {discounts.map((discount) => {
-                            const eligible = isVoucherEligible(discount);
-                            const isSelected = availableVouchers.includes(discount.code);
+                            const eligible = isDiscountEligible(discount);
+                            const isSelected = selectedDiscounts.includes(discount.code);
 
-                            const toggleVoucher = () => {
+                            const toggleDiscount = () => {
                                 if (isSelected) {
-                                    setSelectedVouchers(prev => prev.filter(code => code !== discount.code));
+                                    setSelectedDiscounts(prev => prev.filter(code => code !== discount.code));
                                 } else {
-                                    setSelectedVouchers(prev => [...prev, discount.code]);
+                                    setSelectedDiscounts(prev => [...prev, discount.code]);
                                 }
                             };
 
                             return (
                                 <TouchableOpacity
                                     key={discount._id}
-                                    onPress={() => eligible && toggleVoucher()}
+                                    onPress={() => eligible && toggleDiscount()}
                                     className={`py-4 px-6 mr-3 rounded-2xl items-center border ${isSelected
                                         ? 'bg-[#c04444] border-[#c04444] shadow-lg shadow-[#c04444]/30'
                                         : eligible

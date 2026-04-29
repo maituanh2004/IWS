@@ -238,7 +238,7 @@ export default function DiscountManagementScreen({ navigation }) {
                                 onPress={handleSave} 
                                 disabled={submitting}
                             >
-                                {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase italic tracking-widest">{editingDiscount ? 'Update Voucher' : 'Create Voucher'}</Text>}
+                                {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase italic tracking-widest">{editingDiscount ? 'Update Discount' : 'Create Discount'}</Text>}
                             </TouchableOpacity>
                         </ScrollView>
                     </View>

@@ -84,8 +84,8 @@ export default function MovieManagementScreen({ navigation }) {
 
     const renderMovie = ({ item, index }) => {
         const price = item.price || 0;
-        const available = item.availableVouchers || [];
-        const hasDiscount = available.length > 0;
+        const availableDiscounts = item.availableDiscounts || [];
+        const hasDiscount = availableDiscounts.length > 0;
 
         return (
             <AnimatedCard index={index}>
