@@ -48,7 +48,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
 
             const payload = {
                 showtimeId: showtime._id,
-                seats: expandSeats(selectedSeats)
+                seats: selectedSeats
             };
 
             console.log('PREVIEW PAYLOAD:', payload);

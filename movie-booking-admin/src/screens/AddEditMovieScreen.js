@@ -46,42 +46,86 @@ export default function AddEditMovieScreen({ route, navigation }) {
     const loadDiscounts = async () => {
         try {
             const response = await discountService.getDiscounts();
-            const activeDiscounts = response.data.data.filter(d => new Date(d.expiryDate) > new Date());
+
+            const data = response?.data?.data;
+
+            if (!Array.isArray(data)) {
+                throw new Error("Invalid discount data");
+            }
+
+            const activeDiscounts = data.filter(
+                d => new Date(d.expiryDate) > new Date()
+            );
+
             setDiscounts(activeDiscounts);
+
         } catch (error) {
-            console.error('Failed to load discounts:', error);
+            console.log("🔥 LOAD ERROR:", error);
+            setDiscounts([]); // 🔥 QUAN TRỌNG
+            handleApiError(error, navigation);
         }
     };
 
     const handleSave = async () => {
+
         if (!title || !description || !duration || !genre || !releaseDate || !price) {
-            alert('Error: Please fill in all fields including price');
+            alert('Please fill all fields');
+            return;
+        }
+
+        const parsedPrice = parseInt(price);
+        const parsedDuration = parseInt(duration);
+
+        if (isNaN(parsedPrice)) {
+            alert("Price must be a valid number");
+            return;
+        }
+
+        if (isNaN(parsedDuration)) {
+            alert("Duration must be a number");
+            return;
+        }
+
+        // validate date
+        const parsedDate = new Date(releaseDate);
+        if (isNaN(parsedDate.getTime())) {
+            alert("Invalid release date");
             return;
         }
 
         const movieData = {
             title,
             description,
-            poster: poster || undefined,
-            duration: parseInt(duration),
+            duration: parsedDuration,
             genre,
-            releaseDate: new Date(releaseDate),
-            price: parseInt(price),
-            availableDiscounts: selectedDiscounts
+            releaseDate: parsedDate,
+            price: parsedPrice,
+
+            // 🔥 FIX POSTER
+            ...(poster ? { poster } : {}),
+
+            // 🔥 FIX DISCOUNT (bạn làm đúng rồi)
+            availableDiscounts: discounts
+                .filter(d => selectedDiscounts.includes(d.code))
+                .map(d => d._id)
         };
+
+        console.log("🔥 FINAL PAYLOAD:", movieData);
 
         setLoading(true);
         try {
             if (isEdit) {
                 await movieService.updateMovie(movie._id, movieData);
-                alert('Success: Movie updated');
             } else {
                 await movieService.createMovie(movieData);
-                alert('Success: Movie created');
             }
+
+            alert('Success');
             navigation.goBack();
+
         } catch (error) {
-            alert('Error: ' + (error.response?.data?.message || 'Failed to save movie'));
+            console.log("🔥 BACKEND ERROR:", error.response?.data);
+            alert(error.response?.data?.error || 'Failed to save movie');
         } finally {
             setLoading(false);
         }
@@ -100,170 +144,214 @@ export default function AddEditMovieScreen({ route, navigation }) {
             keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         >
             <BackgroundWrapper>
-                <AdminHeader title={isEdit ? 'Edit Movie' : 'New Movie'} showClose={true} />
+                <AdminHeader title={isEdit ? 'Edit Movie' : 'New Movie'} showClose />
 
                 <ScrollView className="flex-1" contentContainerClassName="p-6 pb-20">
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Movie Title*</Text>
+
+                    {/* TITLE */}
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                        Movie Title*
+                    </Text>
                     <TextInput
-                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6 focus:border-[#c04444]"
+                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 mb-6"
                         value={title}
                         onChangeText={setTitle}
                         placeholder="e.g. Inception"
                         placeholderTextColor="#4b5563"
-                        returnKeyType="next"
-                        onSubmitEditing={() => descRef.current?.focus()}
-                        blurOnSubmit={false}
                     />
 
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Description*</Text>
+                    {/* DESCRIPTION */}
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase ml-1">
+                        Description*
+                    </Text>
                     <TextInput
-                        ref={descRef}
-                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6 h-32 text-top focus:border-[#c04444]"
+                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 mb-6 h-32"
                         value={description}
                         onChangeText={setDescription}
-                        placeholder="Write something compelling..."
-                        placeholderTextColor="#4b5563"
                         multiline
-                        numberOfLines={4}
                     />
 
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Base Price (VND)*</Text>
+                    {/* PRICE */}
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase ml-1">
+                        Base Price (VND)*
+                    </Text>
                     <TextInput
-                        ref={priceRef}
-                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6 focus:border-[#c04444]"
+                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 mb-6"
                         value={price}
                         onChangeText={setPrice}
-                        placeholder="e.g. 120000"
-                        placeholderTextColor="#4b5563"
                         keyboardType="numeric"
                     />
 
-                    <Text className="text-[10px] font-black text-gray-500 mb-4 uppercase tracking-widest ml-1">Eligible Vouchers</Text>
+                    {/* DISCOUNTS */}
+                    <Text className="text-[10px] font-black text-gray-500 mb-4 uppercase ml-1">
+                        Eligible Vouchers
+                    </Text>
+
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row mb-8">
-                        <TouchableOpacity
-                            onPress={() => setSelectedDiscounts([])}
-                            className={`py-4 px-8 mr-3 rounded-2xl items-center border ${selectedDiscounts.length === 0
-                                ? 'bg-[#c04444] border-[#c04444] shadow-lg shadow-[#c04444]/30'
+
+                        {/* NONE */}
+                        <View className={`mr-3 rounded-2xl border ${
+                            selectedDiscounts.length === 0
+                                ? 'bg-[#c04444] border-[#c04444]'
                                 : 'bg-white/5 border-white/10'
-                                }`}
-                        >
-                            <Text className={`font-black text-[10px] uppercase tracking-widest ${selectedDiscounts.length === 0 ? 'text-white' : 'text-gray-500'}`}>
-                                None
-                            </Text>
-                        </TouchableOpacity>
+                        }`}>
+                            <TouchableOpacity
+                                onPress={() => setSelectedDiscounts([])}
+                                className="py-4 px-8 items-center"
+                            >
+                                <Text className="text-white text-[10px] font-black uppercase">
+                                    None
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
 
-                        <TouchableOpacity
-                            onPress={() => {
-                                const allCodes = discounts.map(d => d.code);
-                                setSelectedDiscounts(allCodes);
-                            }}
-                            className={`py-3 px-6 mr-2 rounded-xl items-center border ${selectedDiscounts.length > 0 && selectedDiscounts.length === discounts.length
-                                ? 'bg-[#e50914] border-[#e50914]'
-                                : 'bg-white border-gray-200'
-                                }`}
-                        >
-                            <Text className={`font-bold text-xs ${selectedDiscounts.length > 0 && selectedDiscounts.length === discounts.length ? 'text-white' : 'text-gray-700'}`}>
-                                Select All
-                            </Text>
-                        </TouchableOpacity>
+                        {/* SELECT ALL */}
+                        <View className="mr-2 rounded-xl border bg-white">
+                            <TouchableOpacity
+                                onPress={() => {
+                                    const allCodes = Array.isArray(discounts)
+                                        ? discounts.map(d => d.code)
+                                        : [];
+                                    setSelectedDiscounts(allCodes);
+                                }}
+                                className="py-3 px-6 items-center"
+                            >
+                                <Text className="text-gray-700 text-xs font-bold">
+                                    Select All
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
 
-                        {discounts.map((discount) => {
+                        {/* LIST */}
+                        {Array.isArray(discounts) && discounts.map((discount) => {
                             const eligible = isDiscountEligible(discount);
-                            const isSelected = selectedDiscounts.includes(discount.code);
+                            const isSelected = selectedDiscounts?.includes(discount?.code);
 
-                            const toggleDiscount = () => {
+                            const toggle = () => {
                                 if (isSelected) {
-                                    setSelectedDiscounts(prev => prev.filter(code => code !== discount.code));
+                                    setSelectedDiscounts(prev =>
+                                        (prev || []).filter(c => c !== discount.code)
+                                    );
                                 } else {
-                                    setSelectedDiscounts(prev => [...prev, discount.code]);
+                                    setSelectedDiscounts(prev =>
+                                        [...(prev || []), discount.code]
+                                    );
                                 }
                             };
 
                             return (
-                                <TouchableOpacity
-                                    key={discount._id}
-                                    onPress={() => eligible && toggleDiscount()}
-                                    className={`py-4 px-6 mr-3 rounded-2xl items-center border ${isSelected
-                                        ? 'bg-[#c04444] border-[#c04444] shadow-lg shadow-[#c04444]/30'
-                                        : eligible
-                                            ? 'bg-white/5 border-white/10'
-                                            : 'bg-transparent border-red-900/20 opacity-30'
-                                        }`}
-                                >
-                                    <Text className={`font-black text-[10px] uppercase tracking-widest ${isSelected ? 'text-white' : eligible ? 'text-white/60' : 'text-red-500'}`}>
-                                        {discount.code} (-{discount.percentage}%)
-                                    </Text>
-                                    {!eligible && (
-                                        <Text className="text-[7px] text-red-500 mt-1 font-black">Min {discount.minPrice / 1000}K</Text>
-                                    )}
-                                </TouchableOpacity>
+                                <View
+                                    key={discount?._id || discount?.code || Math.random()}
+                                    className={`mr-3 rounded-2xl border ${
+                                        isSelected
+                                            ? 'bg-[#c04444] border-[#c04444]'
+                                            : eligible
+                                                ? 'bg-white/5 border-white/10'
+                                                : 'opacity-30 border-red-900/20'
+                                    }`}>
+                                    <TouchableOpacity
+                                        onPress={() => eligible && toggle()}
+                                        className="py-4 px-6 items-center"
+                                    >
+                                        <Text className="text-[10px] font-black uppercase text-white">
+                                            {discount?.code || 'N/A'} (-{discount?.percentage || 0}%)
+                                        </Text>
+
+                                        {!eligible && (
+                                            <Text className="text-[7px] text-red-500 mt-1">
+                                                Min {discount.minPrice / 1000}K
+                                            </Text>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
                             );
                         })}
                     </ScrollView>
 
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Poster URL</Text>
+                    {/* POSTER */}
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                    Poster URL
+                    </Text>
+
                     <TextInput
-                        ref={posterRef}
-                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6 focus:border-[#c04444]"
-                        value={poster}
-                        onChangeText={setPoster}
-                        placeholder="https://..."
-                        placeholderTextColor="#4b5563"
+                    ref={posterRef}
+                    className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 mb-6"
+                    value={poster}
+                    onChangeText={setPoster}
+                    placeholder="https://..."
+                    placeholderTextColor="#4b5563"
                     />
 
                     {poster ? (
-                        <View className="mb-8 items-center">
-                            <Image
-                                source={{ uri: poster }}
-                                className="w-48 h-72 rounded-[32px] border border-white/10 shadow-2xl"
-                                resizeMode="cover"
-                            />
-                        </View>
+                    <View className="mb-8 items-center">
+                        <Image
+                        source={{ uri: poster }}
+                        className="w-48 h-72 rounded-[32px]"
+                        resizeMode="cover"
+                        />
+                    </View>
                     ) : null}
 
+
+                    {/* DURATION + GENRE */}
                     <View className="flex-row gap-4 mb-6">
-                        <View className="flex-1">
-                            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Duration (min)*</Text>
-                            <TextInput
-                                ref={durationRef}
-                                className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic focus:border-[#c04444]"
-                                value={duration}
-                                onChangeText={setDuration}
-                                placeholder="120"
-                                placeholderTextColor="#4b5563"
-                                keyboardType="numeric"
-                            />
-                        </View>
-                        <View className="flex-1">
-                            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Genre*</Text>
-                            <TextInput
-                                ref={genreRef}
-                                className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic focus:border-[#c04444]"
-                                value={genre}
-                                onChangeText={setGenre}
-                                placeholder="e.g. Action"
-                                placeholderTextColor="#4b5563"
-                            />
-                        </View>
+                    <View className="flex-1">
+                        <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase ml-1">
+                        Duration (min)*
+                        </Text>
+                        <TextInput
+                        ref={durationRef}
+                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10"
+                        value={duration}
+                        onChangeText={setDuration}
+                        keyboardType="numeric"
+                        />
                     </View>
 
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Release Date (YYYY-MM-DD)*</Text>
+                    <View className="flex-1">
+                        <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase ml-1">
+                        Genre*
+                        </Text>
+                        <TextInput
+                        ref={genreRef}
+                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10"
+                        value={genre}
+                        onChangeText={setGenre}
+                        />
+                    </View>
+                    </View>
+
+
+                    {/* RELEASE DATE */}
+                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase ml-1">
+                    Release Date (YYYY-MM-DD)*
+                    </Text>
+
                     <TextInput
-                        ref={releaseDateRef}
-                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-10 focus:border-[#c04444]"
-                        value={releaseDate}
-                        onChangeText={setReleaseDate}
-                        placeholder="2024-01-01"
-                        placeholderTextColor="#4b5563"
+                    ref={releaseDateRef}
+                    className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 mb-10"
+                    value={releaseDate}
+                    onChangeText={setReleaseDate}
+                    placeholder="2024-01-01"
+                    placeholderTextColor="#4b5563"
                     />
 
-                    <TouchableOpacity
-                        className="bg-[#c04444] p-6 rounded-[24px] items-center shadow-2xl shadow-[#c04444]/40"
-                        onPress={handleSave}
-                        disabled={loading}
-                    >
-                        {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase italic tracking-widest">{isEdit ? 'Update Movie' : 'Launch Movie'}</Text>}
-                    </TouchableOpacity>
+                    {/* SAVE BUTTON */}
+                    <View className="rounded-[24px] bg-[#c04444]">
+                        <TouchableOpacity
+                            onPress={handleSave}
+                            disabled={loading}
+                            className="p-6 items-center"
+                        >
+                            {loading
+                                ? <ActivityIndicator color="#fff" />
+                                : <Text className="text-white font-black text-lg">
+                                    {isEdit ? 'Update Movie' : 'Launch Movie'}
+                                </Text>
+                            }
+                        </TouchableOpacity>
+                    </View>
+
                 </ScrollView>
             </BackgroundWrapper>
         </KeyboardAvoidingView>
