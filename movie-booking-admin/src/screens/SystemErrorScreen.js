@@ -56,7 +56,7 @@ const SystemErrorScreen = ({ route, navigation }) => {
 
                     <TouchableOpacity
                         className="bg-[#c04444] w-full py-6 rounded-[24px] flex-row justify-center items-center shadow-2xl shadow-[#c04444]/40 mb-5"
-                        onPress={() => navigation.navigate('MovieManagement')}
+                        onPress={() => navigation.navigate('App', { screen: 'MovieManagement' })}
                     >
                         <Home color="#fff" size={22} />
                         <Text className="text-white font-black text-xl ml-3 uppercase tracking-widest">Return Base</Text>

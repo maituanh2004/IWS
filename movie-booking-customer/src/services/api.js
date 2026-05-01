@@ -4,18 +4,11 @@ import { Platform } from 'react-native';
 
 // ⚙️  Update LOCAL_IP to your machine's current IP whenever it changes.
 // Run `ipconfig` (Windows) or `ifconfig` (Mac/Linux) to find it.
-const LOCAL_IP = '192.168.1.4';
+const LOCAL_IP = '192.168.1.5';
 
 const getApiUrl = () => {
-    if (Platform.OS === 'web') return 'http://localhost:5000/api';
-
-    if (Platform.OS === 'android') {
-        // Use LAN IP if set, otherwise fall back to Android emulator loopback
-        return LOCAL_IP ? `http://${LOCAL_IP}:5000/api` : 'http://10.0.2.2:5000/api';
-    }
-
-    // iOS simulator / other
-    return `http://${LOCAL_IP || 'localhost'}:5000/api`;
+    // Use ngrok for all platforms so both emulator and phone work
+    return `${NGROK_URL}/api`;
 };
 
 const API_URL = getApiUrl();
@@ -59,7 +52,7 @@ export const getMovie = (id) => api.get(`/movies/${id}`);
 export const getShowtimes = () => api.get('/showtimes');
 
 export const getShowtimesByMovie = (movieId) =>
-    api.get(`/showtimes/movie/${movieId}`);
+    api.get(`/movies/${movieId}/showtimes`);
 
 export const getShowtime = (id) =>
     api.get(`/showtimes/${id}`);
@@ -68,13 +61,23 @@ export const getAvailableSeats = (showtimeId) =>
     api.get(`/showtimes/${showtimeId}/seats`);
 
 // Booking APIs
-export const createBooking = (showtimeId, seats) =>
-    api.post('/bookings', { showtimeId, seats });
+export const createBooking = (showtimeId, seats, discountCode) =>
+    api.post('/bookings', { showtimeId, seats, discountCode });
 
-export const getUserBookings = (userId) =>
+export const getMyBookings = () =>
+    api.get('/bookings/me');
+
+export const getUserBookingsAdmin = (userId) =>
     api.get(`/bookings/user/${userId}`);
+
+export const getBookingByGroupId = (groupId) =>
+    api.get(`/bookings/group/${groupId}`);
 
 // Discount APIs
 export const getDiscounts = () => api.get('/discounts');
+
+// Payment APIs
+export const createPayment = (bookingGroupId) =>
+    api.post('/payments', { bookingGroupId });
 
 export default api;

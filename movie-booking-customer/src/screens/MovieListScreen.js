@@ -3,22 +3,23 @@ import {
     View,
     Text,
     ScrollView,
+    Image,
     TouchableOpacity,
     ActivityIndicator,
-    TextInput,
     Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import { useUI } from '../context/UIContext';
 import * as api from '../services/api';
 import ScreenWrapper from '../components/ScreenWrapper';
 import MovieCard from '../components/MovieCard';
 import BottomNav from '../components/BottomNav';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-// HERO_W là chiều rộng thực của thẻ, trừ đi phần padding 2 bên
-const HERO_W = SCREEN_W - 32;
+const CARD_GAP = 16;
+const CARD_W = SCREEN_W - 48;
 
 const DEFAULT_GRADIENTS = [
     ['#2C0A0A', '#8B1A1A', '#1A0505'],
@@ -27,126 +28,24 @@ const DEFAULT_GRADIENTS = [
     ['#2C2C0A', '#8B8B1A', '#1A1A05'],
 ];
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const HERO_W = SCREEN_W - 32; // card width with 16px padding each side
-
-// ─── Sample Data ──────────────────────────────────────────────────────────────
-const HERO_MOVIES = [
-    {
-        _id: 'h1',
-        title: 'Avengers:',
-        titleAccent: 'Doomsday',
-        genre: 'ACTION / SCI-FI',
-        rating: 9.2,
-        desc: 'Một kỷ nguyên mới bắt đầu. Sự trỗi dậy của một mối đe dọa không thể ngăn cản từ đa vũ trụ.',
-        gradientColors: ['#2C0A0A', '#8B1A1A', '#1A0505'],
-        poster: 'https://via.placeholder.com/400x220/8B1A1A/FFFFFF?text=Avengers',
-    },
-    {
-        _id: 'h2',
-        title: 'Lật Mặt 8:',
-        titleAccent: 'Vòng Lặp',
-        genre: 'HÀI / GIA ĐÌNH',
-        rating: 8.5,
-        desc: 'Câu chuyện gia đình đầy cảm xúc về những kết nối và tình thân không thể chia cắt.',
-        gradientColors: ['#0A1A2C', '#1A4A8B', '#050F1A'],
-        poster: 'https://via.placeholder.com/400x220/1A4A8B/FFFFFF?text=Lat+Mat+8',
-    },
-    {
-        _id: 'h3',
-        title: 'A Minecraft',
-        titleAccent: 'Movie',
-        genre: 'PHIÊU LƯU / GIA ĐÌNH',
-        rating: 7.8,
-        desc: 'Cuộc phiêu lưu kỳ thú trong thế giới khối vuông, nơi mọi giấc mơ đều trở thành hiện thực.',
-        gradientColors: ['#0A2C0A', '#1A6B1A', '#051A05'],
-        poster: 'https://via.placeholder.com/400x220/1A6B1A/FFFFFF?text=Minecraft',
-    },
-];
-
-const NOW_PLAYING = [
-    {
-        _id: '1',
-        title: 'Avengers: Doomsday',
-        genre: 'Hành động',
-        rating: 9.2,
-        duration: 150,
-        poster: 'https://via.placeholder.com/160x220/8B1A1A/FFFFFF?text=Avengers',
-        gradientColors: ['#8B1A1A', '#2C0A0A'],
-    },
-    {
-        _id: '2',
-        title: 'Lật Mặt 8',
-        genre: 'Hài / Gia đình',
-        rating: 8.5,
-        duration: 120,
-        poster: 'https://via.placeholder.com/160x220/1A4A8B/FFFFFF?text=Lat+Mat',
-        gradientColors: ['#1A4A8B', '#0A1A2C'],
-    },
-    {
-        _id: '3',
-        title: 'A Minecraft Movie',
-        genre: 'Phiêu lưu',
-        rating: 7.8,
-        duration: 110,
-        poster: 'https://via.placeholder.com/160x220/1A6B1A/FFFFFF?text=Minecraft',
-        gradientColors: ['#1A6B1A', '#0A2C0A'],
-    },
-    {
-        _id: '4',
-        title: 'Sinners',
-        genre: 'Kinh dị / Giật gân',
-        rating: 8.1,
-        duration: 135,
-        poster: 'https://via.placeholder.com/160x220/4A0A0A/FFFFFF?text=Sinners',
-        gradientColors: ['#4A0A0A', '#1A0505'],
-    },
-    {
-        _id: '5',
-        title: 'Mickey 17',
-        genre: 'Khoa học viễn tưởng',
-        rating: 7.5,
-        duration: 138,
-        poster: 'https://via.placeholder.com/160x220/0A0A4A/FFFFFF?text=Mickey+17',
-        gradientColors: ['#0A0A4A', '#05051A'],
-    },
-    {
-        _id: '6',
-        title: 'The Dark Knight',
-        genre: 'Hành động / Tội phạm',
-        rating: 9.9,
-        duration: 152,
-        poster: 'https://via.placeholder.com/160x220/1A1A1A/FFFFFF?text=Dark+Knight',
-        gradientColors: ['#1A1A2C', '#05050F'],
-    },
-];
-
-// ─── Bottom Nav Config ─────────────────────────────────────────────────────────
-const NAV_ITEMS = [
-    { id: 'home', icon: 'home', label: 'TRANG CHỦ' },
-    { id: 'movies', icon: 'film', label: 'PHIM' },
-    { id: 'cinemas', icon: 'storefront', label: 'RẠP' },
-    { id: 'tickets', icon: 'ticket', label: 'VÉ CỦA TÔI' },
-    { id: 'profile', icon: 'person', label: 'TÔI' },
-];
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function MovieListScreen({ navigation }) {
     const { user } = useAuth();
+    const { t, colors } = useUI();
     const [movies, setMovies] = useState([]);
     const [heroMovies, setHeroMovies] = useState([]);
     const [vouchers, setVouchers] = useState([]);
     const [filteredMovies, setFilteredMovies] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [heroIndex, setHeroIndex] = useState(0);
-
     const heroScrollRef = useRef(null);
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        setFilteredMovies(movies);
+    }, [movies]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -164,12 +63,13 @@ export default function MovieListScreen({ navigation }) {
                 setMovies(allMovies);
                 setFilteredMovies(allMovies);
 
-                // Lấy 3 phim đầu làm banner hero
-                setHeroMovies(allMovies.slice(0, 3).map(m => ({
-                    ...m,
-                    titleAccent: m.title.split(' ').slice(-1)[0],
-                    titleBase: m.title.split(' ').slice(0, -1).join(' ') + ' '
-                })));
+                if (allMovies && allMovies.length > 0) {
+                    setHeroMovies(allMovies.slice(0, 3).map(m => ({
+                        ...m,
+                        titleAccent: (m.title || '').split(' ').slice(-1)[0],
+                        titleBase: (m.title || '').split(' ').slice(0, -1).join(' ') + ' '
+                    })));
+                }
             }
 
             if (discountsRes.data.success) {
@@ -177,104 +77,32 @@ export default function MovieListScreen({ navigation }) {
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);
-            navigation.navigate('SystemError', { errorType: '500' });
         } finally {
             setLoading(false);
         }
-    } catch (error) {
-        console.error('Error fetching movies:', error);
-        Alert.alert('Lỗi', 'Không thể tải danh sách phim.');
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
-useEffect(() => {
-    const filtered = movies.filter((m) =>
-        m.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredMovies(filtered);
-}, [searchQuery, movies]);
+    const onHeroScroll = (e) => {
+        const idx = Math.round(e.nativeEvent.contentOffset.x / (CARD_W + CARD_GAP));
+        setHeroIndex(idx);
+    };
 
-const onHeroScroll = (e) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / HERO_W);
-    setHeroIndex(idx);
-};
+    const getInitials = (name) =>
+        (name || '').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'CV';
 
-const getInitials = (name) =>
-    name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'CV';
-
-// Hero dot tracker
-const onHeroScroll = (e) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / HERO_W);
-    setHeroIndex(idx);
-};
-
-const handleNavPress = (navId) => {
-    setActiveNav(navId);
-    switch (navId) {
-        case 'profile': navigation.navigate('Profile'); break;
-        case 'tickets': navigation.navigate('BookingHistory'); break;
-        default: break;
-    }
-};
-
-const getInitials = (name) =>
-    name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
-
-if (loading) {
     return (
         <ScreenWrapper>
             {/* ── Header ── */}
-            <View className="flex-row items-center justify-between px-4 py-3 bg-[#0A0A0F]">
-                <TouchableOpacity className="w-9 h-9 items-center justify-center">
-                    <Ionicons name="menu" size={26} color="#FFFFFF" />
-                </TouchableOpacity>
-
+            <View className={`flex-row items-center justify-between px-4 py-3 ${colors.headerBg}`}>
+                <View className="w-9" />
                 <Text className="text-[#00D4FF] text-xl font-black tracking-[3px] italic">CINEVIET</Text>
-
-                <View className="flex-row items-center gap-2">
-                    <TouchableOpacity
-                        className="w-9 h-9 items-center justify-center"
-                        onPress={() => {
-                            setIsSearchVisible(!isSearchVisible);
-                            if (isSearchVisible) setSearchQuery('');
-                        }}
-                    >
-                        <Ionicons
-                            name={isSearchVisible ? 'close' : 'search-outline'}
-                            size={24}
-                            color="#FFFFFF"
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        className="w-9 h-9 rounded-full bg-[#1E1E2E] border-1.5 border-[#00D4FF] items-center justify-center"
-                        onPress={() => navigation.navigate('Profile')}
-                    >
-                        <Text className="text-[#00D4FF] text-[11px] font-bold">{getInitials(user?.name)}</Text>
-                    </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                    className="w-9 h-9 rounded-full bg-[#1E1E2E] border-1.5 border-[#00D4FF] items-center justify-center"
+                    onPress={() => navigation.navigate('Profile')}
+                >
+                    <Text className="text-[#00D4FF] text-[11px] font-bold">{getInitials(user?.name)}</Text>
+                </TouchableOpacity>
             </View>
-
-            {/* ── Search Bar ── */}
-            {isSearchVisible && (
-                <View className="flex-row items-center bg-[#1E1E2E] mx-4 mb-4 px-3 h-11 rounded-xl border border-[#2A2A3E]">
-                    <Ionicons name="search" size={20} color="#888" />
-                    <TextInput
-                        className="flex-1 text-white text-sm h-full ml-2"
-                        placeholder="Tìm kiếm phim, thể loại..."
-                        placeholderTextColor="#888"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        autoFocus
-                    />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color="#555" />
-                        </TouchableOpacity>
-                    )}
-                </View>
-            )}
 
             <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
                 {loading ? (
@@ -282,92 +110,100 @@ if (loading) {
                         <ActivityIndicator size="large" color="#00D4FF" />
                     </View>
                 ) : (
-                    /* Toàn bộ nội dung bọc trong Fragment để đảm bảo logic loading */
                     <>
-                        {/* ── Location ── */}
-                        <TouchableOpacity className="flex-row items-center gap-1.5 mx-4 mb-4 self-start bg-[#141420] px-3 py-2 rounded-full border border-[#2A2A3E]">
-                            <Ionicons name="location" size={14} color="#00D4FF" />
-                            <Text className="text-white text-xs font-semibold">Hà Nội</Text>
-                            <Ionicons name="chevron-down" size={14} color="#AAAAAA" />
-                        </TouchableOpacity>
-
                         {/* ── Hero Carousel ── */}
-                        <View className="mb-7">
-                            <ScrollView
-                                ref={heroScrollRef}
-                                horizontal
-                                pagingEnabled
-                                showsHorizontalScrollIndicator={false}
-                                onScroll={onHeroScroll}
-                                scrollEventThrottle={16}
-                                snapToInterval={HERO_W} // Quan trọng: Khớp với chiều rộng View con
-                                decelerationRate="fast"
-                                contentContainerStyle={{ paddingHorizontal: 16 }}
-                            >
-                                {heroMovies.map((movie) => (
-                                    <TouchableOpacity
-                                        key={movie._id}
-                                        activeOpacity={0.9}
-                                        onPress={() => navigation.navigate('MovieDetail', { movie })}
-                                        style={{ width: HERO_W }}
-                                        className="pr-4" // Tạo khoảng cách giữa các slide
-                                    >
-                                        <View className="rounded-3xl overflow-hidden">
-                                            <LinearGradient
-                                                colors={movie.gradientColors}
-                                                className="px-5 pt-24 pb-5 min-h-[280px] justify-end"
-                                                start={{ x: 0.5, y: 0 }}
-                                                end={{ x: 0.5, y: 1 }}
-                                            >
-                                                <View className="flex-row items-center gap-2.5 mb-2">
-                                                    <View className="flex-row items-center gap-1 bg-black/50 px-2.5 py-1 rounded-full">
-                                                        <Ionicons name="star" size={12} color="#F4C430" />
-                                                        <Text className="text-white text-[13px] font-bold">{movie.rating || 9.0}</Text>
+                        {heroMovies.length > 0 && (
+                            <View className="mb-7">
+                                <ScrollView
+                                    ref={heroScrollRef}
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    onScroll={onHeroScroll}
+                                    scrollEventThrottle={16}
+                                    snapToOffsets={heroMovies.map((_, i) => i * (CARD_W + CARD_GAP))}
+                                    decelerationRate="fast"
+                                    contentContainerStyle={{ paddingLeft: 16, paddingRight: SCREEN_W - CARD_W - 16 }}
+                                >
+                                    {heroMovies.map((movie, idx) => (
+                                        <TouchableOpacity
+                                            key={movie._id}
+                                            activeOpacity={0.9}
+                                            onPress={() => navigation.navigate('MovieDetail', { movie })}
+                                            style={{
+                                                width: CARD_W,
+                                                marginRight: CARD_GAP,
+                                            }}
+                                        >
+                                            <View className="rounded-3xl overflow-hidden" style={{ minHeight: 280 }}>
+                                                {/* Movie poster as background */}
+                                                {movie.poster ? (
+                                                    <Image
+                                                        source={{ uri: movie.poster }}
+                                                        className="absolute w-full h-full"
+                                                        resizeMode="cover"
+                                                    />
+                                                ) : null}
+
+                                                {/* Dark gradient overlay */}
+                                                <LinearGradient
+                                                    colors={movie.poster
+                                                        ? ['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0.95)']
+                                                        : movie.gradientColors
+                                                    }
+                                                    className="px-5 pt-24 pb-5 min-h-[280px] justify-end"
+                                                    start={{ x: 0.5, y: 0 }}
+                                                    end={{ x: 0.5, y: 1 }}
+                                                >
+                                                    <View className="flex-row items-center gap-2.5 mb-2">
+                                                        <View className="flex-row items-center gap-1 bg-black/60 px-2.5 py-1 rounded-full">
+                                                            <Ionicons name="star" size={12} color="#F4C430" />
+                                                            <Text className="text-white text-[13px] font-bold">{movie.rating || 9.0}</Text>
+                                                        </View>
+                                                        <Text className="text-gray-200 text-[13px] tracking-widest font-medium uppercase">{movie.genre}</Text>
                                                     </View>
-                                                    <Text className="text-gray-300 text-[13px] tracking-widest font-medium uppercase">{movie.genre}</Text>
-                                                </View>
 
-                                                <Text className="text-white text-3xl font-black leading-9">{movie.titleBase}</Text>
-                                                <Text className="text-[#00D4FF] text-3xl font-black leading-9 mb-2.5">{movie.titleAccent}</Text>
+                                                    <Text className="text-white text-3xl font-black leading-9">{movie.titleBase}</Text>
+                                                    <Text className="text-[#00D4FF] text-3xl font-black leading-9 mb-2.5">{movie.titleAccent}</Text>
 
-                                                <Text className="text-gray-400 text-xs leading-5 mb-5" numberOfLines={2}>
-                                                    {movie.description}
-                                                </Text>
+                                                    <Text className="text-gray-300 text-xs leading-5 mb-5" numberOfLines={2}>
+                                                        {movie.description}
+                                                    </Text>
 
-                                                <View className="flex-row items-center justify-between">
-                                                    <View className="flex-row items-center gap-2 bg-[#00D4FF] px-5 py-3 rounded-xl">
-                                                        <Ionicons name="ticket-outline" size={18} color="#0A0A0F" />
-                                                        <Text className="text-[#0A0A0F] text-[13px] font-extrabold tracking-widest">ĐẶT VÉ NGAY</Text>
+                                                    <View className="flex-row items-center justify-between">
+                                                        <View className="flex-row items-center gap-2 bg-[#00D4FF] px-5 py-3 rounded-xl">
+                                                            <Ionicons name="ticket-outline" size={18} color="#0A0A0F" />
+                                                            <Text className="text-[#0A0A0F] text-[13px] font-extrabold tracking-widest">{t('book_now')}</Text>
+                                                        </View>
+
+                                                        <View className="flex-row gap-1.5">
+                                                            {heroMovies.map((_, i) => (
+                                                                <View
+                                                                    key={i}
+                                                                    className={`h-2 rounded-full ${i === heroIndex ? 'w-6 bg-[#00D4FF]' : 'w-2 bg-white/30'}`}
+                                                                />
+                                                            ))}
+                                                        </View>
                                                     </View>
-
-                                                    <View className="flex-row gap-1.5">
-                                                        {heroMovies.map((_, i) => (
-                                                            <View
-                                                                key={i}
-                                                                className={`h-2 rounded-full ${i === heroIndex ? 'w-6 bg-[#00D4FF]' : 'w-2 bg-[#333]'}`}
-                                                            />
-                                                        ))}
-                                                    </View>
-                                                </View>
-                                            </LinearGradient>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
+                                                </LinearGradient>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
 
                         {/* ── Voucher Section ── */}
                         {vouchers.length > 0 && (
                             <View className="mb-7 px-4">
                                 <View className="flex-row items-center gap-2 mb-4">
                                     <Text className="text-xl">🎟️</Text>
-                                    <Text className="text-white text-lg font-extrabold">Ưu đãi độc quyền</Text>
+                                    <Text className={`${colors.text} text-lg font-extrabold`}>{t('exclusive_offers')}</Text>
                                 </View>
                                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                                     {vouchers.map((voucher) => (
                                         <TouchableOpacity
                                             key={voucher._id}
-                                            className="bg-[#141420] border border-[#1E1E2E] rounded-2xl p-4 mr-3 w-64"
+                                            className={`${colors.card} border ${colors.border} rounded-2xl p-4 mr-3 w-64`}
                                             activeOpacity={0.8}
                                         >
                                             <View className="flex-row items-center gap-3 mb-2">
@@ -375,12 +211,12 @@ if (loading) {
                                                     <Ionicons name="pricetag" size={20} color="#00D4FF" />
                                                 </View>
                                                 <View className="flex-1">
-                                                    <Text className="text-white text-sm font-bold" numberOfLines={1}>{voucher.code}</Text>
-                                                    <Text className="text-[#4CAF50] text-xs font-bold">Giảm {voucher.discountPercentage}%</Text>
+                                                    <Text className={`${colors.text} text-sm font-bold`} numberOfLines={1}>{voucher.code}</Text>
+                                                    <Text className="text-[#4CAF50] text-xs font-bold">{t('save')} {voucher.percentage || voucher.discountPercentage}%</Text>
                                                 </View>
                                             </View>
                                             <Text className="text-gray-500 text-[10px] leading-4" numberOfLines={2}>
-                                                {voucher.description || 'Áp dụng cho tất cả các suất chiếu tại CineViet.'}
+                                                {voucher.description || 'Applicable to all screenings at CineViet.'}
                                             </Text>
                                         </TouchableOpacity>
                                     ))}
@@ -388,14 +224,14 @@ if (loading) {
                             </View>
                         )}
 
-                        {/* ── Danh sách phim chính ── */}
+                        {/* ── Main Movie List ── */}
                         <View className="flex-row items-center justify-between px-4 mb-4">
                             <View className="flex-row items-center gap-2">
                                 <Text className="text-xl">🎬</Text>
-                                <Text className="text-white text-xl font-extrabold">Đang Chiếu</Text>
+                                <Text className={`${colors.text} text-xl font-extrabold`}>{t('now_showing')}</Text>
                             </View>
                             <TouchableOpacity>
-                                <Text className="text-[#00D4FF] text-xs font-semibold">Xem tất cả</Text>
+                                <Text className="text-[#00D4FF] text-xs font-semibold">{t('see_all')}</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -412,13 +248,13 @@ if (loading) {
                             {filteredMovies.length === 0 && (
                                 <View className="w-full h-48 items-center justify-center gap-2">
                                     <Ionicons name="film-outline" size={40} color="#333" />
-                                    <Text className="text-gray-500 text-sm">Không tìm thấy phim</Text>
+                                    <Text className="text-gray-500 text-sm">No movies found</Text>
                                 </View>
                             )}
                         </View>
                     </>
                 )}
-                <View className="h-24" />
+                <View className="h-20" />
             </ScrollView>
 
             <BottomNav />

@@ -2,10 +2,12 @@ import React from 'react';
 import { View, Text, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useUI } from '../context/UIContext';
 
-export default function TicketCard({ movie, showtime, seats, bookingCode, cinemaName }) {
+export default function VoucherCard({ movie, showtime, seats, bookingCode, cinemaName }) {
+  const { t, colors } = useUI();
   const time = showtime ? new Date(showtime.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-  const date = showtime ? new Date(showtime.startTime).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' }) : '';
+  const date = showtime ? new Date(showtime.startTime).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: '2-digit' }) : '';
 
   return (
     <View className="w-full mb-5 relative">
@@ -24,7 +26,7 @@ export default function TicketCard({ movie, showtime, seats, bookingCode, cinema
 
           <View className="flex-1 justify-center gap-1">
             <Text className="text-[#0A0A0F] text-lg font-extrabold leading-6" numberOfLines={2}>{movie?.title}</Text>
-            <Text className="text-gray-500 text-sm">Phòng {showtime?.room || '?'} • {cinemaName}</Text>
+            <Text className="text-gray-500 text-sm">{t('room')} {showtime?.room || '?'} • {cinemaName}</Text>
             <View className="flex-row gap-1.5 mt-1">
               <View className="bg-[#F4C430] px-2 py-0.5 rounded-md">
                 <Text className="text-[#0A0A0F] text-[11px] font-extrabold">IMAX 3D</Text>
@@ -40,33 +42,33 @@ export default function TicketCard({ movie, showtime, seats, bookingCode, cinema
 
         <View className="flex-row gap-8 mb-4">
           <View className="gap-1">
-            <Text className="text-gray-400 text-[10px] font-bold tracking-widest">NGÀY CHIẾU</Text>
+            <Text className="text-gray-400 text-[10px] font-bold tracking-widest">{t('date')}</Text>
             <Text className="text-[#0A0A0F] text-xl font-extrabold">{date}</Text>
           </View>
           <View className="gap-1">
-            <Text className="text-gray-400 text-[10px] font-bold tracking-widest">GIỜ CHIẾU</Text>
+            <Text className="text-gray-400 text-[10px] font-bold tracking-widest">{t('time')}</Text>
             <Text className="text-[#0A0A0F] text-xl font-extrabold">{time}</Text>
           </View>
         </View>
 
         <View className="gap-1">
-          <Text className="text-gray-400 text-[10px] font-bold tracking-widest">GHẾ NGỒI</Text>
+          <Text className="text-gray-400 text-[10px] font-bold tracking-widest">{t('seats')}</Text>
           <Text className="text-[#0A0A0F] text-2xl font-extrabold">{seats?.join(', ')}</Text>
         </View>
       </View>
 
       {/* Tear Line */}
       <View className="flex-row items-center h-9 relative">
-        <View className="w-4.5 h-9 bg-[#0A0A0F] rounded-r-full absolute left-0 z-10" />
+        <View className={`w-4.5 h-9 ${colors.background} rounded-r-full absolute left-0 z-10`} />
         <View className="flex-1 flex-row items-center justify-center gap-1 px-8">
           {Array.from({ length: 20 }).map((_, i) => (
-            <View key={i} className="w-2 h-[1.5px] bg-gray-600 rounded-full" />
+            <View key={i} className="w-2 h-[1.5px] bg-gray-400 rounded-full" />
           ))}
         </View>
         <View className="absolute left-1/2 -translate-x-2 z-20">
           <Ionicons name="cut-outline" size={18} color="#AAA" />
         </View>
-        <View className="w-4.5 h-9 bg-[#0A0A0F] rounded-l-full absolute right-0 z-10" />
+        <View className={`w-4.5 h-9 ${colors.background} rounded-l-full absolute right-0 z-10`} />
       </View>
 
       {/* Bottom Part */}
@@ -89,10 +91,10 @@ export default function TicketCard({ movie, showtime, seats, bookingCode, cinema
       </View>
 
       {/* Corner decorations */}
-      <View className="absolute -top-px -left-px w-5 h-5 rounded-tl-3xl bg-[#0A0A0F]" />
-      <View className="absolute -top-px -right-px w-5 h-5 rounded-tr-3xl bg-[#0A0A0F]" />
-      <View className="absolute -bottom-px -left-px w-5 h-5 rounded-bl-3xl bg-[#0A0A0F]" />
-      <View className="absolute -bottom-px -right-px w-5 h-5 rounded-br-3xl bg-[#0A0A0F]" />
+      <View className={`absolute -top-px -left-px w-5 h-5 rounded-tl-3xl ${colors.background}`} />
+      <View className={`absolute -top-px -right-px w-5 h-5 rounded-tr-3xl ${colors.background}`} />
+      <View className={`absolute -bottom-px -left-px w-5 h-5 rounded-bl-3xl ${colors.background}`} />
+      <View className={`absolute -bottom-px -right-px w-5 h-5 rounded-br-3xl ${colors.background}`} />
     </View>
   );
 }

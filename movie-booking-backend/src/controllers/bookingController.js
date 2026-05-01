@@ -114,3 +114,59 @@ exports.previewBooking = async (req, res) => {
     });
   }
 };
+
+// GET BOOKING BY GROUP ID
+exports.getBookingByGroupId = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const bookings = await Booking.find({ bookingGroupId: groupId })
+      .populate({
+        path: 'showtime',
+        populate: { path: 'movie' },
+      })
+      .lean();
+
+    if (!bookings || bookings.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    const grouped = groupBookings(bookings);
+
+    res.status(200).json({
+      success: true,
+      data: grouped[0] // Return the single group
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+// GET BOOKINGS BY SHOWTIME ID
+exports.getBookingsByShowtime = async (req, res) => {
+  console.log('DEBUG: getBookingsByShowtime hit with ID:', req.params.showtimeId);
+  try {
+    const { showtimeId } = req.params;
+    const bookings = await Booking.find({ showtime: showtimeId })
+      .populate('user', 'name email')
+      .lean();
+
+    const grouped = groupBookings(bookings);
+
+    res.status(200).json({
+      success: true,
+      data: grouped
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};

@@ -2,8 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useUI } from '../context/UIContext';
 
 export default function MovieCard({ movie, onPress, width = '31%' }) {
+  const { colors } = useUI();
+
   return (
     <TouchableOpacity
       style={{ width }}
@@ -30,10 +33,10 @@ export default function MovieCard({ movie, onPress, width = '31%' }) {
         </View>
       </View>
 
-      <Text className="text-white text-xs font-bold" numberOfLines={1}>
+      <Text className={`${colors.text} text-xs font-bold`} numberOfLines={1}>
         {movie.title}
       </Text>
-      <Text className="text-gray-500 text-[10px]" numberOfLines={1}>
+      <Text className={`${colors.textSecondary} text-[10px]`} numberOfLines={1}>
         {movie.genre}
       </Text>
     </TouchableOpacity>

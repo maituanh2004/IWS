@@ -2,17 +2,8 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-<<<<<<< HEAD
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  StatusBar,
-=======
   TouchableOpacity,
   Alert,
->>>>>>> FE-admin
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -20,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import { useUI } from '../context/UIContext';
 import ScreenWrapper from '../components/ScreenWrapper';
 import CustomerInput from '../components/CustomerInput';
 import CustomerButton from '../components/CustomerButton';
@@ -32,25 +24,24 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const { signIn } = useAuth();
+  const { t, colors, theme } = useUI();
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
     setLoading(true);
     try {
       await signIn(email, password);
     } catch (error) {
-      Alert.alert('Đăng nhập thất bại', error.response?.data?.error || 'Sai email hoặc mật khẩu');
+      Alert.alert('Login Failed', error.response?.data?.error || 'Incorrect email or password');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    Alert.alert('Thông báo', `Đăng nhập bằng ${provider} sẽ ra mắt sớm!`);
-  };
+
 
   return (
     <ScreenWrapper>
@@ -64,27 +55,27 @@ export default function LoginScreen({ navigation }) {
         >
           {/* ── Hero Section ── */}
           <View className="h-72 justify-end items-center pb-9 relative overflow-hidden">
-            <View className="absolute inset-0 bg-[#0D1520]">
+            <View className={`absolute inset-0 ${theme === 'dark' ? 'bg-[#0D1520]' : 'bg-[#E0E0E0]'}`}>
               <LinearGradient
-                colors={['rgba(10,10,15,0.3)', 'rgba(10,10,15,0.85)', '#0A0A0F']}
+                colors={theme === 'dark' ? ['rgba(10,10,15,0.3)', 'rgba(10,10,15,0.85)', '#0A0A0F'] : ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.85)', '#F8F9FA']}
                 className="absolute inset-0"
               />
             </View>
 
             <View className="flex-row items-center gap-2.5 mb-2.5">
               <Text className="text-3xl">🎬</Text>
-              <Text className="text-white text-4xl font-black italic tracking-[3px]">CINEVIET</Text>
+              <Text className={`${theme === 'dark' ? 'text-white' : 'text-[#0A0A0F]'} text-4xl font-black italic tracking-[3px]`}>CINEVIET</Text>
             </View>
-            <Text className="text-gray-400 text-[15px] tracking-wide">Trải nghiệm điện ảnh đỉnh cao</Text>
+            <Text className={`${colors.textSecondary} text-[15px] tracking-wide`}>Your ultimate cinema experience</Text>
           </View>
 
           {/* ── Form Card ── */}
-          <View className="flex-1 bg-[#141420] rounded-t-[32px] px-6 pt-8 pb-10">
-            <Text className="text-white text-2xl font-bold mb-1.5">Chào mừng trở lại</Text>
-            <Text className="text-gray-500 text-sm mb-7">Đăng nhập để tiếp tục</Text>
+          <View className={`flex-1 ${colors.card} rounded-t-[32px] px-6 pt-8 pb-10`}>
+            <Text className={`${colors.text} text-2xl font-bold mb-1.5`}>{t('welcome')}</Text>
+            <Text className={`${colors.textSecondary} text-sm mb-7`}>{t('signin_continue')}</Text>
 
             <CustomerInput
-              label="EMAIL"
+              label={t('email')}
               icon="mail-outline"
               placeholder="Email"
               value={email}
@@ -95,7 +86,7 @@ export default function LoginScreen({ navigation }) {
 
             <View className="relative">
               <CustomerInput
-                label="MẬT KHẨU"
+                label={t('password')}
                 icon="lock-closed-outline"
                 placeholder="••••••••••"
                 value={password}
@@ -119,62 +110,31 @@ export default function LoginScreen({ navigation }) {
                 className="flex-row items-center gap-2.5"
                 onPress={() => setRememberMe(!rememberMe)}
               >
-                <View className={`w-5 h-5 rounded-md border-1.5 items-center justify-center ${rememberMe ? 'border-[#00D4FF] bg-[#00D4FF18]' : 'border-gray-600 bg-[#1E1E2E]'}`}>
+                <View className={`w-5 h-5 rounded-md border-1.5 items-center justify-center ${rememberMe ? 'border-[#00D4FF] bg-[#00D4FF18]' : `${colors.border} ${theme === 'dark' ? 'bg-[#1E1E2E]' : 'bg-gray-100'}`}`}>
                   {rememberMe && <Ionicons name="checkmark" size={12} color="#00D4FF" />}
                 </View>
-                <Text className="text-gray-400 text-sm">Ghi nhớ đăng nhập</Text>
+                <Text className={`${colors.textSecondary} text-sm`}>{t('remember_me')}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => Alert.alert('Thông báo', 'Tính năng sẽ ra mắt sớm!')}>
-                <Text className="text-[#00D4FF] text-sm font-semibold">Quên mật khẩu?</Text>
+              <TouchableOpacity onPress={() => Alert.alert('Coming Soon', 'This feature will be available soon!')}>
+                <Text className="text-[#00D4FF] text-sm font-semibold">{t('forgot_password')}</Text>
               </TouchableOpacity>
             </View>
 
             <CustomerButton
-              title="ĐĂNG NHẬP"
+              title={t('signin')}
               onPress={handleLogin}
               loading={loading}
             />
 
-            <View className="flex-row items-center mb-6 gap-2.5">
-              <View className="flex-1 h-[1px] bg-[#2A2A3E]" />
-              <Text className="text-gray-600 text-xs">hoặc đăng nhập với</Text>
-              <View className="flex-1 h-[1px] bg-[#2A2A3E]" />
-            </View>
-
-            <View className="flex-row gap-3.5 mb-7">
-              <TouchableOpacity
-                className="flex-1 flex-row items-center justify-center gap-2.5 h-13 bg-[#1E1E2E] rounded-xl border border-[#2A2A3E]"
-                onPress={() => handleSocialLogin('Facebook')}
-              >
-                <Ionicons name="logo-facebook" size={20} color="#1877F2" />
-                <Text className="text-gray-300 text-sm font-semibold">Facebook</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                className="flex-1 flex-row items-center justify-center gap-2.5 h-13 bg-[#1E1E2E] rounded-xl border border-[#2A2A3E]"
-                onPress={() => handleSocialLogin('Google')}
-              >
-                <Text className="text-[#EA4335] text-lg font-black">G</Text>
-                <Text className="text-gray-300 text-sm font-semibold">Google</Text>
-              </TouchableOpacity>
-            </View>
-
             <View className="flex-row justify-center items-center mb-7">
-              <Text className="text-gray-500 text-sm">Chưa có tài khoản? </Text>
+              <Text className={`${colors.textSecondary} text-sm`}>{t('no_account')} </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text className="text-[#00D4FF] text-sm font-bold">Đăng ký ngay</Text>
+                <Text className="text-[#00D4FF] text-sm font-bold">{t('signup')}</Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              className="items-center"
-              onPress={() => Alert.alert('Thông báo', 'Đăng nhập vân tay sẽ ra mắt sớm!')}
-            >
-              <View className="w-13 h-13 rounded-full bg-[#1E1E2E] border border-[#2A2A3E] items-center justify-center">
-                <Ionicons name="finger-print-outline" size={26} color="#00D4FF" />
-              </View>
-            </TouchableOpacity>
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

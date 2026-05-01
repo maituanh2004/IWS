@@ -8,52 +8,21 @@ import {
     Alert,
     Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Armchair, RotateCcw, Info, ChevronLeft, Ticket } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as api from '../services/api';
 import ScreenWrapper from '../components/ScreenWrapper';
-import Header from '../components/Header';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
 const formatVND = (n) =>
     n ? n.toLocaleString('vi-VN') + 'đ' : '0đ';
 
-const { width: SCREEN_W } = Dimensions.get('window');
-
-// ─── Seat Config ──────────────────────────────────────────────────────────────
-
-// 7 regular rows (A-G), 9 seats each
-// Center VIP: rows D, E (middle 5 seats)
-// Last row H: 4 couple seats
-const ROW_CONFIG = [
-    { row: 'A', type: 'regular', cols: 9 },
-    { row: 'B', type: 'regular', cols: 9 },
-    { row: 'C', type: 'regular', cols: 9 },
-    { row: 'D', type: 'vip', cols: 9, vipRange: [3, 7] }, // VIP: D4-D8
-    { row: 'E', type: 'vip', cols: 9, vipRange: [3, 7] }, // VIP: E4-E8
-    { row: 'F', type: 'regular', cols: 9 },
-    { row: 'G', type: 'regular', cols: 9 },
-    { row: 'H', type: 'couple', coupleSeats: 4 }, // Hàng ghế đôi
-];
-
-// Pre-booked seats for demo (can be empty or keep for demo)
-const DEMO_BOOKED = ['A1', 'A2', 'B3', 'D5', 'E6', 'H1C', 'H3C'];
-
-const PRICE_REGULAR = 120000;
-const PRICE_VIP = 150000;
-const PRICE_COUPLE = 200000; // per couple unit
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const formatVND = (n) =>
-    n.toLocaleString('vi-VN') + 'đ';
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function SeatSelectionScreen({ route, navigation }) {
     const { showtime: initialShowtime } = route.params || {};
 
     const [showtime, setShowtime] = useState(initialShowtime);
-    const [bookedSeats, setBookedSeats] = useState([]);
+    const [seatsData, setSeatsData] = useState([]);
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -73,265 +42,280 @@ export default function SeatSelectionScreen({ route, navigation }) {
                 api.getAvailableSeats(initialShowtime._id)
             ]);
 
-            if (stRes.data.success) setShowtime(stRes.data.data);
-            if (seatsRes.data.success) setBookedSeats(seatsRes.data.data.bookedSeats || []);
+            if (stRes.data.success) {
+                setShowtime(stRes.data.data);
+            }
+            if (seatsRes.data.success) {
+                setSeatsData(seatsRes.data.data);
+            }
 
         } catch (error) {
             console.error('Failed to load seat data:', error);
-            Alert.alert('Lỗi', 'Không thể tải sơ đồ ghế ngồi. Vui lòng thử lại.');
+            Alert.alert('Error', 'Unable to load seat map. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
-    const layout = useMemo(() => {
-        if (!showtime) return { rows: 0, cols: 0, capacity: 0 };
+    const basePrice = showtime?.basePrice || 100000;
+    
+    // Group seats by row
+    const groupedSeats = useMemo(() => {
+        const rows = {};
+        seatsData.forEach(seat => {
+            if (!rows[seat.row]) rows[seat.row] = [];
+            rows[seat.row].push(seat);
+        });
+        // Sort seats in each row by number
+        Object.keys(rows).forEach(rowKey => {
+            rows[rowKey].sort((a, b) => a.number - b.number);
+        });
+        return rows;
+    }, [seatsData]);
 
-        // Match admin capacity logic
-        let capacity = showtime.totalSeats || 80;
-        const roomNum = parseInt(showtime.room);
-        if (roomNum >= 1 && roomNum <= 5) capacity = 80;
-        else if (roomNum >= 6 && roomNum <= 10) capacity = 100;
-
-        const cols = 10;
-        const rows = Math.ceil(capacity / cols);
-        const startVipRow = Math.floor((rows - 4) / 2);
-        const endVipRow = startVipRow + 3;
-        return { capacity, cols, rows, startVipRow, endVipRow };
-    }, [showtime]);
-
-    const basePrice = showtime?.price || 100000;
-    const PRICE_REGULAR = basePrice;
-    const PRICE_VIP = Math.round(basePrice * 1.25 / 1000) * 1000;
-    const PRICE_COUPLE = Math.round(basePrice * 1.8 / 1000) * 1000;
-
-    const getSeatType = (r, c) => {
-        if (r === layout.rows - 1) return 'couple';
-        if (r >= layout.startVipRow && r <= layout.endVipRow && c >= 2 && c <= layout.cols - 3) return 'vip';
-        return 'regular';
+    const getSeatPrice = (seat) => {
+        if (seat.type === 'VIP') return Math.round(basePrice * 1.25 / 1000) * 1000;
+        if (seat.type === 'COUPLE') return Math.round(basePrice * 1.8 / 1000) * 1000;
+        return basePrice;
     };
 
-    const getSeatPrice = (seatId) => {
-        if (seatId.includes('-')) return PRICE_COUPLE;
-        const rowLabel = seatId[0];
-        const r = rowLabel.charCodeAt(0) - 65;
-        const c = parseInt(seatId.slice(1)) - 1;
-        if (getSeatType(r, c) === 'vip') return PRICE_VIP;
-        return PRICE_REGULAR;
+    const toggleSeat = (seat) => {
+        if (seat.isBooked) return;
+        
+        setSelectedSeats((prev) => {
+            const isSelected = prev.includes(seat.code);
+            if (isSelected) {
+                return prev.filter((s) => s !== seat.code);
+            } else {
+                return [...prev, seat.code];
+            }
+        });
     };
 
-    const toggleSeat = (seatId) => {
-        if (bookedSeats.includes(seatId)) return;
-        setSelectedSeats((prev) =>
-            prev.includes(seatId)
-                ? prev.filter((s) => s !== seatId)
-                : [...prev, seatId]
-        );
-    };
-
-    const totalPrice = selectedSeats.reduce((sum, seatId) => sum + getSeatPrice(seatId), 0);
+    const totalPrice = useMemo(() => {
+        return selectedSeats.reduce((sum, code) => {
+            const seat = seatsData.find(s => s.code === code);
+            return sum + (seat ? getSeatPrice(seat) : 0);
+        }, 0);
+    }, [selectedSeats, seatsData, basePrice]);
 
     const handleContinue = () => {
         if (selectedSeats.length === 0) {
-            Alert.alert('Thông báo', 'Vui lòng chọn ít nhất 1 ghế');
+            Alert.alert('Notice', 'Please select at least 1 seat');
             return;
         }
         navigation.navigate('BookingConfirm', {
             showtime,
             movie: showtime.movie,
-            cinema: { name: `Rạp ${showtime.room}` },
-            time: new Date(showtime.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            date: new Date(showtime.startTime).getDate(),
+            cinema: { name: `CineViet Cinema - Room ${showtime.room}` },
             seats: selectedSeats,
             totalPrice,
         });
     };
 
-    const Seat = ({ seatId, type, label }) => {
-        const isBooked = bookedSeats.includes(seatId);
-        const isSelected = selectedSeats.includes(seatId);
-        const isVip = type === 'vip';
-        const isCouple = type === 'couple';
+    const SEAT_SIZE = (SCREEN_W - 60) / 10;
+    const ICON_SIZE = Math.floor(SEAT_SIZE * 0.45);
+    const TEXT_SIZE = Math.floor(SEAT_SIZE * 0.28);
 
-        if (isCouple) {
-            return (
-                <TouchableOpacity
-                    className={`h-[${SEAT_SIZE}px] rounded-lg border-1.2 items-center justify-center ${isSelected ? 'bg-[#A855F7] border-[#A855F7]' : isBooked ? 'bg-[#ff3d3d]/30 border-[#ff3d3d]/20' : 'bg-[#0A0A0F] border-[#A855F7]'}`}
-                    style={{ width: COUPLE_W }}
-                    onPress={() => toggleSeat(seatId)}
-                    disabled={isBooked}
-                    activeOpacity={0.7}
-                >
-                    {isSelected && <Text className="text-[#0A0A0F] text-[10px] font-black">C</Text>}
-                </TouchableOpacity>
-            );
+    const Seat = ({ seat }) => {
+        const isSelected = selectedSeats.includes(seat.code);
+        const isVip = seat.type === 'VIP';
+        const isCouple = seat.type === 'COUPLE';
+        const isBooked = seat.isBooked;
+
+        // Custom styling for customer app matching admin
+        let containerClass = "rounded-lg items-center justify-between py-1 border m-0.5";
+        let iconColor = "#6b7280";
+        let textColor = "text-gray-400";
+        let borderColor = "border-white/10";
+        let bgColor = "bg-white/5";
+
+        if (isSelected) {
+            bgColor = "bg-[#c04444]";
+            borderColor = "border-[#c04444]";
+            iconColor = "#ffffff";
+            textColor = "text-white";
+        } else if (isBooked) {
+            bgColor = "bg-[#c04444]/20";
+            borderColor = "border-[#c04444]/10";
+            iconColor = "rgba(192, 68, 68, 0.3)";
+            textColor = "text-[#c04444]/30";
+        } else if (isVip) {
+            bgColor = "bg-amber-900/10";
+            borderColor = "border-amber-500/30";
+            iconColor = "#f59e0b";
+            textColor = "text-amber-500";
+        } else if (isCouple) {
+            bgColor = "bg-pink-900/10";
+            borderColor = "border-pink-500/30";
+            iconColor = "#ec4899";
+            textColor = "text-pink-400";
         }
 
         return (
             <TouchableOpacity
-                className={`w-[${SEAT_SIZE}px] h-[${SEAT_SIZE}px] rounded-md items-center justify-center ${isSelected ? 'bg-[#00D4FF]' : isBooked ? 'bg-[#ff3d3d]/30' : isVip ? 'bg-[#0A0A0F] border-1.2 border-[#F4C430]' : 'bg-[#2A2A3A]'}`}
-                style={{ width: SEAT_SIZE, height: SEAT_SIZE }}
-                onPress={() => toggleSeat(seatId)}
+                onPress={() => toggleSeat(seat)}
                 disabled={isBooked}
                 activeOpacity={0.7}
+                style={{ 
+                    width: isCouple ? SEAT_SIZE * 2 + 4 : SEAT_SIZE, 
+                    height: SEAT_SIZE 
+                }}
             >
-                {isSelected && (
-                    <Text className="text-[#0A0A0F] text-[10px] font-black">{label}</Text>
-                )}
+                <View 
+                    className={`${containerClass} ${bgColor} ${borderColor} w-full h-full`}
+                >
+                    <Text style={{ fontSize: TEXT_SIZE }} className={`font-black ${textColor}`}>
+                        {seat.code}
+                    </Text>
+                    <View className="flex-row">
+                        <Armchair size={ICON_SIZE} color={iconColor} />
+                        {isCouple && <Armchair size={ICON_SIZE} color={iconColor} />}
+                    </View>
+                </View>
             </TouchableOpacity>
         );
     };
 
-    const renderGrid = () => {
-        if (!showtime) return null;
-        const grid = [];
-        for (let r = 0; r < layout.rows; r++) {
-            const rowLabel = String.fromCharCode(65 + r);
-            const rowSeats = [];
-            const isLastRow = r === layout.rows - 1;
-
-            if (isLastRow) {
-                for (let c = 0; c < layout.cols / 2; c++) {
-                    const seatId = `${rowLabel}${c * 2 + 1}-${c * 2 + 2}`;
-                    rowSeats.push(<Seat key={seatId} seatId={seatId} type="couple" />);
-                    if (c < (layout.cols / 2) - 1) rowSeats.push(<View key={`aisle-c-${c}`} className="w-2" />);
-                }
-            } else {
-                for (let c = 0; c < layout.cols; c++) {
-                    const seatIndex = r * layout.cols + c;
-                    if (seatIndex >= layout.capacity) break;
-                    const seatId = `${rowLabel}${c + 1}`;
-                    rowSeats.push(<Seat key={seatId} seatId={seatId} type={getSeatType(r, c)} label={c + 1} />);
-                    if (c === 1 || c === 7) rowSeats.push(<View key={`aisle-${r}-${c}`} className="w-2" />);
-                }
-            }
-
-            grid.push(
-                <View key={rowLabel} className="flex-row items-center gap-[6px]">
-                    <Text className="text-[#444] text-[10px] font-bold w-3.5 text-center">{rowLabel}</Text>
-                    {rowSeats}
-                    <Text className="text-[#444] text-[10px] font-bold w-3.5 text-center">{rowLabel}</Text>
-                </View>
-            );
-        }
-        return grid;
-    };
-
-    const SEAT_GAP = 6;
-    const SEAT_SIZE = (SCREEN_W - 32 - 12 - (SEAT_GAP * 11)) / 10;
-    const COUPLE_W = SEAT_SIZE * 2 + SEAT_GAP;
-
     if (loading && !showtime) {
         return (
             <View className="flex-1 bg-[#0A0A0F] justify-center items-center">
-                <ActivityIndicator size="large" color="#00D4FF" />
-                <Text className="text-gray-500 mt-2.5">Đang tải sơ đồ ghế...</Text>
+                <ActivityIndicator size="large" color="#c04444" />
+                <Text className="text-gray-500 mt-4 font-bold tracking-widest uppercase text-xs">Loading Theater...</Text>
             </View>
         );
     }
 
     return (
         <ScreenWrapper>
-            <Header
-                title="Chọn Ghế"
-                subTitle={`Phòng ${showtime?.room || '?'}`}
-                rightElement={
-                    <TouchableOpacity onPress={loadData}>
-                        <Ionicons name="refresh-outline" size={20} color="#00D4FF" />
-                    </TouchableOpacity>
-                }
-            />
+            {/* Custom Admin-style Header */}
+            <View className="flex-row items-center justify-between px-5 pt-12 pb-6 bg-[#0A0A0F]">
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()}
+                    className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 items-center justify-center"
+                >
+                    <ChevronLeft color="#FFFFFF" size={24} />
+                </TouchableOpacity>
+                <View className="items-center">
+                    <Text className="text-[#c04444] text-[10px] font-black uppercase tracking-[4px] mb-0.5">Seat Selection</Text>
+                    <Text className="text-white text-xl font-black italic tracking-tighter uppercase">Theater Layout</Text>
+                </View>
+                <TouchableOpacity 
+                    onPress={loadData}
+                    className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 items-center justify-center"
+                >
+                    <RotateCcw color="#c04444" size={18} />
+                </TouchableOpacity>
+            </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
-                {/* Movie Info Card */}
-                <View className="bg-[#141420] rounded-2xl p-3.5 mb-6 border border-[#1E1E2E]">
-                    <View className="flex-row items-center mb-2.5">
-                        <Ionicons name="film" size={20} color="#00D4FF" className="mr-2.5" />
-                        <Text className="text-white text-[15px] font-bold flex-1" numberOfLines={1}>{showtime?.movie?.title}</Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-40">
+                {/* Movie & Showtime Info Card */}
+                <View className="bg-black/40 mx-5 mt-4 p-6 rounded-[32px] border border-white/10 shadow-2xl">
+                    <View className="flex-row justify-between items-start mb-4">
+                        <View className="flex-1">
+                            <Text className="text-[#c04444] text-[10px] font-black uppercase tracking-[3px] mb-2" numberOfLines={1}>
+                                {showtime?.movie?.title || 'Loading Movie...'}
+                            </Text>
+                            <Text className="text-3xl font-black text-white italic">ROOM {showtime?.room}</Text>
+                        </View>
+                        <View className="bg-[#c04444] px-4 py-2 rounded-2xl shadow-lg shadow-[#c04444]/40">
+                            <Text className="text-white font-black text-xs italic uppercase tracking-widest">
+                                {showtime ? new Date(showtime.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                            </Text>
+                        </View>
                     </View>
-                    <View className="flex-row flex-wrap gap-3.5">
-                        <View className="flex-row items-center gap-1">
-                            <Ionicons name="calendar-outline" size={14} color="#AAA" />
-                            <Text className="text-gray-400 text-[12px] font-medium">{showtime ? new Date(showtime.startTime).toLocaleDateString('vi-VN') : ''}</Text>
+                    <View className="flex-row items-center pt-4 border-t border-white/5 gap-4">
+                        <View className="flex-row items-center">
+                            <Info color="#6b7280" size={14} />
+                            <Text className="text-gray-400 text-[10px] font-black uppercase ml-2 tracking-widest">
+                                {showtime ? new Date(showtime.startTime).toLocaleDateString('vi-VN') : ''}
+                            </Text>
                         </View>
-                        <View className="flex-row items-center gap-1">
-                            <Ionicons name="time-outline" size={14} color="#AAA" />
-                            <Text className="text-gray-400 text-[12px] font-medium">{showtime ? new Date(showtime.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</Text>
-                        </View>
-                        <View className="flex-row items-center gap-1">
-                            <Ionicons name="cash-outline" size={14} color="#4CAF50" />
-                            <Text className="text-[#4CAF50] text-[12px] font-medium">{formatVND(basePrice)}</Text>
+                        <View className="flex-row items-center">
+                            <Ticket color="#6b7280" size={14} />
+                            <Text className="text-gray-400 text-[10px] font-black uppercase ml-2 tracking-widest">
+                                {formatVND(basePrice)} / Base
+                            </Text>
                         </View>
                     </View>
                 </View>
 
                 {/* Screen Indicator */}
-                <View className="items-center mb-8">
-                    <View className="w-[80%] h-1 bg-[#00D4FF] rounded-full shadow-lg shadow-[#00D4FF]/50" />
-                    <Text className="text-[#00D4FF] text-[10px] font-bold tracking-[6px] mt-1.5 uppercase">MÀN HÌNH</Text>
-                </View>
-
-                {/* Seat Grid */}
-                <View className="items-center gap-[6px] mb-7">
-                    {renderGrid()}
-                </View>
-
-                {/* Legend */}
-                <View className="mb-3">
-                    <View className="flex-row justify-between items-center">
-                        <View className="flex-row items-center gap-1.5">
-                            <View className="w-4 h-4 rounded-sm bg-[#2A2A3A]" />
-                            <Text className="text-gray-500 text-[11px]">Thường</Text>
-                        </View>
-                        <View className="flex-row items-center gap-1.5">
-                            <View className="w-4 h-4 rounded-sm bg-[#0A0A0F] border border-[#F4C430]" />
-                            <Text className="text-gray-500 text-[11px]">VIP</Text>
-                        </View>
-                        <View className="flex-row items-center gap-1.5">
-                            <View className="w-4 h-4 rounded-sm bg-[#00D4FF]" />
-                            <Text className="text-gray-500 text-[11px]">Đang chọn</Text>
-                        </View>
-                        <View className="flex-row items-center gap-1.5">
-                            <View className="w-4 h-4 rounded-sm bg-[#ff3d3d]/30" />
-                            <Text className="text-gray-500 text-[11px]">Đã bán</Text>
-                        </View>
+                <View className="mt-12 px-4 items-center">
+                    <View className="w-full max-w-[300px] mb-12">
+                        <View className="w-full h-1 bg-[#c04444] rounded-full shadow-lg shadow-[#c04444]/50 opacity-80" />
+                        <Text className="text-center text-[#c04444] text-[10px] font-black uppercase tracking-[12px] mt-3">SCREEN</Text>
                     </View>
-                    <View className="flex-row justify-center mt-3">
-                        <View className="flex-row items-center gap-1.5">
-                            <View className="w-7 h-4 rounded-sm bg-[#0A0A0F] border border-[#A855F7]" />
-                            <Text className="text-gray-500 text-[11px]">Couple</Text>
-                        </View>
+                    
+                    {/* Seating Grid */}
+                    <View className="items-center">
+                        {Object.keys(groupedSeats).sort().map(rowKey => (
+                            <View key={rowKey} className="flex-row items-center mb-1">
+                                <Text className="w-6 text-gray-700 font-black text-center text-[10px]">{rowKey}</Text>
+                                <View className="flex-row items-center justify-center">
+                                    {groupedSeats[rowKey].map(seat => (
+                                        <Seat key={seat.code} seat={seat} />
+                                    ))}
+                                </View>
+                                <Text className="w-6 text-gray-700 font-black text-center text-[10px]">{rowKey}</Text>
+                            </View>
+                        ))}
                     </View>
                 </View>
 
-                <View className="h-40" />
+                {/* Legend Area */}
+                <View className="mt-12 mx-5 bg-black/40 p-8 rounded-[40px] border border-white/10">
+                    <Text className="text-[10px] font-black text-gray-500 mb-6 uppercase tracking-[4px] text-center italic">Seat Categories</Text>
+                    <View className="flex-row justify-around flex-wrap gap-y-6">
+                        <View className="items-center w-1/4">
+                            <View className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 items-center justify-center mb-2">
+                                <Armchair size={14} color="#6b7280" />
+                            </View>
+                            <Text className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Normal</Text>
+                        </View>
+                        <View className="items-center w-1/4">
+                            <View className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 items-center justify-center mb-2">
+                                <Armchair size={14} color="#f59e0b" />
+                            </View>
+                            <Text className="text-[8px] text-gray-500 font-black uppercase tracking-widest">VIP</Text>
+                        </View>
+                        <View className="items-center w-1/4">
+                            <View className="w-8 h-8 rounded-xl bg-pink-500/10 border border-pink-500/30 items-center justify-center mb-2">
+                                <Armchair size={14} color="#ec4899" />
+                            </View>
+                            <Text className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Couple</Text>
+                        </View>
+                        <View className="items-center w-1/4">
+                            <View className="w-8 h-8 rounded-xl bg-[#c04444] items-center justify-center mb-2">
+                                <Armchair size={14} color="#ffffff" />
+                            </View>
+                            <Text className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Selected</Text>
+                        </View>
+                    </View>
+                </View>
+
+                <View className="h-20" />
             </ScrollView>
 
-            {/* Sticky Bottom */}
-            <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0F]/98 border-t border-[#1E1E2E] px-4 pt-3.5 pb-9">
-                <View className="flex-row items-center gap-4">
+            {/* Sticky Bottom Summary */}
+            <View className="absolute bottom-0 left-0 right-0 bg-[#0A0A0F]/95 border-t border-white/5 px-6 pt-5 pb-10 shadow-2xl">
+                <View className="flex-row items-center justify-between">
                     <View className="flex-1">
-                        <View className="flex-row items-center mb-0.5">
-                            <Text className="text-gray-600 text-[12px]">Ghế đã chọn: </Text>
-                            <Text className="text-white text-[13px] font-bold flex-1" numberOfLines={1}>
-                                {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'Chưa chọn'}
+                        <View className="flex-row items-center mb-1">
+                            <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Selected: </Text>
+                            <Text className="text-white text-xs font-black italic flex-1" numberOfLines={1}>
+                                {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'None'}
                             </Text>
                         </View>
-                        <Text className="text-[#00D4FF] text-2xl font-black">{formatVND(totalPrice)}</Text>
+                        <Text className="text-[#c04444] text-3xl font-black italic tracking-tighter">{formatVND(totalPrice)}</Text>
                     </View>
 
                     <TouchableOpacity
                         onPress={handleContinue}
                         activeOpacity={0.85}
-                        className="flex-1 rounded-2xl overflow-hidden shadow-lg shadow-[#00D4FF]/20"
+                        className="bg-[#c04444] h-14 px-8 rounded-2xl items-center justify-center shadow-lg shadow-[#c04444]/40"
                     >
-                        <LinearGradient
-                            colors={['#00D4FF', '#00AACC']}
-                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                            className="h-13 items-center justify-center"
-                        >
-                            <Text className="text-[#0A0A0F] text-base font-black tracking-widest">TIẾP TỤC</Text>
-                        </LinearGradient>
+                        <Text className="text-white text-base font-black italic tracking-[2px] uppercase">Book Now</Text>
                     </TouchableOpacity>
                 </View>
             </View>

@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Search, ServerCrash, AlertTriangle, Home, RefreshCcw } from 'lucide-react-native';
 
 const SystemErrorScreen = ({ route, navigation }) => {
-    const { errorType = 'generic' } = route.params || {};
+    const { errorType = 'generic', message: customMessage } = route.params || {};
 
     const errorConfigs = {
         '404': {
@@ -54,7 +55,7 @@ const SystemErrorScreen = ({ route, navigation }) => {
                 </Text>
 
                 <Text className="text-gray-500 text-center mb-16 leading-6 font-medium tracking-wide px-4">
-                    {config.message}
+                    {customMessage || config.message}
                 </Text>
 
                 <TouchableOpacity
