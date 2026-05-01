@@ -1,6 +1,27 @@
 const Booking = require("../models/Booking");
 const { createPaymentUrl } = require("../services/paymentService");
 
+function getSuccessHTML() {
+  return `
+    <html>
+      <body style="text-align:center;margin-top:80px;font-family:sans-serif">
+        <h1 style="color:green">Thanh toán thành công 🎉</h1>
+        <p>Vui lòng quay lại app để xem vé</p>
+      </body>
+    </html>
+  `;
+}
+function getFailHTML(message) {
+  return `
+    <html>
+      <body style="text-align:center;margin-top:80px;font-family:sans-serif">
+        <h1 style="color:red">${message}</h1>
+        <p>Vui lòng quay lại app để thử lại</p>
+      </body>
+    </html>
+  `;
+}
+
 exports.createPayment = async (req, res) => {
   try {
     const { bookingGroupId } = req.body;
@@ -49,51 +70,70 @@ exports.vnpayReturn = async (req, res) => {
 
     const bookingGroupId = vnp_TxnRef;
 
-    // 👉 find all bookings in group
     const bookings = await Booking.find({ bookingGroupId });
 
     if (!bookings.length) {
-      return res.send("Booking not found");
+      return res.send(getFailHTML("Không tìm thấy booking"));
+    }
+
+    const booking = bookings[0];
+
+    // ✅ nếu đã SUCCESS → không làm gì nữa
+    if (booking.paymentStatus === "SUCCESS") {
+      console.log("Already SUCCESS → skip update");
+      return res.send(getSuccessHTML());
+    }
+
+    // ❗ chưa có responseCode → chờ
+    if (!vnp_ResponseCode) {
+      return res.send(`
+        <html>
+          <body style="text-align:center;margin-top:80px">
+            <h2>Đang xử lý...</h2>
+          </body>
+        </html>
+      `);
     }
 
     const now = new Date();
 
-    // 👉 check expired BEFORE processing payment
-    if (bookings[0].expiresAt && bookings[0].expiresAt <= now) {
-      // 🔥 booking hết hạn → xoá luôn để release ghế
-      await Booking.deleteMany({ bookingGroupId });
-
-      return res.send("Booking expired ⏰");
+    if (booking.expiresAt && booking.expiresAt <= now) {
+      await Booking.updateMany(
+        { bookingGroupId },
+        { status: "FAILED", paymentStatus: "FAILED" }
+      );
+      return res.send(getFailHTML("Booking đã hết hạn ⏰"));
     }
 
-    // =============================
-    // PAYMENT SUCCESS
-    // =============================
+    // ✅ SUCCESS
     if (vnp_ResponseCode === "00") {
       await Booking.updateMany(
         { bookingGroupId },
         {
           status: "CONFIRMED",
           paymentStatus: "SUCCESS",
-          expiresAt: null // 🔥 clear expiry
+          expiresAt: null,
         }
       );
 
-      return res.send("Payment success ✅");
+      return res.send(getSuccessHTML());
     }
 
-    // =============================
-    // PAYMENT FAILED
-    // =============================
-    else {
-      // 🔥 IMPORTANT: delete to free seats
-      await Booking.deleteMany({ bookingGroupId });
-
-      return res.send("Payment failed ❌ (Seats released)");
+    // ❗ thêm check này
+    if (booking.paymentStatus !== "SUCCESS") {
+      await Booking.updateMany(
+        { bookingGroupId },
+        {
+          status: "FAILED",
+          paymentStatus: "FAILED"
+        }
+      );
     }
+
+    return res.send(getFailHTML("Thanh toán thất bại ❌"));
 
   } catch (err) {
     console.error(err);
-    res.send("Error processing payment");
+    return res.send(getFailHTML("Lỗi hệ thống"));
   }
 };

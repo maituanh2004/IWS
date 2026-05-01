@@ -114,3 +114,32 @@ exports.previewBooking = async (req, res) => {
     });
   }
 };
+
+// Get Booking by Group Id
+exports.getBookingByGroupId = async (req, res) => {
+  try {
+    const bookings = await Booking.find({
+      bookingGroupId: req.params.bookingGroupId
+    });
+    
+    if (!bookings.length) {
+      return res.json({
+        success: true,
+        data: null, 
+        paymentStatus: "PENDING"
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: bookings[0],
+      paymentStatus: bookings[0].paymentStatus
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
