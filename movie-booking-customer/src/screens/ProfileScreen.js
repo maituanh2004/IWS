@@ -105,29 +105,32 @@ export default function ProfileScreen({ navigation }) {
       onPress={() => item.type !== 'toggle' && Alert.alert('Thông báo', 'Tính năng sắp ra mắt!')}
       activeOpacity={item.type === 'toggle' ? 1 : 0.6}
     >
-      <View className="flex-row items-center flex-1">
-        <Ionicons name={item.icon} size={20} color="#AAA" className="mr-3.5 w-6" />
-        <Text className="text-gray-200 text-sm font-medium">{item.label}</Text>
-      </View>
+    <View className="flex-row items-center flex-1">
+      <Ionicons name={item.icon} size={20} color="#AAA" className="mr-3.5 w-6" />
+      <Text className="text-gray-200 text-sm font-medium">{item.label}</Text>
+    </View>
 
-      {item.type === 'chevron' && (
+    {item.type === 'chevron' && (
+      <Ionicons name="chevron-forward" size={18} color="#555" />
+    )}
+
+    {item.type === 'value' && (
+      <View className="flex-row items-center gap-1">
+        <Text className="text-gray-600 text-xs">{item.value}</Text>
         <Ionicons name="chevron-forward" size={18} color="#555" />
-      )}
+      </View>
+    )}
 
-      {item.type === 'value' && (
-        <View className="flex-row items-center gap-1">
-          <Text className="text-gray-600 text-xs">{item.value}</Text>
-          <Ionicons name="chevron-forward" size={18} color="#555" />
-        </View>
-      )}
-
-      {item.type === 'toggle' && (
-        <Switch
-          value={notifEnabled}
-          onValueChange={setNotifEnabled}
-          trackColor={{ false: '#333', true: '#00D4FF' }}
-          thumbColor="#FFFFFF"
-        />
+    {item.type === 'toggle' && (
+      <Switch
+        value={notifEnabled}
+        onValueChange={setNotifEnabled}
+        trackColor={{ false: '#333', true: '#00D4FF' }}
+        thumbColor="#FFFFFF"
+      />
+    )}
+    </TouchableOpacity>
+  );
   return (
       <ScreenWrapper>
         <Header title="Tài Khoản" showBack={false} />

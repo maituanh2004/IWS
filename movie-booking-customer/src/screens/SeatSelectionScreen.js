@@ -13,53 +13,73 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as api from '../services/api';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Header from '../components/Header';
+import { formatCurrency, isSeatBooked, getDisplaySeatType, formatTime } from '../utils/bookingUtils';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-
-const formatVND = (n) =>
-    n ? n.toLocaleString('vi-VN') + 'đ' : '0đ';
-
-const { width: SCREEN_W } = Dimensions.get('window');
-
-// ─── Seat Config ──────────────────────────────────────────────────────────────
-
-// 7 regular rows (A-G), 9 seats each
-// Center VIP: rows D, E (middle 5 seats)
-// Last row H: 4 couple seats
-const ROW_CONFIG = [
-    { row: 'A', type: 'regular', cols: 9 },
-    { row: 'B', type: 'regular', cols: 9 },
-    { row: 'C', type: 'regular', cols: 9 },
-    { row: 'D', type: 'vip', cols: 9, vipRange: [3, 7] }, // VIP: D4-D8
-    { row: 'E', type: 'vip', cols: 9, vipRange: [3, 7] }, // VIP: E4-E8
-    { row: 'F', type: 'regular', cols: 9 },
-    { row: 'G', type: 'regular', cols: 9 },
-    { row: 'H', type: 'couple', coupleSeats: 4 }, // Hàng ghế đôi
-];
-
-// Pre-booked seats for demo (can be empty or keep for demo)
-const DEMO_BOOKED = ['A1', 'A2', 'B3', 'D5', 'E6', 'H1C', 'H3C'];
-
-const PRICE_REGULAR = 120000;
-const PRICE_VIP = 150000;
-const PRICE_COUPLE = 200000; // per couple unit
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const formatVND = (n) =>
-    n.toLocaleString('vi-VN') + 'đ';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function SeatSelectionScreen({ route, navigation }) {
     const { showtime: initialShowtime } = route.params || {};
 
+    const [preview, setPreview] = useState(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
+
     const [showtime, setShowtime] = useState(initialShowtime);
-    const [bookedSeats, setBookedSeats] = useState([]);
+    const [seats, setSeats] = useState([])
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [loading, setLoading] = useState(true);
+    const seatMap = useMemo(() => {
+        const map = {};
+        seats.forEach(s => {
+            map[s.code] = s;
+        });
+        return map;
+    }, [seats]);
 
     useEffect(() => {
         loadData();
     }, [initialShowtime?._id]);
+
+    // Preview
+    const fetchPreview = async () => {
+        try {
+            if (!showtime?._id || !selectedSeats.length) return;
+
+            const payload = {
+                showtimeId: showtime._id,
+                seats: expandSeats(selectedSeats)
+            };
+
+            console.log('PREVIEW PAYLOAD:', payload);
+
+            setPreviewLoading(true);
+
+            const res = await api.previewBooking(payload);
+
+            if (res.data.success) {
+                setPreview(res.data.data);
+            }
+
+        } catch (err) {
+            console.log('Preview error:', err.response?.data || err.message);
+        } finally {
+            setPreviewLoading(false);
+        }
+    };
+    useEffect(() => {
+        if (!selectedSeats.length || !showtime?._id) {
+            setPreview(null);
+            setPreviewLoading(false);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            fetchPreview();
+        }, 300); // delay 300ms
+
+        return () => clearTimeout(timer);
+
+    }, [selectedSeats, showtime?._id]);
 
     const loadData = async () => {
         if (!initialShowtime?._id) {
@@ -74,7 +94,9 @@ export default function SeatSelectionScreen({ route, navigation }) {
             ]);
 
             if (stRes.data.success) setShowtime(stRes.data.data);
-            if (seatsRes.data.success) setBookedSeats(seatsRes.data.data.bookedSeats || []);
+
+            const seatData = seatsRes.data.data.seats;
+            setSeats(seatData);
 
         } catch (error) {
             console.error('Failed to load seat data:', error);
@@ -100,7 +122,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
         return { capacity, cols, rows, startVipRow, endVipRow };
     }, [showtime]);
 
-    const basePrice = showtime?.price || 100000;
+    const basePrice = showtime?.basePrice || 100000;
     const PRICE_REGULAR = basePrice;
     const PRICE_VIP = Math.round(basePrice * 1.25 / 1000) * 1000;
     const PRICE_COUPLE = Math.round(basePrice * 1.8 / 1000) * 1000;
@@ -121,43 +143,114 @@ export default function SeatSelectionScreen({ route, navigation }) {
     };
 
     const toggleSeat = (seatId) => {
-        if (bookedSeats.includes(seatId)) return;
-        setSelectedSeats((prev) =>
+
+        // 🔥 COUPLE SEAT
+        if (seatId.includes('-')) {
+
+            const row = seatId[0];
+            const [a, b] = seatId.slice(1).split('-');
+
+            const seat1 = seatMap?.[`${row}${a}`];
+            const seat2 = seatMap?.[`${row}${b}`];
+
+            // ❗ nếu 1 trong 2 ghế bị booked → không cho chọn
+            if (seat1?.isBooked || seat2?.isBooked) return;
+
+            setSelectedSeats(prev =>
+                prev.includes(seatId)
+                    ? prev.filter(s => s !== seatId)
+                    : [...prev, seatId]
+            );
+
+            return;
+        }
+
+        // 🔥 NORMAL SEAT
+        if (seatMap?.[seatId]?.isBooked) return;
+
+        setSelectedSeats(prev =>
             prev.includes(seatId)
-                ? prev.filter((s) => s !== seatId)
+                ? prev.filter(s => s !== seatId)
                 : [...prev, seatId]
         );
     };
 
-    const totalPrice = selectedSeats.reduce((sum, seatId) => sum + getSeatPrice(seatId), 0);
+
+    const totalPrice = 0;
+
+    const expandSeats = (seats) => {
+        const result = [];
+
+        seats.forEach(seat => {
+            if (seat.includes('-')) {
+                const row = seat[0];
+                const [a, b] = seat.slice(1).split('-');
+
+                result.push(`${row}${a}`);
+                result.push(`${row}${b}`);
+            } else {
+                result.push(seat);
+            }
+        });
+
+        return result;
+    };
 
     const handleContinue = () => {
         if (selectedSeats.length === 0) {
             Alert.alert('Thông báo', 'Vui lòng chọn ít nhất 1 ghế');
             return;
         }
-        navigation.navigate('BookingConfirm', {
+        navigation.navigate('BookingConfirmScreen', {
             showtime,
-            movie: showtime.movie,
-            cinema: { name: `Rạp ${showtime.room}` },
-            time: new Date(showtime.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            date: new Date(showtime.startTime).getDate(),
-            seats: selectedSeats,
-            totalPrice,
+            seats: expandSeats(selectedSeats)
         });
     };
 
     const Seat = ({ seatId, type, label }) => {
-        const isBooked = bookedSeats.includes(seatId);
+
         const isSelected = selectedSeats.includes(seatId);
-        const isVip = type === 'vip';
-        const isCouple = type === 'couple';
+
+        const seatType =
+            type === 'couple'
+                ? 'COUPLE'
+                : getDisplaySeatType(seatId, seatMap);
+
+        const isVip = seatType === 'VIP';
+        const isCouple = seatType === 'COUPLE';
+
+        let isBooked = false;
+
+        const getCoupleSeat = (seatId) => {
+            if (!seatId.includes('-')) return null;
+
+            const row = seatId[0];
+            const [a, b] = seatId.slice(1).split('-');
+
+            return {
+                seat1: seatMap[`${row}${a}`],
+                seat2: seatMap[`${row}${b}`]
+            };
+        };
+
+        if (isCouple) {
+            const couple = getCoupleSeat(seatId);
+
+            isBooked =
+                couple?.seat1?.isBooked ||
+                couple?.seat2?.isBooked;
+        } else {
+            isBooked = seatMap?.[seatId]?.isBooked;
+        }
 
         if (isCouple) {
             return (
                 <TouchableOpacity
-                    className={`h-[${SEAT_SIZE}px] rounded-lg border-1.2 items-center justify-center ${isSelected ? 'bg-[#A855F7] border-[#A855F7]' : isBooked ? 'bg-[#ff3d3d]/30 border-[#ff3d3d]/20' : 'bg-[#0A0A0F] border-[#A855F7]'}`}
-                    style={{ width: COUPLE_W }}
+                    className={`h-[${SEAT_SIZE}px] rounded-lg border-1.2 items-center justify-center ${isSelected ? 'bg-[#A855F7] border-[#A855F7]' : isBooked ? 'bg-[#ff3d3d]/30 border-[#ff3d3d]/20' : 'bg-[#2A1A40] border-[#A855F7]'}`}
+                    style={{
+                        width: COUPLE_W,
+                        height: SEAT_SIZE,
+                    }}
                     onPress={() => toggleSeat(seatId)}
                     disabled={isBooked}
                     activeOpacity={0.7}
@@ -169,7 +262,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
 
         return (
             <TouchableOpacity
-                className={`w-[${SEAT_SIZE}px] h-[${SEAT_SIZE}px] rounded-md items-center justify-center ${isSelected ? 'bg-[#00D4FF]' : isBooked ? 'bg-[#ff3d3d]/30' : isVip ? 'bg-[#0A0A0F] border-1.2 border-[#F4C430]' : 'bg-[#2A2A3A]'}`}
+                className={`w-[${SEAT_SIZE}px] h-[${SEAT_SIZE}px] rounded-md items-center justify-center ${isSelected ? 'bg-[#00D4FF]' : isBooked ? 'bg-[#ff3d3d]/30' : isVip ? 'bg-[#1A1A1A] border-1.2 border-[#F4C430]' : 'bg-[#3A3A4A]'}`}
                 style={{ width: SEAT_SIZE, height: SEAT_SIZE }}
                 onPress={() => toggleSeat(seatId)}
                 disabled={isBooked}
@@ -193,21 +286,37 @@ export default function SeatSelectionScreen({ route, navigation }) {
             if (isLastRow) {
                 for (let c = 0; c < layout.cols / 2; c++) {
                     const seatId = `${rowLabel}${c * 2 + 1}-${c * 2 + 2}`;
+
                     rowSeats.push(<Seat key={seatId} seatId={seatId} type="couple" />);
-                    if (c < (layout.cols / 2) - 1) rowSeats.push(<View key={`aisle-c-${c}`} className="w-2" />);
+
+                    if (c < (layout.cols / 2) - 1) {
+                        rowSeats.push(<View key={`aisle-c-${c}`} className="w-2" />);
+                    }
                 }
             } else {
                 for (let c = 0; c < layout.cols; c++) {
                     const seatIndex = r * layout.cols + c;
                     if (seatIndex >= layout.capacity) break;
+
                     const seatId = `${rowLabel}${c + 1}`;
-                    rowSeats.push(<Seat key={seatId} seatId={seatId} type={getSeatType(r, c)} label={c + 1} />);
-                    if (c === 1 || c === 7) rowSeats.push(<View key={`aisle-${r}-${c}`} className="w-2" />);
+
+                    rowSeats.push(
+                        <Seat
+                            key={seatId}
+                            seatId={seatId}
+                            type={getSeatType(r, c)}
+                            label={c + 1}
+                        />
+                    );
+
+                    if (c === 1 || c === 7) {
+                        rowSeats.push(<View key={`aisle-${r}-${c}`} className="w-2" />);
+                    }
                 }
             }
 
             grid.push(
-                <View key={rowLabel} className="flex-row items-center gap-[6px]">
+                <View key={rowLabel} className="flex-row items-center gap-[4px]">
                     <Text className="text-[#444] text-[10px] font-bold w-3.5 text-center">{rowLabel}</Text>
                     {rowSeats}
                     <Text className="text-[#444] text-[10px] font-bold w-3.5 text-center">{rowLabel}</Text>
@@ -260,7 +369,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
                         </View>
                         <View className="flex-row items-center gap-1">
                             <Ionicons name="cash-outline" size={14} color="#4CAF50" />
-                            <Text className="text-[#4CAF50] text-[12px] font-medium">{formatVND(basePrice)}</Text>
+                            <Text className="text-[#4CAF50] text-[12px] font-medium">{formatCurrency(basePrice)}</Text>
                         </View>
                     </View>
                 </View>
@@ -297,8 +406,8 @@ export default function SeatSelectionScreen({ route, navigation }) {
                         </View>
                     </View>
                     <View className="flex-row justify-center mt-3">
-                        <View className="flex-row items-center gap-1.5">
-                            <View className="w-7 h-4 rounded-sm bg-[#0A0A0F] border border-[#A855F7]" />
+                        <View className="flex-row items-center gap-[6px]">
+                            <View className="w-7 h-4 rounded-sm bg-[#2A1A40] border border-[#A855F7]" />
                             <Text className="text-gray-500 text-[11px]">Couple</Text>
                         </View>
                     </View>
@@ -317,12 +426,13 @@ export default function SeatSelectionScreen({ route, navigation }) {
                                 {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'Chưa chọn'}
                             </Text>
                         </View>
-                        <Text className="text-[#00D4FF] text-2xl font-black">{formatVND(totalPrice)}</Text>
+                        <Text className="text-[#00D4FF] text-2xl font-black">{formatCurrency(preview?.finalPrice || 0)}</Text>
                     </View>
 
                     <TouchableOpacity
                         onPress={handleContinue}
                         activeOpacity={0.85}
+                        disabled={!preview || previewLoading}
                         className="flex-1 rounded-2xl overflow-hidden shadow-lg shadow-[#00D4FF]/20"
                     >
                         <LinearGradient

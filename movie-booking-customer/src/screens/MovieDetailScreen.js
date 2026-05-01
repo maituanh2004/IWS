@@ -58,7 +58,10 @@ export default function MovieDetailScreen({ route, navigation }) {
               <View className="bg-[#F4C430] px-2 py-0.5 rounded-md">
                 <Text className="text-[#0A0A0F] text-[10px] font-black italic">IMAX</Text>
               </View>
-              <Text className="text-gray-300 text-xs font-bold tracking-widest">{movie.genre?.toUpperCase()}</Text>
+              <Text className="text-gray-300 text-xs font-bold tracking-widest">{
+                Array.isArray(movie.genre)
+                ? movie.genre.join(', ')
+                : movie.genre?.toUpperCase()}</Text>
             </View>
             <Text className="text-white text-4xl font-black italic mb-2">{movie.title}</Text>
             

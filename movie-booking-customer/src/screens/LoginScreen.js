@@ -2,17 +2,8 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-<<<<<<< HEAD
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  StatusBar,
-=======
   TouchableOpacity,
   Alert,
->>>>>>> FE-admin
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -34,14 +25,26 @@ export default function LoginScreen({ navigation }) {
   const { signIn } = useAuth();
 
   const handleLogin = async () => {
+    console.log("🔥 CLICK LOGIN");
+    console.log("EMAIL:", email);
+    console.log("PASSWORD:", password);
+
     if (!email || !password) {
+      console.log("❌ VALIDATE FAIL");
       Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin');
       return;
     }
+
+    console.log("✅ VALIDATE PASS");
+
     setLoading(true);
+
     try {
+      console.log("🔥 CALLING signIn...");
       await signIn(email, password);
+      console.log("✅ LOGIN SUCCESS");
     } catch (error) {
+      console.log("❌ LOGIN ERROR:", error);
       Alert.alert('Đăng nhập thất bại', error.response?.data?.error || 'Sai email hoặc mật khẩu');
     } finally {
       setLoading(false);
@@ -92,6 +95,7 @@ export default function LoginScreen({ navigation }) {
               keyboardType="email-address"
               autoCapitalize="none"
             />
+            console.log("EMAIL STATE:", email);
 
             <View className="relative">
               <CustomerInput

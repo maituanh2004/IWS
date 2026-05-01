@@ -39,24 +39,6 @@ const getPasswordStrength = (pw) => {
     return { level: 3, label: 'Mật khẩu mạnh ✓', colors: ['#00D4FF', '#4CAF50'] };
 };
 
-// ─── Step config ──────────────────────────────────────────────────────────────
-const STEPS = ['TÀI KHOẢN', 'CÁ NHÂN', 'XÁC MINH'];
-
-// ─── Password strength ────────────────────────────────────────────────────────
-const getPasswordStrength = (pw) => {
-    if (!pw) return { level: 0, label: '', color: [] };
-    let score = 0;
-    if (pw.length >= 6) score++;
-    if (pw.length >= 10) score++;
-    if (/[A-Z]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-
-    if (score <= 1) return { level: 1, label: 'Mật khẩu yếu', colors: ['#FF4444', '#FF4444'] };
-    if (score <= 3) return { level: 2, label: 'Mật khẩu trung bình', colors: ['#F4C430', '#F4C430'] };
-    return { level: 3, label: 'Mật khẩu mạnh ✓', colors: ['#00D4FF', '#4CAF50'] };
-};
-
 export default function RegisterScreen({ navigation }) {
     const { signUp } = useAuth();
 
@@ -213,31 +195,10 @@ export default function RegisterScreen({ navigation }) {
                             <Text className="text-[#FF4444] text-[12px] mt-[-14px] mb-3 ml-1">Mật khẩu không khớp</Text>
                         )}
 
-                        {/* Password strength */}
-                        {password.length > 0 && <StrengthBar />}
-
-                        {/* XÁC NHẬN MẬT KHẨU */}
-                        <Text style={styles.fieldLabel}>XÁC NHẬN MẬT KHẨU</Text>
-                        <View style={[
-                            styles.inputBox,
-                            confirmPw && confirmPw !== password && styles.inputBoxError,
-                        ]}>
-                            <Ionicons name="shield-checkmark-outline" size={18} color="#666" style={styles.inputIcon} />
-                            <TextInput
-                                style={[styles.input, { flex: 1 }]}
-                                placeholder="••••••••••"
-                                placeholderTextColor="#444"
-                                value={confirmPw}
-                                onChangeText={setConfirmPw}
-                                secureTextEntry={!showConfirm}
-                                returnKeyType="done"
-                            />
-                            <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeBtn}>
-                                <Ionicons name={showConfirm ? 'eye-outline' : 'eye-off-outline'} size={18} color="#666" />
-                            </TouchableOpacity>
-                        </View>
                         {confirmPw.length > 0 && confirmPw !== password && (
-                            <Text style={styles.errorHint}>Mật khẩu không khớp</Text>
+                            <Text className="text-[#FF4444] text-[12px] mt-[-14px] mb-3 ml-1">
+                                Mật khẩu không khớp
+                            </Text>
                         )}
 
                         {/* Terms checkbox */}

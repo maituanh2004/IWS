@@ -27,9 +27,6 @@ const DEFAULT_GRADIENTS = [
     ['#2C2C0A', '#8B8B1A', '#1A1A05'],
 ];
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const HERO_W = SCREEN_W - 32; // card width with 16px padding each side
-
 // ─── Sample Data ──────────────────────────────────────────────────────────────
 const HERO_MOVIES = [
     {
@@ -135,7 +132,7 @@ export default function MovieListScreen({ navigation }) {
     const { user } = useAuth();
     const [movies, setMovies] = useState([]);
     const [heroMovies, setHeroMovies] = useState([]);
-    const [vouchers, setVouchers] = useState([]);
+    const [discounts, setDiscounts] = useState([]);
     const [filteredMovies, setFilteredMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -173,7 +170,7 @@ export default function MovieListScreen({ navigation }) {
             }
 
             if (discountsRes.data.success) {
-                setVouchers(discountsRes.data.data);
+                setDiscounts(discountsRes.data.data);
             }
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -181,48 +178,33 @@ export default function MovieListScreen({ navigation }) {
         } finally {
             setLoading(false);
         }
-    } catch (error) {
-        console.error('Error fetching movies:', error);
-        Alert.alert('Lỗi', 'Không thể tải danh sách phim.');
-    } finally {
-        setLoading(false);
     }
-};
+    
+    useEffect(() => {
+        const filtered = movies.filter((m) =>
+            m.title.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredMovies(filtered);
+    }, [searchQuery, movies]);
 
-useEffect(() => {
-    const filtered = movies.filter((m) =>
-        m.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredMovies(filtered);
-}, [searchQuery, movies]);
+    // Hero dot tracker
+    const onHeroScroll = (e) => {
+        const idx = Math.round(e.nativeEvent.contentOffset.x / HERO_W);
+        setHeroIndex(idx);
+    };
 
-const onHeroScroll = (e) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / HERO_W);
-    setHeroIndex(idx);
-};
+    const handleNavPress = (navId) => {
+        setActiveNav(navId);
+        switch (navId) {
+            case 'profile': navigation.navigate('Profile'); break;
+            case 'tickets': navigation.navigate('BookingHistory'); break;
+            default: break;
+        }
+    };
 
-const getInitials = (name) =>
-    name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'CV';
+    const getInitials = (name) =>
+        name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
-// Hero dot tracker
-const onHeroScroll = (e) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / HERO_W);
-    setHeroIndex(idx);
-};
-
-const handleNavPress = (navId) => {
-    setActiveNav(navId);
-    switch (navId) {
-        case 'profile': navigation.navigate('Profile'); break;
-        case 'tickets': navigation.navigate('BookingHistory'); break;
-        default: break;
-    }
-};
-
-const getInitials = (name) =>
-    name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
-
-if (loading) {
     return (
         <ScreenWrapper>
             {/* ── Header ── */}
@@ -356,17 +338,17 @@ if (loading) {
                             </ScrollView>
                         </View>
 
-                        {/* ── Voucher Section ── */}
-                        {vouchers.length > 0 && (
+                        {/* ── Discount Section ── */}
+                        {discounts.length > 0 && (
                             <View className="mb-7 px-4">
                                 <View className="flex-row items-center gap-2 mb-4">
                                     <Text className="text-xl">🎟️</Text>
                                     <Text className="text-white text-lg font-extrabold">Ưu đãi độc quyền</Text>
                                 </View>
                                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                    {vouchers.map((voucher) => (
+                                    {discounts.map((discount) => (
                                         <TouchableOpacity
-                                            key={voucher._id}
+                                            key={discount._id}
                                             className="bg-[#141420] border border-[#1E1E2E] rounded-2xl p-4 mr-3 w-64"
                                             activeOpacity={0.8}
                                         >
@@ -375,12 +357,12 @@ if (loading) {
                                                     <Ionicons name="pricetag" size={20} color="#00D4FF" />
                                                 </View>
                                                 <View className="flex-1">
-                                                    <Text className="text-white text-sm font-bold" numberOfLines={1}>{voucher.code}</Text>
-                                                    <Text className="text-[#4CAF50] text-xs font-bold">Giảm {voucher.discountPercentage}%</Text>
+                                                    <Text className="text-white text-sm font-bold" numberOfLines={1}>{discount.code}</Text>
+                                                    <Text className="text-[#4CAF50] text-xs font-bold">Giảm {discount.percentage}%</Text>
                                                 </View>
                                             </View>
                                             <Text className="text-gray-500 text-[10px] leading-4" numberOfLines={2}>
-                                                {voucher.description || 'Áp dụng cho tất cả các suất chiếu tại CineViet.'}
+                                                {discount.description || 'Áp dụng cho tất cả các suất chiếu tại CineViet.'}
                                             </Text>
                                         </TouchableOpacity>
                                     ))}

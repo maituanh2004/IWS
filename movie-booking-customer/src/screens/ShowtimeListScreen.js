@@ -19,7 +19,7 @@ export default function ShowtimeListScreen({ route, navigation }) {
 
   useEffect(() => {
     loadShowtimes();
-  }, []);
+  }, [movie._id]);
 
   const loadShowtimes = async () => {
     try {
@@ -34,6 +34,7 @@ export default function ShowtimeListScreen({ route, navigation }) {
 
   const renderShowtime = ({ item }) => {
     const startTime = new Date(item.startTime);
+    const price = item.basePrice || 0;
 
     return (
       <TouchableOpacity
@@ -56,7 +57,7 @@ export default function ShowtimeListScreen({ route, navigation }) {
           <View className="bg-[#1E1E2E] px-2.5 py-1 rounded-md border border-[#2A2A3E] mb-1">
             <Text className="text-gray-300 text-xs font-bold uppercase tracking-widest">PHÒNG {item.room}</Text>
           </View>
-          <Text className="text-lg font-black text-white">{item.price.toLocaleString('vi-VN')}đ</Text>
+          <Text className="text-lg font-black text-white">{price.toLocaleString('vi-VN')}đ</Text>
         </View>
       </TouchableOpacity>
     );

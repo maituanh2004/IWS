@@ -13,6 +13,8 @@ import BookingConfirmScreen from '../screens/BookingConfirmScreen';
 import BookingHistoryScreen from '../screens/BookingHistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SystemErrorScreen from '../screens/SystemErrorScreen';
+import BookingDetailScreen from '../screens/BookingDetailScreen';
+import PaymentFailScreen from '../screens/PaymentFailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,10 +33,12 @@ export default function AppNavigator() {
                     <Stack.Screen name="MovieDetail" component={MovieDetailScreen} />
                     <Stack.Screen name="ShowtimeList" component={ShowtimeListScreen} />
                     <Stack.Screen name="SeatSelection" component={SeatSelectionScreen} />
-                    <Stack.Screen name="BookingConfirm" component={BookingConfirmScreen} />
+                    <Stack.Screen name="BookingConfirmScreen" component={BookingConfirmScreen} />
                     <Stack.Screen name="BookingHistory" component={BookingHistoryScreen} />
                     <Stack.Screen name="Profile" component={ProfileScreen} />
                     <Stack.Screen name="SystemError" component={SystemErrorScreen} />
+                    <Stack.Screen name="PaymentFail" component={PaymentFailScreen} />
+                    <Stack.Screen name="BookingDetail" component={BookingDetailScreen} />
                 </Stack.Navigator>
             ) : (
                 <Stack.Navigator screenOptions={{ headerShown: false }}>

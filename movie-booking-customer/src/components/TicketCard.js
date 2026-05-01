@@ -70,24 +70,12 @@ export default function TicketCard({ movie, showtime, seats, bookingCode, cinema
       </View>
 
       {/* Bottom Part */}
-      <View className="bg-[#E8E8EE] rounded-b-3xl py-6 items-center gap-3.5">
-        <View className="p-1.5 bg-white rounded-lg">
-          <View className="w-32 h-32 bg-white p-2">
-            {/* Simple QR placeholder */}
-            <View className="flex-1 gap-0.5">
-              {Array.from({ length: 8 }).map((_, r) => (
-                <View key={r} className="flex-1 flex-row gap-0.5">
-                  {Array.from({ length: 8 }).map((_, c) => (
-                    <View key={c} className={`flex-1 ${ (r+c)%3===0 || (r<2 && c<2) || (r>5 && c<2) ? 'bg-black' : 'bg-white'}`} />
-                  ))}
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
-        <Text className="text-[#0A0A0F] text-sm font-bold tracking-wider">{bookingCode}</Text>
+      <View className="bg-[#E8E8EE] rounded-b-3xl py-6 items-center justify-center">
+        <Text className="text-gray-400 text-sm font-semibold">
+          Vé sẽ được hiển thị sau khi thanh toán
+        </Text>
       </View>
-
+      
       {/* Corner decorations */}
       <View className="absolute -top-px -left-px w-5 h-5 rounded-tl-3xl bg-[#0A0A0F]" />
       <View className="absolute -top-px -right-px w-5 h-5 rounded-tr-3xl bg-[#0A0A0F]" />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Search, ServerCrash, AlertTriangle, Home, RefreshCcw } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const SystemErrorScreen = ({ route, navigation }) => {
     const { errorType = 'generic' } = route.params || {};
