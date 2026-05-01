@@ -102,7 +102,7 @@ export default function AppNavigator() {
             {/* RootStack holds SystemError at the top level so it's
                 reachable from both the unauthenticated (Login) and
                 authenticated (App) stacks */}
-            <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            <RootStack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
                 {user ? (
                     <RootStack.Screen name="App" component={AppStack} />
                 ) : (

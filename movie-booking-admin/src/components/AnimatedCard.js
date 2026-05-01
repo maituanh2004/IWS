@@ -10,13 +10,13 @@ import Animated, {
 
 const AnimatedCard = ({ children, index = 0, delay = 100 }) => {
     const opacity = useSharedValue(0);
-    const translateY = useSharedValue(50);
+    const translateY = useSharedValue(20);
     const scale = useSharedValue(0.9);
 
     useEffect(() => {
-        opacity.value = withDelay(index * delay, withTiming(1, { duration: 600 }));
-        translateY.value = withDelay(index * delay, withSpring(0, { damping: 15 }));
-        scale.value = withDelay(index * delay, withSpring(1, { damping: 12 }));
+        opacity.value = withDelay(index * delay, withTiming(1, { duration: 300 }));
+        translateY.value = withDelay(index * delay, withSpring(0));
+        scale.value = withDelay(index * delay, withSpring(1));
     }, [index, delay]);
 
     const animatedStyle = useAnimatedStyle(() => {

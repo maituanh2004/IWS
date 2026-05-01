@@ -3,11 +3,14 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
+import { useUI } from '../context/UIContext';
+
 export default function Header({ title, showBack = true, rightElement, subTitle }) {
   const navigation = useNavigation();
+  const { colors } = useUI();
 
   return (
-    <View className="flex-row items-center justify-between px-4 py-4 bg-[#0A0A0F] border-b border-[#1E1E2E]">
+    <View className={`flex-row items-center justify-between px-4 py-4 ${colors.headerBg} border-b ${colors.border}`}>
       <View className="w-10">
         {showBack && (
           <TouchableOpacity 
@@ -20,7 +23,7 @@ export default function Header({ title, showBack = true, rightElement, subTitle 
       </View>
 
       <View className="flex-1 items-center">
-        <Text className="text-white text-lg font-extrabold" numberOfLines={1}>
+        <Text className={`${colors.text} text-lg font-extrabold`} numberOfLines={1}>
           {title}
         </Text>
         {subTitle && (

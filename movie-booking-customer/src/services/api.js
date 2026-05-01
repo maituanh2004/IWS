@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 
 // ⚙️  Update LOCAL_IP to your machine's current IP whenever it changes.
 // Run `ipconfig` (Windows) or `ifconfig` (Mac/Linux) to find it.
-const LOCAL_IP = '192.168.1.4';
+const LOCAL_IP = '192.168.1.5';
 
 const getApiUrl = () => {
     if (Platform.OS === 'web') {
@@ -94,7 +94,7 @@ export const createBooking = ({ showtimeId, seats, discountCode }) =>
 export const getMyBookings = () =>
     api.get('/bookings/me');
 
-export const getUserBookings = (userId) =>
+export const getUserBookingsAdmin = (userId) =>
     api.get(`/bookings/user/${userId}`);
 
 export const getBookingByGroupId = (bookingGroupId) => {

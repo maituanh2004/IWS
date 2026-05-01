@@ -18,18 +18,7 @@ const NavIcon = ({ icon: Icon, isActive }) => {
     const scale = useSharedValue(1);
 
     useEffect(() => {
-        if (isActive) {
-            scale.value = withRepeat(
-                withSequence(
-                    withTiming(1.15, { duration: 1500 }),
-                    withTiming(1, { duration: 1500 })
-                ),
-                -1,
-                true
-            );
-        } else {
-            scale.value = withSpring(1);
-        }
+        scale.value = withSpring(isActive ? 1.05 : 1);
     }, [isActive]);
 
     const animatedStyle = useAnimatedStyle(() => ({

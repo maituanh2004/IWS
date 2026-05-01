@@ -37,21 +37,15 @@ const seedData = async () => {
     console.log('👤 Creating users...');
 
     const users = await User.create([
-      {
-        name: 'Admin',
-        email: 'admin@example.com',
-        password: 'admin123',
-        role: 'admin'
-      },
-      {
-        name: 'John Doe',
-        email: 'customer@example.com',
-        password: 'customer123',
-        role: 'customer'
-      }
+      { name: 'Admin User', email: 'admin@example.com', password: 'admin123', role: 'admin' },
+      { name: 'John Doe', email: 'customer@example.com', password: 'customer123', role: 'customer' },
+      { name: 'Alice Johnson', email: 'alice@example.com', password: 'password123', role: 'customer' },
+      { name: 'Bob Smith', email: 'bob@example.com', password: 'password123', role: 'customer' }
     ]);
 
-    const user = users[1];
+    const admin = users[0];
+    const customer = users[1];
+    const otherCustomers = users.slice(2);
 
     // =============================
     // MOVIES
@@ -59,183 +53,96 @@ const seedData = async () => {
     console.log('🎬 Creating movies...');
 
     const movies = await Movie.create([
-    {
+      {
         title: 'Avengers: Endgame',
-        description: 'Superheroes unite to defeat Thanos.',
-        duration: 181,
-        genre: 'Action',
-        releaseDate: new Date('2019-04-26'),
-        price: 100000
-    },
-    {
+        description: 'The Avengers assemble once more in order to restore balance to the universe.',
+        duration: 181, genre: 'Action, Sci-Fi', releaseDate: new Date('2019-04-26'),
+        price: 100000, poster: 'https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg', rating: 8.4
+      },
+      {
         title: 'Inception',
-        description: 'Dream within a dream.',
-        duration: 148,
-        genre: 'Sci-Fi',
-        releaseDate: new Date('2010-07-16'),
-        price: 95000
-    },
-    {
+        description: 'A thief who steals corporate secrets through dream-sharing technology.',
+        duration: 148, genre: 'Sci-Fi, Adventure', releaseDate: new Date('2010-07-16'),
+        price: 95000, poster: 'https://media.themoviedb.org/t/p/w600_and_h900_face/eBtqGWtR5KUiNl6OXHLR3ri6nVm.jpg', rating: 8.8
+      },
+      {
         title: 'Interstellar',
-        description: 'Space exploration to save humanity.',
-        duration: 169,
-        genre: 'Sci-Fi',
-        releaseDate: new Date('2014-11-07'),
-        price: 110000
-    },
-    {
-        title: 'The Dark Knight',
-        description: 'Batman vs Joker.',
-        duration: 152,
-        genre: 'Action',
-        releaseDate: new Date('2008-07-18'),
-        price: 100000
-    },
-    {
-        title: 'Parasite',
-        description: 'A dark comedy thriller.',
-        duration: 132,
-        genre: 'Drama',
-        releaseDate: new Date('2019-05-30'),
-        price: 90000
-    }
+        description: 'A team of explorers travel through a wormhole in space.',
+        duration: 169, genre: 'Sci-Fi, Drama', releaseDate: new Date('2014-11-07'),
+        price: 110000, poster: 'https://media.themoviedb.org/t/p/w600_and_h900_face/if4TI9LbqNIrzkoOgWjX5PZYDYe.jpg', rating: 8.7
+      }
     ]);
-
-    const avengers = movies[0];
 
     // =============================
     // SHOWTIME
     // =============================
-    const now = new Date();
-
-    const addHours = (hours) => {
-        return new Date(now.getTime() + hours * 60 * 60 * 1000);
-    };
-    
     console.log('🕒 Creating showtimes...');
+    const now = new Date();
+    const addDays = (d) => new Date(now.getTime() + d * 24 * 60 * 60 * 1000);
 
     const showtimes = await Showtime.create([
-    // ROOM 1
-    {
-        movie: movies[0]._id,
-        startTime: addHours(2),
-        endTime: addHours(5),
-        room: '1',
-        totalSeats: getRoomCapacity('1'),
-        basePrice: 100000
-    },
-    {
-        movie: movies[1]._id,
-        startTime: addHours(6),
-        endTime: addHours(9),
-        room: '1',
-        totalSeats: getRoomCapacity('1'),
-        basePrice: 100000
-    },
-
-    // ROOM 2
-    {
-        movie: movies[2]._id,
-        startTime: addHours(2),
-        endTime: addHours(5),
-        room: '2',
-        totalSeats: getRoomCapacity('2'),
-        basePrice: 110000
-    },
-    {
-        movie: movies[3]._id,
-        startTime: addHours(6),
-        endTime: addHours(9),
-        room: '2',
-        totalSeats: getRoomCapacity('2'),
-        basePrice: 110000
-    },
-
-    // ROOM 6 (100 seats)
-    {
-        movie: movies[4]._id,
-        startTime: addHours(3),
-        endTime: addHours(6),
-        room: '6',
-        totalSeats: getRoomCapacity('6'),
-        basePrice: 120000
-    },
-
-    // NEXT DAY
-    {
-        movie: movies[0]._id,
-        startTime: addHours(24 + 2),
-        endTime: addHours(24 + 5),
-        room: '3',
-        totalSeats: getRoomCapacity('3'),
-        basePrice: 100000
-    },
-    {
-        movie: movies[1]._id,
-        startTime: addHours(24 + 6),
-        endTime: addHours(24 + 9),
-        room: '7',
-        totalSeats: getRoomCapacity('7'),
-        basePrice: 120000
-    }
+      // Future Showtimes
+      { movie: movies[0]._id, startTime: addDays(1), endTime: addDays(1.1), room: '1', totalSeats: 80, basePrice: 100000 },
+      { movie: movies[1]._id, startTime: addDays(2), endTime: addDays(2.1), room: '2', totalSeats: 80, basePrice: 95000 },
+      { movie: movies[2]._id, startTime: addDays(3), endTime: addDays(3.1), room: '5', totalSeats: 80, basePrice: 110000 },
+      // Past Showtime (for history)
+      { movie: movies[0]._id, startTime: addDays(-2), endTime: addDays(-1.9), room: '3', totalSeats: 80, basePrice: 100000 }
     ]);
+
+    // =============================
+    // BOOKINGS (The "Booked Data")
+    // =============================
+    console.log('🎟 Creating bookings...');
+
+    const bookingsData = [];
+
+    // 1. Confirmed Upcoming Booking for primary customer (John Doe)
+    const group1 = new mongoose.Types.ObjectId();
+    bookingsData.push(
+      { user: customer._id, showtime: showtimes[0]._id, seat: 'A5', bookingGroupId: group1, totalPrice: 100000, status: 'CONFIRMED', paymentStatus: 'SUCCESS' },
+      { user: customer._id, showtime: showtimes[0]._id, seat: 'A6', bookingGroupId: group1, totalPrice: 100000, status: 'CONFIRMED', paymentStatus: 'SUCCESS' }
+    );
+
+    // 2.  (Past) Booking for John Doe
+    const group2 = new mongoose.Types.ObjectId();
+    bookingsData.push(
+      { user: customer._id, showtime: showtimes[3]._id, seat: 'C10', bookingGroupId: group2, totalPrice: 100000, status: 'CONFIRMED', paymentStatus: 'SUCCESS' }
+    );
+
+    // 3. Pending Booking for John Doe (to test countdown/expiry)
+    const group3 = new mongoose.Types.ObjectId();
+    bookingsData.push(
+      { user: customer._id, showtime: showtimes[1]._id, seat: 'B1', bookingGroupId: group3, totalPrice: 95000, status: 'PENDING', paymentStatus: 'PENDING', expiresAt: new Date(now.getTime() + 10 * 60 * 1000) }
+    );
+
+    // 4. Some bookings for other customers to fill up Admin Occupancy
+    for (let i = 0; i < 10; i++) {
+      const c = otherCustomers[i % otherCustomers.length];
+      const s = showtimes[i % 3]; // Only future ones
+      bookingsData.push({
+        user: c._id, showtime: s._id, seat: `Row${i}-S1`, bookingGroupId: new mongoose.Types.ObjectId(),
+        totalPrice: s.basePrice, status: 'CONFIRMED', paymentStatus: 'SUCCESS'
+      });
+    }
+
+    await Booking.create(bookingsData);
 
     // =============================
     // DISCOUNT
     // =============================
     console.log('💸 Creating discounts...');
-
-    await Discount.create({
-      code: 'SALE10',
-      percentage: 10,
-      minPrice: 50000,
-      expiryDate: new Date('2026-12-31')
-    });
-
-    // =============================
-    // TEST BOOKINGS
-    // =============================
-    console.log('🎟 Creating test bookings...');
-
-    const group1 = new mongoose.Types.ObjectId();
-    const group2 = new mongoose.Types.ObjectId();
-
-    const showtime = showtimes[0];
-
-    // ❌ EXPIRED BOOKING
-    await Booking.create({
-        user: user._id,
-        showtime: showtime._id,
-        seat: 'A1',
-        bookingGroupId: group1,
-        totalPrice: 100000,
-        originalPrice: 100000,
-        status: 'PENDING',
-        paymentStatus: 'PENDING',
-        expiresAt: new Date(Date.now() - 60 * 1000)
-    });
-
-    // ✔ VALID BOOKING
-    await Booking.create({
-        user: user._id,
-        showtime: showtime._id,
-        seat: 'A2',
-        bookingGroupId: group2,
-        totalPrice: 100000,
-        originalPrice: 100000,
-        status: 'CONFIRMED', // 🔥 FIX
-        paymentStatus: 'SUCCESS',
-        expiresAt: null
-    });
+    await Discount.create([
+      { code: 'WELCOME20', description: '20% off for first booking', percentage: 20, minPrice: 0, expiryDate: new Date('2026-12-31') },
+      { code: 'MOVIE50', description: 'Save $50 on $200', percentage: 15, minPrice: 200000, expiryDate: new Date('2026-12-31') }
+    ]);
 
     console.log('✅ Seed completed successfully!');
+    console.log('-----------------------------------');
+    console.log('Customer login: customer@example.com / customer123');
+    console.log('Admin login: admin@example.com / admin123');
+    console.log('-----------------------------------');
 
-    console.log('\n📋 Test info:');
-    console.log('A1 → expired (sẽ bị cleanup)');
-    console.log('A2 → still locked');
-
-    process.exit();
-
+    process.exit(0);
   } catch (err) {
     console.error('❌ Seed error:', err);
     process.exit(1);

@@ -9,10 +9,12 @@ exports.register = async (req, res, next) => {
     try {
         console.log('Registration attempt:', req.body.email);
         const { name, email, password, role } = req.body;
+        const trimmedEmail = email ? email.trim().toLowerCase() : '';
+        const trimmedName = name ? name.trim() : '';
 
         const user = await User.create({
-            name,
-            email,
+            name: trimmedName,
+            email: trimmedEmail,
             password,
             role
         });
@@ -37,7 +39,8 @@ exports.login = async (req, res, next) => {
             return res.status(400).json({ success: false, error: 'Please provide email and password' });
         }
 
-        const user = await User.findOne({ email }).select('+password');
+        const trimmedEmail = email.trim().toLowerCase();
+        const user = await User.findOne({ email: trimmedEmail }).select('+password');
 
         if (!user) {
             console.log('Login failed: User not found', email);
