@@ -1,25 +1,35 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-
+import * as NavigationService from '../navigation/NavigationService';
+import Constants from 'expo-constants';
 
 const LOCAL_IP = "192.168.1.5"; // ← Update this whenever your machine's IP changes
 const PUBLIC_URL = "";
 
 const getBaseUrl = () => {
+
     if (PUBLIC_URL) return `${PUBLIC_URL}/api`;
 
-    if (Platform.OS === 'web') return `http://localhost:5000/api`;
-
-    if (Platform.OS === 'android') {
-        const isLanIp = typeof LOCAL_IP === 'string' && /^\d+\.\d+\.\d+\.\d+$/.test(LOCAL_IP) && !LOCAL_IP.startsWith('127.');
-        if (isLanIp) return `http://${LOCAL_IP}:5000/api`;
-        // default emulator host
-        return `http://10.0.2.2:5000/api`;
+    // 🌐 Web
+    if (Platform.OS === 'web') {
+        return 'http://localhost:5000/api';
     }
 
-    // iOS and other platforms: use LOCAL_IP if provided
-    return `http://${LOCAL_IP || 'localhost'}:5000/api`;
+    // 📱 Lấy host từ Expo (quan trọng)
+    const hostUri =
+        Constants.expoConfig?.hostUri ||
+        Constants.manifest?.debuggerHost;
+
+    if (!hostUri) {
+        console.log("⚠️ No hostUri found, fallback localhost");
+        return 'http://localhost:5000/api';
+    }
+
+    // Ví dụ: 192.168.1.21:8081 → lấy IP
+    const host = hostUri.split(':')[0];
+
+    return `http://${host}:5000/api`;
 };
 
 const API_BASE = getBaseUrl();
@@ -66,7 +76,6 @@ api.interceptors.response.use(undefined, async (error) => {
     return Promise.reject(error);
 });
 
-import * as NavigationService from '../navigation/NavigationService';
 
 // ⭐ INTERCEPTOR 1 — REQUEST LOGGING & AUTH
 api.interceptors.request.use(async (config) => {

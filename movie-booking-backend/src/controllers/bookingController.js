@@ -143,3 +143,36 @@ exports.getBookingByGroupId = async (req, res) => {
     });
   }
 };
+
+// Get booking by showtime
+exports.getBookingsByShowtime = async (req, res) => {
+  try {
+    const { showtimeId } = req.params;
+
+    const mongoose = require('mongoose');
+
+    if (!mongoose.Types.ObjectId.isValid(showtimeId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid showtimeId'
+      });
+    }
+
+    const bookings = await Booking.find({
+      showtime: showtimeId
+    }).populate('user');
+
+    res.status(200).json({
+      success: true,
+      data: bookings
+    });
+
+  } catch (err) {
+    console.error("🔥 BACKEND ERROR:", err); // 👈 DEBUG
+
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};

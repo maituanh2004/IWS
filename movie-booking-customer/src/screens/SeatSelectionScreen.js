@@ -75,10 +75,8 @@ export default function SeatSelectionScreen({ route, navigation }) {
             setPreviewLoading(false);
             return;
         }
-        const timer = setTimeout(() => {
-            fetchPreview();
-        }, 300);
-        return () => clearTimeout(timer);
+        fetchPreview();
+        return;
     }, [selectedSeats, showtime?._id]);
 
     const loadData = async () => {

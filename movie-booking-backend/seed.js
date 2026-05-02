@@ -118,10 +118,30 @@ const seedData = async () => {
     // 4. Some bookings for other customers to fill up Admin Occupancy
     for (let i = 0; i < 10; i++) {
       const c = otherCustomers[i % otherCustomers.length];
-      const s = showtimes[i % 3]; // Only future ones
+      const s = showtimes[i % 3];
+
+      // 👉 xác định số ghế theo room
+      const roomNumber = Number(s.room);
+      const totalSeats = roomNumber <= 5 ? 80 : 100;
+
+      const rowsCount = totalSeats === 80 ? 8 : 10;
+      const colsCount = 10;
+
+      const rows = Array.from({ length: rowsCount }, (_, idx) =>
+        String.fromCharCode(65 + idx) // A, B, C...
+      );
+
+      const row = rows[i % rows.length];
+      const col = (i % colsCount) + 1;
+
       bookingsData.push({
-        user: c._id, showtime: s._id, seat: `Row${i}-S1`, bookingGroupId: new mongoose.Types.ObjectId(),
-        totalPrice: s.basePrice, status: 'CONFIRMED', paymentStatus: 'SUCCESS'
+        user: c._id,
+        showtime: s._id,
+        seat: `${row}${col}`, // ✅ luôn hợp lệ theo room
+        bookingGroupId: new mongoose.Types.ObjectId(),
+        totalPrice: s.basePrice,
+        status: 'CONFIRMED',
+        paymentStatus: 'SUCCESS'
       });
     }
 

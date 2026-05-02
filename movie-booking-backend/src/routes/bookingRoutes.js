@@ -6,7 +6,8 @@ const {
   previewBooking,
   getMyBookings,
   getBookingsByUserId,
-  getBookingByGroupId
+  getBookingByGroupId,
+  getBookingsByShowtime
 } = require('../controllers/bookingController');
 
 const { 
@@ -25,5 +26,7 @@ router.get('/group/:bookingGroupId', protect, getBookingByGroupId);
 
 // admin xem user khác
 router.get('/user/:userId', protect, authorize('admin'), getBookingsByUserId);
+
+router.get('/showtime/:showtimeId', protect, authorize('admin'), getBookingsByShowtime);
 
 module.exports = router;

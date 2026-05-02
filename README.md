@@ -22,6 +22,11 @@ Install all dependencies for all projects from the root directory:
 ```bash
 npm install
 ```
+```Run ngrok
+npm install -g ngrok
+ngrok http 5000
+replace VPN_Return = ngrok url
+```
 
 ### 2. Run Projects
 You can run all components directly from the root:
