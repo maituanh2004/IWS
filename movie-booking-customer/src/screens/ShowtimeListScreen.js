@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   Dimensions,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,10 +39,35 @@ export default function ShowtimeListScreen({ route, navigation }) {
   const textColor = theme === 'dark' ? '#FFFFFF' : '#1A1A2E';
   const subTextColor = theme === 'dark' ? '#6b7280' : '#9ca3af';
   const borderColor = theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)';
+  const generateDates = (days = 7) => {
+    const dates = [];
+    const today = new Date();
+
+    for (let i = 0; i < days; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() + i);
+      dates.push(d.toDateString());
+    }
+
+    return dates;
+  };
+
+  const uniqueDates = generateDates(7); // 7 ngày tới
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     loadShowtimes();
   }, [movie._id]);
+
+  useEffect(() => {
+    if (showtimes.length > 0 && !selectedDate) {
+      setSelectedDate(new Date(showtimes[0].startTime).toDateString());
+    }
+  }, [showtimes]);
+  
+  const filteredShowtimes = showtimes.filter(st => {
+    return new Date(st.startTime).toDateString() === selectedDate;
+  });
 
   const loadShowtimes = async () => {
     try {
@@ -105,13 +131,6 @@ export default function ShowtimeListScreen({ route, navigation }) {
                   </Text>
                 </View>
               </View>
-
-              <View style={{ height: 1, backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', marginVertical: 4 }} />
-
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Ionicons name="film-outline" size={10} color={subTextColor} />
-                <Text style={{ color: subTextColor, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>Cinema 1</Text>
-              </View>
             </View>
           </LinearGradient>
         </View>
@@ -166,23 +185,73 @@ export default function ShowtimeListScreen({ route, navigation }) {
 
       {/* List */}
       <View style={{ flex: 1, backgroundColor: bgColor }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ paddingHorizontal: 12, marginTop: 8, marginBottom: 8, maxHeight: 60 }}
+        >
+          {uniqueDates.map((dateStr) => {
+            const date = new Date(dateStr);
+            const isActive = selectedDate === dateStr;
+
+            return (
+              <TouchableOpacity
+                key={dateStr}
+                onPress={() => setSelectedDate(dateStr)}
+                style={{
+                  marginRight: 8,
+                  paddingVertical: 6,
+                  borderRadius: 14,
+                  backgroundColor: isActive ? '#00D4FF' : 'rgba(255,255,255,0.08)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 44,
+                  minWidth: 75,
+                  paddingHorizontal: 20
+                }}
+              >
+              <Text style={{
+                color: isActive ? '#000' : '#999',
+                fontWeight: '700',
+                fontSize: 10,
+                textAlign: 'center'
+              }}>
+                {date.toLocaleDateString('vi-VN', {
+                  weekday: 'short'
+                })}
+              </Text>
+
+              <Text style={{
+                color: isActive ? '#000' : '#bbb',
+                fontWeight: '900',
+                fontSize: 12,
+                textAlign: 'center'
+              }}>
+                {date.getDate()}/{date.getMonth() + 1}
+              </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
         {loading ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" color="#00D4FF" />
           </View>
-        ) : showtimes.length === 0 ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }}>
-            <Text style={{ color: subTextColor, fontSize: 14, fontWeight: '800' }}>No Slots Found</Text>
-          </View>
-        ) : (
+          ) : filteredShowtimes.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 }}>
+              <Text style={{ color: subTextColor, fontSize: 14, fontWeight: '800' }}>
+                No showtimes available
+              </Text>
+            </View>
+          ) : (
           <FlatList
-            data={showtimes}
+            data={filteredShowtimes}
             renderItem={renderShowtime}
             keyExtractor={(item) => item._id}
             numColumns={2}
             columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 16 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingTop: 16, paddingBottom: 48 }}
+            contentContainerStyle={{ paddingTop: 16, paddingBottom: 48, flexGrow: 1 }}
           />
         )}
       </View>

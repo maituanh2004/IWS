@@ -16,8 +16,6 @@ import ScreenWrapper from '../components/ScreenWrapper';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import TicketCard from '../components/TicketCard';
-
-// ✅ IMPORT BOOKING UTILS
 import { useUI } from '../context/UIContext';
 import {
   formatCurrency,
@@ -184,7 +182,6 @@ export default function BookingHistoryScreen({ navigation }) {
         <View className="flex-1 items-center justify-center">
           <Text className="text-gray-500">{t('no_tickets_found')}</Text>
         </View>
-        <BottomNav />
       </ScreenWrapper>
     );
   }

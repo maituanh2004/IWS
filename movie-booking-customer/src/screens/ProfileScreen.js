@@ -18,8 +18,8 @@ export default function ProfileScreen({ navigation }) {
   const { theme, language, toggleTheme, toggleLanguage, t, colors } = useUI();
   // Edit Profile State
   const [modalVisible, setModalVisible] = useState(false);
-  const [editName, setEditName] = useState(user?.name || '');
-  const [editEmail, setEditEmail] = useState(user?.email || '');
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [saving, setSaving] = useState(false);
@@ -37,8 +37,8 @@ export default function ProfileScreen({ navigation }) {
     if (id === 'tickets') {
       navigation.navigate('DiscountHistory');
     } else if (id === 'edit_profile') {
-      setEditName(user?.name || '');
-      setEditEmail(user?.email || '');
+      setName(user?.name || '');
+      setEmail(user?.email || '');
       setCurrentPassword('');
       setNewPassword('');
       setModalVisible(true);
@@ -48,14 +48,14 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const handleSaveProfile = async () => {
-    if (!editName || !editEmail) {
+    if (!name || !email) {
       Alert.alert('Error', 'Name and Email are required.');
       return;
     }
     setSaving(true);
     try {
-      if (editName !== user?.name || editEmail !== user?.email) {
-        await api.updateDetails(editName, editEmail);
+      if (name !== user?.name || email !== user?.email) {
+        await api.updateDetails(name, email);
       }
       if (currentPassword && newPassword) {
         await api.updatePassword(currentPassword, newPassword);
@@ -102,8 +102,8 @@ export default function ProfileScreen({ navigation }) {
         if (item.id === 'theme') toggleTheme();
         else if (item.id === 'language') toggleLanguage();
         else if (item.id === 'personalInfo') {
-          setEditName(user?.name || '');
-          setEditEmail(user?.email || '');
+          setName(user?.name || '');
+          setEmail(user?.email || '');
           setCurrentPassword('');
           setNewPassword('');
           setModalVisible(true);
@@ -200,8 +200,8 @@ export default function ProfileScreen({ navigation }) {
 
             <Text className={`${colors.textMuted} text-xs font-black tracking-widest uppercase mb-2 ml-1`}>Full Name</Text>
             <TextInput
-              value={editName}
-              onChangeText={setEditName}
+              value={name}
+              onChangeText={setName}
               placeholder="Your name"
               placeholderTextColor="#666"
               className={`w-full h-14 px-4 rounded-xl mb-4 ${theme === 'dark' ? 'bg-[#0A0A0F] text-white' : 'bg-gray-100 text-black'}`}
@@ -209,8 +209,8 @@ export default function ProfileScreen({ navigation }) {
 
             <Text className={`${colors.textMuted} text-xs font-black tracking-widest uppercase mb-2 ml-1`}>Email</Text>
             <TextInput
-              value={editEmail}
-              onChangeText={setEditEmail}
+              value={email}
+              onChangeText={setEmail}
               placeholder="Your email"
               placeholderTextColor="#666"
               autoCapitalize="none"

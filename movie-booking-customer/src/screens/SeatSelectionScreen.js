@@ -206,7 +206,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
                         <Armchair size={ICON_SIZE} color={isSelected ? '#FFF' : isBooked ? 'rgba(255,255,255,0.2)' : isDark ? '#ec4899' : '#db2777'} />
                         <Armchair size={ICON_SIZE} color={isSelected ? '#FFF' : isBooked ? 'rgba(255,255,255,0.2)' : isDark ? '#ec4899' : '#db2777'} />
                     </View>
-                    {isSelected && <Text className="absolute bottom-1 text-[#0A0A0F] text-[8px] font-black italic uppercase">C</Text>}
+                    {<Text className="absolute bottom-1 text-[#0A0A0F] text-[8px] font-black italic uppercase">{seatId}</Text>}
                 </TouchableOpacity>
             );
         }

@@ -59,6 +59,18 @@ export const login = (email, password) =>
 
 export const getMe = () => api.get('/auth/me');
 
+export const updatePassword = (currentPassword, newPassword) =>
+  api.put('/auth/updatepassword', {
+    currentPassword,
+    newPassword,
+  });
+
+export const updateDetails = (name, email) =>
+  api.put('/auth/updatedetails', {
+    name,
+    email,
+  });
+
 // Movie APIs
 export const getMovies = () => api.get('/movies');
 

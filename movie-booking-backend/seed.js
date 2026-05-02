@@ -3,6 +3,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const mongoose = require('mongoose');
 const connectDB = require('./src/config/database');
+const bcrypt = require('bcryptjs');
 
 const User = require('./src/models/User');
 const Movie = require('./src/models/Movie');
@@ -77,17 +78,61 @@ const seedData = async () => {
     // SHOWTIME
     // =============================
     console.log('🕒 Creating showtimes...');
-    const now = new Date();
-    const addDays = (d) => new Date(now.getTime() + d * 24 * 60 * 60 * 1000);
 
-    const showtimes = await Showtime.create([
-      // Future Showtimes
-      { movie: movies[0]._id, startTime: addDays(1), endTime: addDays(1.1), room: '1', totalSeats: 80, basePrice: 100000 },
-      { movie: movies[1]._id, startTime: addDays(2), endTime: addDays(2.1), room: '2', totalSeats: 80, basePrice: 95000 },
-      { movie: movies[2]._id, startTime: addDays(3), endTime: addDays(3.1), room: '5', totalSeats: 80, basePrice: 110000 },
-      // Past Showtime (for history)
-      { movie: movies[0]._id, startTime: addDays(-2), endTime: addDays(-1.9), room: '3', totalSeats: 80, basePrice: 100000 }
-    ]);
+    const now = new Date();
+
+    // 👉 danh sách giờ chiếu
+    const timeSlots = [9, 12, 15, 18, 21];
+
+    // 👉 tạo showtime cho nhiều ngày
+    const generateShowtimes = (movie, dayOffset, basePrice, room) => {
+      return timeSlots.map((hour) => {
+        const start = new Date(now);
+        start.setDate(now.getDate() + dayOffset);
+        start.setHours(hour, 0, 0, 0);
+
+        const end = new Date(start);
+        end.setHours(start.getHours() + 2); // phim ~2 tiếng
+
+        return {
+          movie: movie._id,
+          startTime: start,
+          endTime: end,
+          room: room,
+          totalSeats: getRoomCapacity(room),
+          basePrice: basePrice
+        };
+      });
+    };
+
+    // 👉 generate toàn bộ showtimes
+    let showtimeData = [];
+
+    // mỗi phim 2 ngày (bạn có thể tăng lên)
+    showtimeData.push(...generateShowtimes(movies[0], 1, 100000, '1'));
+    showtimeData.push(...generateShowtimes(movies[0], 2, 100000, '1'));
+
+    showtimeData.push(...generateShowtimes(movies[1], 1, 95000, '2'));
+    showtimeData.push(...generateShowtimes(movies[1], 2, 95000, '2'));
+
+    showtimeData.push(...generateShowtimes(movies[2], 1, 110000, '5'));
+    showtimeData.push(...generateShowtimes(movies[2], 2, 110000, '5'));
+
+    // thêm 1 suất quá khứ để test history
+    const past = new Date(now);
+    past.setDate(now.getDate() - 2);
+    past.setHours(14, 0, 0, 0);
+
+    showtimeData.push({
+      movie: movies[0]._id,
+      startTime: past,
+      endTime: new Date(past.getTime() + 2 * 60 * 60 * 1000),
+      room: '3',
+      totalSeats: 80,
+      basePrice: 100000
+    });
+
+    const showtimes = await Showtime.create(showtimeData);
 
     // =============================
     // BOOKINGS (The "Booked Data")
