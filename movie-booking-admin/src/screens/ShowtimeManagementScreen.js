@@ -20,10 +20,6 @@ export default function ShowtimeManagementScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadShowtimes();
-    }, []);
-
-    useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             loadShowtimes();
         });

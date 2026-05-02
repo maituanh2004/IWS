@@ -23,10 +23,6 @@ export default function MovieManagementScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadData();
-    }, []);
-
-    useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             loadData();
         });
