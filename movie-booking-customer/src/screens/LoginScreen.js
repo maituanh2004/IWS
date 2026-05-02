@@ -93,7 +93,6 @@ export default function LoginScreen({ navigation }) {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            console.log("EMAIL STATE:", email);
 
             <View className="relative">
               <CustomerInput
