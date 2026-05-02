@@ -55,7 +55,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
             if (!showtime?._id || !selectedSeats.length) return;
             const payload = {
                 showtimeId: showtime._id,
-                seats: selectedSeats
+                seats: expandSeats(selectedSeats)
             };
             setPreviewLoading(true);
             const res = await api.previewBooking(payload);
@@ -75,10 +75,8 @@ export default function SeatSelectionScreen({ route, navigation }) {
             setPreviewLoading(false);
             return;
         }
-        const timer = setTimeout(() => {
-            fetchPreview();
-        }, 300);
-        return () => clearTimeout(timer);
+        fetchPreview();
+        return;
     }, [selectedSeats, showtime?._id]);
 
     const loadData = async () => {

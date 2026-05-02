@@ -45,7 +45,7 @@ const validateSeatInput = (seats, totalSeats) => {
   }
 };
 
-const checkSeatAvailability = async (showtimeId, seats) => {
+const checkSeatAvailability = async (showtimeId, seats, bookingGroupId) => {
   const now = new Date();
 
   const existing = await Booking.find({
@@ -59,6 +59,10 @@ const checkSeatAvailability = async (showtimeId, seats) => {
       }
     ]
   });
+  
+  if (bookingGroupId) {
+    query.bookingGroupId = { $ne: bookingGroupId };
+  }
 
   if (existing.length > 0) {
     const takenSeats = existing.map(b => b.seat);

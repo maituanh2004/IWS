@@ -126,22 +126,29 @@ export default function BookingConfirmScreen({ route, navigation }) {
     try {
       if (!showtime?._id) throw new Error('Showtime ID is missing');
 
-      // 1. tạo booking
-      const bookingRes = await api.createBooking({
-        showtimeId: showtime._id,
-        seats,
-        ...(selectedDiscount ? { discountCode: selectedDiscount.code } : {})
-      });
+      let currentBookingGroupId = bookingGroupId;
 
-      if (!bookingRes.data.success) {
-        throw new Error(bookingRes.data.message);
+      // ✅ CHỈ tạo booking nếu CHƯA có
+      if (!currentBookingGroupId) {
+        const bookingRes = await api.createBooking({
+          showtimeId: showtime._id,
+          seats,
+          ...(selectedDiscount ? { discountCode: selectedDiscount.code } : {})
+        });
+
+        if (!bookingRes.data.success) {
+          throw new Error(bookingRes.data.message);
+        }
+
+        currentBookingGroupId = bookingRes.data.data.bookingGroupId;
+
+        // lưu lại để dùng retry
+        setBookingGroupId(currentBookingGroupId);
       }
 
-      const bookingGroupId = bookingRes.data.data.bookingGroupId;
-
-      // 2. tạo payment (VNPay)
+      // ✅ luôn dùng booking cũ để payment
       const paymentRes = await api.createPayment({
-        bookingGroupId
+        bookingGroupId: currentBookingGroupId
       });
 
       if (!paymentRes.data.success) {
@@ -150,9 +157,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
       const paymentUrl = paymentRes.data.paymentUrl;
 
-      // 3. redirect sang VNPay
       await Linking.openURL(paymentUrl);
-      setBookingGroupId(bookingGroupId);
       setHasOpenedVNPay(true);
 
     } catch (e) {
