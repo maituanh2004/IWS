@@ -16,8 +16,6 @@ const QUICK_ACTIONS = [
 export default function ProfileScreen({ navigation }) {
   const { user, signOut, setUser } = useAuth();
   const { theme, language, toggleTheme, toggleLanguage, t, colors } = useUI();
-  const [notifEnabled, setNotifEnabled] = useState(true);
-
   // Edit Profile State
   const [modalVisible, setModalVisible] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
@@ -28,7 +26,6 @@ export default function ProfileScreen({ navigation }) {
 
   const ACCOUNT_ITEMS = [
     { id: 'personalInfo', icon: 'person-outline', label: t('personal_info'), type: 'chevron' },
-    { id: 'notifications', icon: 'notifications-outline', label: t('notifications'), type: 'toggle' },
     { id: 'language', icon: 'globe-outline', label: t('language'), type: 'value', value: language === 'en' ? 'English' : 'Tiếng Việt' },
   ];
 
@@ -126,9 +123,7 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={18} color="#555" />
         </View>
       )}
-      {item.type === 'toggle' && (
-        <Switch value={notifEnabled} onValueChange={setNotifEnabled} trackColor={{ false: '#333', true: '#00D4FF' }} thumbColor="#FFFFFF" />
-      )}
+
     </TouchableOpacity>
   );
 
@@ -144,9 +139,7 @@ export default function ProfileScreen({ navigation }) {
                 <Text className="text-white text-3xl font-black italic">{getInitials(user?.name)}</Text>
               </View>
             </View>
-            <View className="absolute bottom-0 right-0 bg-[#00D4FF] w-6 h-6 rounded-full items-center justify-center border-2 border-[#1C0F3F]">
-              <Ionicons name="camera" size={10} color="#FFF" />
-            </View>
+
           </View>
           <Text className="text-white text-2xl font-black italic mb-1">{user?.name}</Text>
           <View className="flex-row w-full mt-4 border-t border-white/5 pt-5" />
@@ -185,7 +178,9 @@ export default function ProfileScreen({ navigation }) {
           onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={20} color="#FF4444" />
-          <Text className={`${colors.text} text-base font-black italic tracking-widest`}>{t('sign_out')}</Text>
+          <Text className="text-white text-base font-black italic tracking-widest">
+            {t('sign_out')}
+          </Text>
         </TouchableOpacity>
 
         <View className="h-24" />

@@ -239,7 +239,7 @@ export default function MovieListScreen({ navigation }) {
                                                 </View>
                                             </View>
                                             <Text className="text-gray-500 text-[10px] leading-4" numberOfLines={2}>
-                                                {discount.description || 'Applicable to all screenings at CineViet.'}
+                                                {discount.description || t('applicable_all')}
                                             </Text>
                                         </TouchableOpacity>
                                     ))}

@@ -23,7 +23,7 @@ const { width: SCREEN_W } = Dimensions.get('window');
 export default function SeatSelectionScreen({ route, navigation }) {
     const { showtime: initialShowtime } = route.params || {};
     const { theme, t } = useUI();
-    
+
     // Theme Colors
     const isDark = theme === 'dark';
     const bgColor = isDark ? 'bg-[#0A0A0F]' : 'bg-[#F8F9FA]';
@@ -75,8 +75,10 @@ export default function SeatSelectionScreen({ route, navigation }) {
             setPreviewLoading(false);
             return;
         }
-        fetchPreview();
-        return;
+        const timer = setTimeout(() => {
+            fetchPreview();
+        }, 300);
+        return () => clearTimeout(timer);
     }, [selectedSeats, showtime?._id]);
 
     const loadData = async () => {
@@ -100,7 +102,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
             setLoading(false);
         }
     };
-    
+
     const layout = useMemo(() => {
         if (!showtime) return { capacity: 80, cols: 10, rows: 8 };
         let capacity = showtime.totalSeats || 80;
@@ -161,12 +163,11 @@ export default function SeatSelectionScreen({ route, navigation }) {
         });
     };
 
-    // 🔥 PRECISE MATH FOR ALIGNMENT
     const ROW_GAP = 4;
-    const SEAT_SIZE = (SCREEN_W - 32 - 12 - (ROW_GAP * 13)) / 10;
-    // Couple seat must cover 2 seats plus the gap between them to remain aligned
-    const COUPLE_W = SEAT_SIZE * 2 + ROW_GAP;
-
+    const AISLE_W = 8
+    const LABEL_W = 14;
+    const SEAT_SIZE = (SCREEN_W - 128) / 10;
+    const COUPLE_W = SEAT_SIZE * 2;
     const renderSeat = (seatId, type, label) => {
         const isSelected = selectedSeats.includes(seatId);
         const seatType = type === 'couple' ? 'COUPLE' : getDisplaySeatType(seatId, seatMap);
@@ -186,12 +187,12 @@ export default function SeatSelectionScreen({ route, navigation }) {
         const TEXT_SIZE = Math.floor(SEAT_SIZE * 0.28);
 
         if (isCouple) {
-            let coupleClass = isSelected 
-                ? 'bg-[#A855F7] border-[#A855F7]' 
-                : isBooked 
-                    ? 'bg-[#ff3d3d]/30 border-[#ff3d3d]/20' 
+            let coupleClass = isSelected
+                ? 'bg-[#A855F7] border-[#A855F7]'
+                : isBooked
+                    ? 'bg-[#ff3d3d]/30 border-[#ff3d3d]/20'
                     : isDark ? 'bg-[#2A1A40] border-[#A855F7]' : 'bg-pink-50 border-pink-200';
-            
+
             return (
                 <TouchableOpacity
                     key={seatId}
@@ -250,46 +251,64 @@ export default function SeatSelectionScreen({ route, navigation }) {
             </TouchableOpacity>
         );
     };
-
     const renderGrid = () => {
         if (!showtime) return null;
         const grid = [];
+
         for (let r = 0; r < layout.rows; r++) {
             const rowLabel = String.fromCharCode(65 + r);
             const rowSeats = [];
             const isLastRow = r === layout.rows - 1;
 
-            if (isLastRow) {
-                for (let c = 0; c < layout.cols / 2; c++) {
-                    const seatId = `${rowLabel}${c * 2 + 1}-${c * 2 + 2}`;
-                    rowSeats.push(renderSeat(seatId, 'couple', null));
-                    if (c === 0 || c === 3) {
-                        rowSeats.push(<View key={`aisle-c-${c}`} className="w-2" />);
+            for (let c = 0; c < layout.cols; c++) {
+                const isVip = (r >= layout.startVipRow && r <= layout.endVipRow && c >= 2 && c <= layout.cols - 3);
+
+                if (isLastRow) {
+                    // Chỉ render ở các cột chẵn 0, 2, 4, 6, 8 để tạo ghế đôi
+                    if (c % 2 === 0) {
+                        const seatId = `${rowLabel}${c + 1}-${c + 2}`;
+                        // QUAN TRỌNG: Độ rộng ghế đôi = 2 ghế đơn + 1 khoảng cách ROW_GAP
+                        const dynamicCoupleW = (SEAT_SIZE * 2) + ROW_GAP;
+
+                        rowSeats.push(
+                            <View key={seatId} style={{ width: dynamicCoupleW, height: SEAT_SIZE }}>
+                                {renderSeat(seatId, 'couple', null)}
+                            </View>
+                        );
                     }
-                }
-            } else {
-                for (let c = 0; c < layout.cols; c++) {
-                    const seatIndex = r * layout.cols + c;
-                    if (seatIndex >= layout.capacity) break;
+                } else {
                     const seatId = `${rowLabel}${c + 1}`;
-                    rowSeats.push(renderSeat(seatId, (r >= layout.startVipRow && r <= layout.endVipRow && c >= 2 && c <= layout.cols - 3) ? 'vip' : 'regular', c + 1));
-                    if (c === 1 || c === 7) {
-                        rowSeats.push(<View key={`aisle-${r}-${c}`} className="w-2" />);
-                    }
+                    rowSeats.push(renderSeat(seatId, isVip ? 'vip' : 'regular', c + 1));
+                }
+
+                // CHÈN LỐI ĐI: Phải chèn cho cả hàng cuối để các cột bên phải không bị lệch
+                if (c === 1 || c === 7) {
+                    rowSeats.push(<View key={`aisle-${r}-${c}`} style={{ width: AISLE_W }} />);
                 }
             }
 
             grid.push(
-                <View key={rowLabel} className={`flex-row items-center gap-[${ROW_GAP}px] ${isLastRow ? 'mt-2' : ''}`}>
-                    <Text className={`text-[10px] font-bold w-3.5 text-center ${subTextColor}`}>{rowLabel}</Text>
-                    {rowSeats}
-                    <Text className={`text-[10px] font-bold w-3.5 text-center ${subTextColor}`}>{rowLabel}</Text>
+                <View
+                    key={rowLabel}
+                    className="flex-row items-center justify-center"
+                    // FIX: Giảm mt-6 xuống mt-2 hoặc mb-1 để hàng G và H gần nhau hơn
+                    style={{ marginTop: isLastRow ? 8 : 0, marginBottom: ROW_GAP }}
+                >
+                    <Text style={{ width: LABEL_W }} className={`text-[10px] font-bold text-center ${subTextColor}`}>{rowLabel}</Text>
+
+                    <View
+                        className="flex-row items-center"
+                        style={{ gap: ROW_GAP }}
+                    >
+                        {rowSeats}
+                    </View>
+
+                    <Text style={{ width: LABEL_W }} className={`text-[10px] font-bold text-center ${subTextColor}`}>{rowLabel}</Text>
                 </View>
             );
         }
         return grid;
     };
-
     if (loading && !showtime) {
         return (
             <View className={`flex-1 ${bgColor} justify-center items-center`}>
@@ -350,7 +369,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
                 </View>
 
                 <View className={`mt-12 mx-5 ${cardBg} p-8 rounded-[40px] border`}>
-                    <Text className={`text-[10px] font-black ${subTextColor} mb-6 uppercase tracking-[4px] text-center italic`}>Seat Categories</Text>
+                    <Text className={`text-[10px] font-black ${subTextColor} mb-6 uppercase tracking-[4px] text-center italic`}>Legend</Text>
                     <View className="flex-row justify-around flex-wrap gap-y-6">
                         <View className="items-center w-1/4">
                             <View className={`w-8 h-8 rounded-xl ${isDark ? 'bg-white/5 border-white/10' : 'bg-gray-100 border-gray-200'} border items-center justify-center mb-2`}>
@@ -374,7 +393,7 @@ export default function SeatSelectionScreen({ route, navigation }) {
                             <View className="w-8 h-8 rounded-xl bg-[#c04444] items-center justify-center mb-2">
                                 <Armchair size={14} color="#ffffff" />
                             </View>
-                            <Text className={`text-[8px] ${subTextColor} font-black uppercase tracking-widest`}>Selected</Text>
+                            <Text className={`text-[8px] ${subTextColor} font-black uppercase tracking-widest`}>Sold</Text>
                         </View>
                     </View>
                 </View>

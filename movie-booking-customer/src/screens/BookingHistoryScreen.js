@@ -18,29 +18,30 @@ import BottomNav from '../components/BottomNav';
 import TicketCard from '../components/TicketCard';
 
 // ✅ IMPORT BOOKING UTILS
+import { useUI } from '../context/UIContext';
 import {
   formatCurrency,
   formatDate,
   formatTime
 } from '../utils/bookingUtils';
 
-// ✅ TABS
-const TABS = [
-  { id: 'all', label: 'Tất Cả' },
-  { id: 'confirmed', label: 'Sắp Tới' },
-  { id: 'watched', label: 'Đã Xem' },
-  { id: 'cancelled', label: 'Đã Hủy' },
-];
-
-const STATUS_CONFIG = {
-  confirmed: { label: 'SẮP TỚI', color: '#00D4FF', bg: '#00D4FF15' },
-  watched: { label: 'ĐÃ XEM', color: '#A855F7', bg: '#A855F715' },
-  cancelled: { label: 'ĐÃ HỦY', color: '#FF4444', bg: '#FF444415' },
-};
-
 export default function BookingHistoryScreen({ navigation }) {
   const { user } = useAuth();
+  const { t } = useUI();
   const [activeTab, setActiveTab] = useState('confirmed');
+
+  const TABS = [
+    { id: 'all', label: t('all') },
+    { id: 'confirmed', label: t('upcoming') },
+    { id: 'watched', label: t('watched') },
+    { id: 'cancelled', label: t('cancelled') },
+  ];
+
+  const STATUS_CONFIG = {
+    confirmed: { label: t('upcoming').toUpperCase(), color: '#00D4FF', bg: '#00D4FF15' },
+    watched: { label: t('watched').toUpperCase(), color: '#A855F7', bg: '#A855F715' },
+    cancelled: { label: t('cancelled').toUpperCase(), color: '#FF4444', bg: '#FF444415' },
+  };
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -117,7 +118,7 @@ export default function BookingHistoryScreen({ navigation }) {
             showtime={item.showtime}
             seats={item.seats}
             bookingCode={`#${item.bookingGroupId.slice(-8).toUpperCase()}`}
-            cinemaName={`Phòng ${item.showtime?.room}`}
+            cinemaName={`${t('room_label')} ${item.showtime?.room}`}
           />
         </TouchableOpacity>
       );
@@ -156,7 +157,7 @@ export default function BookingHistoryScreen({ navigation }) {
           </Text>
 
           <Text className="text-gray-400 text-[11px]">
-            Ghế: {item.seats.join(', ')}
+            {t('seats')}: {item.seats.join(', ')}
           </Text>
 
           <Text className="text-[#00D4FF] text-[12px] font-bold">
@@ -168,7 +169,7 @@ export default function BookingHistoryScreen({ navigation }) {
             onPress={() => navigation.navigate('MovieList')}
           >
             <Ionicons name="refresh-outline" size={14} color="#00D4FF" />
-            <Text className="text-[#00D4FF] text-xs font-bold">Đặt lại</Text>
+            <Text className="text-[#00D4FF] text-xs font-bold">{t('reorder')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -179,9 +180,9 @@ export default function BookingHistoryScreen({ navigation }) {
   if (!loading && filtered.length === 0) {
     return (
       <ScreenWrapper>
-        <Header title="Vé Của Tôi" />
+        <Header title={t('my_tickets_title')} />
         <View className="flex-1 items-center justify-center">
-          <Text className="text-gray-500">Bạn chưa có vé nào</Text>
+          <Text className="text-gray-500">{t('no_tickets_found')}</Text>
         </View>
         <BottomNav />
       </ScreenWrapper>
@@ -190,7 +191,7 @@ export default function BookingHistoryScreen({ navigation }) {
 
   return (
     <ScreenWrapper>
-      <Header title="Vé Của Tôi" showBack={false} />
+      <Header title={t('my_tickets_title')} showBack={false} />
 
       {/* Tabs */}
       <View className="py-4">

@@ -12,12 +12,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenWrapper from '../components/ScreenWrapper';
 import * as api from '../services/api';
+import { useUI } from '../context/UIContext';
 
 const { width } = Dimensions.get('window');
 
 const formatVND = (n) => (n ? n.toLocaleString('vi-VN') + 'đ' : '0đ');
 
 export default function PaymentSuccessScreen({ route, navigation }) {
+  const { t } = useUI();
   const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState({
     bookingId: route.params?.bookingId || '',
@@ -39,7 +41,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
 
   useEffect(() => {
     if (status === 'fail') {
-      Alert.alert('Payment Failed', 'Your payment was not successful. Seats have been released.', [
+      Alert.alert(t('payment_failed'), t('payment_failed_msg'), [
         { text: 'OK', onPress: () => navigation.navigate('MovieList') }
       ]);
       return;
@@ -117,7 +119,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
       <ScreenWrapper>
         <View className="flex-1 bg-[#0A0A0F] justify-center items-center gap-4">
           <ActivityIndicator size="large" color="#00D4FF" />
-          <Text className="text-gray-500 font-bold tracking-widest">LOADING BOOKING DETAILS...</Text>
+          <Text className="text-gray-500 font-bold tracking-widest">{t('loading_booking')}</Text>
         </View>
       </ScreenWrapper>
     );
@@ -187,13 +189,13 @@ export default function PaymentSuccessScreen({ route, navigation }) {
           className="items-center w-full"
         >
           <Text className="text-[#00D4FF] text-xs font-black tracking-[6px] uppercase mb-2">
-            Payment Complete
+            {t('payment_complete')}
           </Text>
           <Text className="text-white text-4xl font-black italic tracking-tight mb-1">
-            BOOKING
+            {t('booking') || 'BOOKING'}
           </Text>
           <Text className="text-white text-4xl font-black italic tracking-tight mb-6">
-            CONFIRMED!
+            {t('confirmed_badge') || 'CONFIRMED!'}
           </Text>
 
           {/* Booking code card */}
@@ -204,7 +206,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
             {/* Booking code */}
             <View className="items-center mb-5">
               <Text className="text-gray-500 text-[10px] font-black tracking-[4px] uppercase mb-2">
-                Booking Code
+                {t('booking_code')}
               </Text>
               <View className="bg-[#00D4FF]/10 px-6 py-3 rounded-2xl border border-[#00D4FF]/30">
                 <Text className="text-[#00D4FF] text-2xl font-black tracking-widest">
@@ -223,7 +225,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
             {/* Movie info */}
             <View className="gap-3">
               <View className="flex-row justify-between items-start">
-                <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">Movie</Text>
+                <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">{t('movie') || 'Movie'}</Text>
                 <Text className="text-white text-sm font-bold text-right flex-1 ml-4" numberOfLines={2}>
                   {details.movieTitle || '—'}
                 </Text>
@@ -231,14 +233,14 @@ export default function PaymentSuccessScreen({ route, navigation }) {
 
               {details.cinemaName ? (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">Cinema</Text>
+                  <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">{t('cinema')}</Text>
                   <Text className="text-white text-sm font-bold">{details.cinemaName}</Text>
                 </View>
               ) : null}
 
               {startTime ? (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">Date & Time</Text>
+                  <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">{t('date_time')}</Text>
                   <Text className="text-white text-sm font-bold">
                     {startTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     {'  '}
@@ -249,7 +251,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
 
               {details.seats.length > 0 ? (
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">Seats</Text>
+                  <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">{t('seats')}</Text>
                   <Text className="text-white text-sm font-bold">{details.seats.join(', ')}</Text>
                 </View>
               ) : null}
@@ -257,7 +259,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
               <View className="h-[1px] bg-[#1E1E2E] my-1" />
 
               <View className="flex-row justify-between items-center">
-                <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">Total Paid</Text>
+                <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">{t('total_paid')}</Text>
                 <Text className="text-[#00D4FF] text-xl font-black">{formatVND(details.totalPrice)}</Text>
               </View>
             </View>
@@ -267,7 +269,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
           <View className="flex-row items-center gap-2 mb-8 px-2">
             <Ionicons name="mail-outline" size={14} color="#555" />
             <Text className="text-gray-600 text-xs text-center flex-1 leading-5">
-              Your ticket has been sent to your email. Show the booking code at the cinema entrance.
+              {t('ticket_email_note')}
             </Text>
           </View>
 
@@ -287,7 +289,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
               <View className="flex-row items-center gap-2.5">
                 <Ionicons name="ticket-outline" size={20} color="#0A0A0F" />
                 <Text className="text-[#0A0A0F] text-base font-black tracking-wider">
-                  VIEW MY TICKETS
+                  {t('view_my_tickets')}
                 </Text>
               </View>
             </LinearGradient>
@@ -301,7 +303,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
             <View className="flex-row items-center gap-2">
               <Ionicons name="film-outline" size={18} color="#AAA" />
               <Text className="text-gray-400 text-sm font-bold">
-                Browse More Movies
+                {t('browse_more')}
               </Text>
             </View>
           </TouchableOpacity>

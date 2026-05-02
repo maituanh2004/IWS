@@ -130,7 +130,7 @@ export default function DiscountHistoryScreen({ navigation }) {
                         </View>
                     </View>
                     <View className="items-end">
-                        <Text className={`${colors.textMuted} text-[9px] font-bold uppercase mb-1`}>Total</Text>
+                        <Text className={`${colors.textMuted} text-[9px] font-bold uppercase mb-1`}>{t('total') || 'Total'}</Text>
                         <Text className={`text-xl font-bold ${colors.text}`}>{formatVND(item.totalPrice)}</Text>
                     </View>
                 </View>
@@ -139,7 +139,7 @@ export default function DiscountHistoryScreen({ navigation }) {
                 <View className="flex-row justify-between items-center pt-3 border-t border-white/5">
                     <View className="flex-row items-center">
                         <CreditCard color={theme === 'dark' ? "#6b7280" : "#9ca3af"} size={14} />
-                        <Text className={`${colors.textSecondary} text-[10px] font-medium ml-2`}>VNPAY Paid</Text>
+                        <Text className={`${colors.textSecondary} text-[10px] font-medium ml-2`}>{t('vnpay_paid')}</Text>
                     </View>
                     <View className={`px-3 py-1 rounded-full border ${
                         isUpcoming ? 'bg-[#00D4FF10] border-[#00D4FF20]' : 
@@ -179,7 +179,7 @@ export default function DiscountHistoryScreen({ navigation }) {
                         <View className="flex-row items-center">
                             <Calendar color={theme === 'dark' ? "#6b7280" : "#9ca3af"} size={14} />
                             <Text className={`${colors.textSecondary} text-[11px] font-medium ml-2`}>
-                                Expires {new Date(item.expiryDate).toLocaleDateString()}
+                                {t('expires')} {new Date(item.expiryDate).toLocaleDateString()}
                             </Text>
                         </View>
                     </View>
@@ -191,7 +191,7 @@ export default function DiscountHistoryScreen({ navigation }) {
                 </View>
                 <View className="pt-3 border-t border-white/5">
                     <Text className={`${colors.textSecondary} text-[11px] leading-4`} numberOfLines={2}>
-                        {item.description || 'Special offer for CineViet fans. Use at checkout.'}
+                        {item.description || t('special_offer_note')}
                     </Text>
                 </View>
             </TouchableOpacity>
@@ -204,7 +204,7 @@ export default function DiscountHistoryScreen({ navigation }) {
             <View className="flex-row items-center justify-between px-6 pt-12 pb-6">
                 <View>
                     <Text className="text-[#00D4FF] text-[11px] font-bold uppercase tracking-widest mb-1">CINEVIET</Text>
-                    <Text className={`${colors.text} text-3xl font-bold tracking-tight uppercase`}>My Booking</Text>
+                    <Text className={`${colors.text} text-3xl font-bold tracking-tight uppercase`}>{t('my_booking_title')}</Text>
                 </View>
                 <TouchableOpacity 
                     onPress={loadData}
@@ -221,7 +221,7 @@ export default function DiscountHistoryScreen({ navigation }) {
                     className={`flex-1 flex-row items-center justify-center py-3.5 rounded-2xl border ${activeTab === 'tickets' ? 'bg-[#00D4FF] border-[#00D4FF]' : `${colors.card} ${colors.border}`}`}
                 >
                     <Ticket color={activeTab === 'tickets' ? "#0A0A0F" : "#6b7280"} size={18} />
-                    <Text className={`ml-2 text-[11px] font-bold uppercase tracking-wide ${activeTab === 'tickets' ? 'text-[#0A0A0F]' : colors.textSecondary}`}>Ticket</Text>
+                    <Text className={`ml-2 text-[11px] font-bold uppercase tracking-wide ${activeTab === 'tickets' ? 'text-[#0A0A0F]' : colors.textSecondary}`}>{t('tickets_count')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                     onPress={() => setActiveTab('promos')}

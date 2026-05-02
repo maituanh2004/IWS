@@ -157,7 +157,7 @@ export default function ShowtimeListScreen({ route, navigation }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 3, height: 16, backgroundColor: '#00D4FF', borderRadius: 2 }} />
-            <Text style={{ color: textColor, fontSize: 15, fontWeight: '800' }}>{t('select_showtime') || 'Available Slots'}</Text>
+            <Text style={{ color: textColor, fontSize: 15, fontWeight: '800' }}>{t('Select showtime') || 'Available Slots'}</Text>
           </View>
         </View>
 

@@ -74,7 +74,7 @@ export default function DiscountCard({ movie, showtime, seats, bookingCode, cine
       {/* Bottom Part */}
       <View className="bg-[#E8E8EE] rounded-b-3xl py-6 items-center justify-center">
         <Text className="text-gray-400 text-sm font-semibold">
-          Vé sẽ được hiển thị sau khi thanh toán
+          {t('ticket_display_note')}
         </Text>
       </View>
       

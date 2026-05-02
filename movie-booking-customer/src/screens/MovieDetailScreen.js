@@ -107,18 +107,7 @@ export default function MovieDetailScreen({ route, navigation }) {
 
           {/* Info Grid */}
           <View style={{ backgroundColor: cardColor, borderColor: borderColor }} className="p-4 rounded-3xl border mb-6 flex-row flex-wrap">
-            <View className="w-1/2 mb-4">
-              <Text style={{ color: subTextColor }} className="text-[10px] font-bold tracking-widest uppercase mb-1">{t('director')}</Text>
-              <Text style={{ color: textColor }} className="text-sm font-black italic">{t('director_placeholder')}</Text>
-            </View>
-            <View className="w-1/2 mb-4">
-              <Text style={{ color: subTextColor }} className="text-[10px] font-bold tracking-widest uppercase mb-1">{t('format')}</Text>
-              <Text style={{ color: textColor }} className="text-sm font-black italic">2D / 3D / IMAX</Text>
-            </View>
-            <View className="w-1/2">
-              <Text style={{ color: subTextColor }} className="text-[10px] font-bold tracking-widest uppercase mb-1">{t('producer')}</Text>
-              <Text style={{ color: textColor }} className="text-sm font-black italic">{t('producer_placeholder')}</Text>
-            </View>
+
             <View className="w-1/2 justify-end">
               <TouchableOpacity onPress={onShare} className="flex-row items-center gap-2">
                 <View className="w-6 h-6 rounded-full items-center justify-center" style={{ backgroundColor: colors.primary + '20' }}>
