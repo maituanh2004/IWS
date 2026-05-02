@@ -51,7 +51,10 @@ exports.getShowtime = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: showtime,
+      data: {
+        ...showtime.toObject(),
+        price: showtime.basePrice || showtime.movie?.price || 0
+      }
     });
   } catch (err) {
     res.status(400).json({

@@ -38,7 +38,7 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
     );
     const [room, setRoom] = useState(showtime?.room?.toString() || '1');
     const [totalSeats, setTotalSeats] = useState(showtime?.totalSeats?.toString() || '100');
-    const [price, setPrice] = useState(showtime?.price?.toString() || '95000');
+    const [price, setPrice] = useState(showtime?.basePrice?.toString() || '');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -66,16 +66,6 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             }
         }
     }, [selectedMovieId, startDate, startTime, movies]);
-    
-    // ✨ Auto-fill price when movie changes (for new showtimes)
-    useEffect(() => {
-        if (selectedMovieId && !isEdit && movies.length > 0) {
-            const movie = movies.find(m => m._id === selectedMovieId);
-            if (movie && movie.price) {
-                setPrice(movie.price.toString());
-            }
-        }
-    }, [selectedMovieId, movies, isEdit]);
 
     const loadMovies = async () => {
         try {
@@ -94,14 +84,18 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             Alert.alert('Error', 'Please fill in all fields');
             return;
         }
+        if (!price || isNaN(price) || Number(price) <= 0) {
+            Alert.alert('Error', 'Please enter a valid base price');
+            return;
+        }
 
         const showtimeData = {
-            movie: selectedMovieId,
+            movieId: selectedMovieId,
             startTime: new Date(`${startDate}T${startTime}:00`),
             endTime: new Date(`${endDate}T${endTime}:00`),
-            room: room.toString(),
+            roomId: room,
             totalSeats: parseInt(totalSeats),
-            price: parseFloat(price),
+            basePrice: parseFloat(price),
         };
 
         setLoading(true);

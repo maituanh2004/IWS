@@ -87,15 +87,17 @@ export default function RegisterScreen({ navigation }) {
                         </View>
                     </View>
                     {/* Form Card */}
-                    <View className={`flex-1 ${colors.card} rounded-t-[32px] px-6 pt-8 pb-10 mt-4`}>
-                        <Text className={`${colors.text} text-2xl font-black mb-1`}>{t('create_account')}</Text>
-                        <Text className={`${colors.textSecondary} text-sm mb-7`}>Step {currentStep + 1}: {STEPS[currentStep]}</Text>
+                    <View className="flex-1 bg-[#121212] rounded-t-[32px] px-6 pt-8 pb-10 mt-4">
+                        <Text className="text-white text-2xl font-black mb-1">
+                        Create Account
+                        </Text>
+                        <Text className="text-gray-400 text-sm mb-7">Step {currentStep + 1}: {STEPS[currentStep]}</Text>
 
-                        <CustomerInput label={t('email')} icon="mail-outline" placeholder="example@email.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-                        <CustomerInput label={t('full_name')} icon="person-outline" placeholder="John Doe" value={name} onChangeText={setName} autoCapitalize="words" />
+                        <CustomerInput label={('email')} icon="mail-outline" placeholder="example@email.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+                        <CustomerInput label={('full_name')} icon="person-outline" placeholder="John Doe" value={name} onChangeText={setName} autoCapitalize="words" />
 
                         <View className="relative">
-                            <CustomerInput label={t('password')} icon="lock-closed-outline" placeholder="••••••••••" value={password} onChangeText={setPassword} secureTextEntry={!showPw} />
+                            <CustomerInput label={('password')} icon="lock-closed-outline" placeholder="••••••••••" value={password} onChangeText={setPassword} secureTextEntry={!showPw} />
                             <TouchableOpacity onPress={() => setShowPw(!showPw)} className="absolute right-4 top-10">
                                 <Ionicons name={showPw ? 'eye-outline' : 'eye-off-outline'} size={18} color="#666" />
                             </TouchableOpacity>
@@ -134,9 +136,13 @@ export default function RegisterScreen({ navigation }) {
                         <CustomerButton title="CONTINUE" onPress={handleNext} loading={loading} />
 
                         <View className="flex-row justify-center items-center">
-                            <Text className={`${colors.textSecondary} text-sm`}>{t('already_have_account')} </Text>
+                            <Text className="text-gray-400 text-sm">
+                                Already have an account? 
+                            </Text>
                             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                                <Text className="text-[#00D4FF] text-sm font-bold">{t('signin')}</Text>
+                                <Text className="text-[#00D4FF] text-sm font-bold">
+                                    Sign in
+                                </Text>
                             </TouchableOpacity>
                         </View>
                     </View>
