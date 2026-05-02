@@ -1,41 +1,81 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Switch, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
 import ScreenWrapper from '../components/ScreenWrapper';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
+import * as api from '../services/api';
 
 const QUICK_ACTIONS = [
-  { id: 'tickets', icon: 'ticket-alt', iconLib: 'FontAwesome5', iconColor: '#00D4FF', iconBg: 'bg-[#00D4FF15]', label: 'My Tickets', sub_key: 'upcoming' },
-  { id: 'wallet', icon: 'wallet-outline', iconLib: 'Ionicons', iconColor: '#A855F7', iconBg: 'bg-[#A855F715]', label: 'CineViet Wallet', sub_key: 'available' },
-  { id: 'offers', icon: 'pricetag-outline', iconLib: 'Ionicons', iconColor: '#FF6B5A', iconBg: 'bg-[#FF6B5A15]', label: 'Offers', sub_key: 'available' },
-  { id: 'points', icon: 'star', iconLib: 'FontAwesome5', iconColor: '#F4C430', iconBg: 'bg-[#F4C43015]', label: 'Reward Points', sub_key: 'available' },
+  { id: 'tickets', icon: 'ticket-alt', iconLib: 'FontAwesome5', iconColor: '#00D4FF', iconBg: 'bg-[#00D4FF15]', labelKey: 'my_tickets', subKey: 'upcoming' },
+  { id: 'edit_profile', icon: 'person-outline', iconLib: 'Ionicons', iconColor: '#A855F7', iconBg: 'bg-[#A855F715]', labelKey: 'personal_info', subKey: 'account' },
 ];
 
 export default function ProfileScreen({ navigation }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, setUser } = useAuth();
   const { theme, language, toggleTheme, toggleLanguage, t, colors } = useUI();
   const [notifEnabled, setNotifEnabled] = useState(true);
+
+  // Edit Profile State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editName, setEditName] = useState(user?.name || '');
+  const [editEmail, setEditEmail] = useState(user?.email || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const ACCOUNT_ITEMS = [
     { id: 'personalInfo', icon: 'person-outline', label: t('personal_info'), type: 'chevron' },
     { id: 'notifications', icon: 'notifications-outline', label: t('notifications'), type: 'toggle' },
     { id: 'language', icon: 'globe-outline', label: t('language'), type: 'value', value: language === 'en' ? 'English' : 'Tiếng Việt' },
-    { id: 'security', icon: 'lock-closed-outline', label: t('security'), type: 'chevron' },
   ];
 
   const APP_ITEMS = [
     { id: 'theme', icon: theme === 'dark' ? 'moon-outline' : 'sunny-outline', label: t('theme'), type: 'value', value: theme === 'dark' ? 'Dark' : 'Light' },
-    { id: 'support', icon: 'headset-outline', label: t('support'), type: 'chevron' },
   ];
 
   const handleQuickAction = (id) => {
     if (id === 'tickets') {
       navigation.navigate('DiscountHistory');
+    } else if (id === 'edit_profile') {
+      setEditName(user?.name || '');
+      setEditEmail(user?.email || '');
+      setCurrentPassword('');
+      setNewPassword('');
+      setModalVisible(true);
     } else {
       Alert.alert('Coming Soon', 'This feature will be available soon!');
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editName || !editEmail) {
+      Alert.alert('Error', 'Name and Email are required.');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editName !== user?.name || editEmail !== user?.email) {
+        await api.updateDetails(editName, editEmail);
+      }
+      if (currentPassword && newPassword) {
+        await api.updatePassword(currentPassword, newPassword);
+      }
+
+      // Refresh user data
+      const response = await api.getMe();
+      if (setUser) setUser(response.data.data);
+
+      Alert.alert('Success', 'Profile updated successfully.');
+      setModalVisible(false);
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.error || 'Failed to update profile.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -64,6 +104,13 @@ export default function ProfileScreen({ navigation }) {
       onPress={() => {
         if (item.id === 'theme') toggleTheme();
         else if (item.id === 'language') toggleLanguage();
+        else if (item.id === 'personalInfo') {
+          setEditName(user?.name || '');
+          setEditEmail(user?.email || '');
+          setCurrentPassword('');
+          setNewPassword('');
+          setModalVisible(true);
+        }
         else if (item.type !== 'toggle') Alert.alert('Coming Soon', 'This feature is coming soon!');
       }}
       activeOpacity={item.type === 'toggle' ? 1 : 0.6}
@@ -88,7 +135,7 @@ export default function ProfileScreen({ navigation }) {
   return (
     <ScreenWrapper>
       <Header title={t('account')} showBack={false} />
-      <ScrollView showsVerticalScrollIndicator={false} className="px-4">
+      <ScrollView showsVerticalScrollIndicator={false} className="px-4" contentContainerStyle={{ paddingBottom: 140 }}>
         {/* Profile Hero Card */}
         <View className="bg-[#1C0F3F] rounded-3xl items-center pt-7 pb-6 px-5 mb-5 mt-4 shadow-xl shadow-purple-900/40 border border-purple-800/30">
           <View className="relative mb-3.5">
@@ -102,32 +149,7 @@ export default function ProfileScreen({ navigation }) {
             </View>
           </View>
           <Text className="text-white text-2xl font-black italic mb-1">{user?.name}</Text>
-          <Text className="text-[#F4C430] text-sm font-black tracking-widest uppercase mb-4">{t('gold_member')} ✦</Text>
-          <View className="w-full mb-2">
-            <View className="flex-row justify-between mb-1.5">
-              <Text className="text-gray-400 text-[10px] font-bold tracking-widest">720 / 1000 PTS</Text>
-              <Text className="text-gray-400 text-[10px] font-bold tracking-widest uppercase">Diamond 💎</Text>
-            </View>
-            <View className="h-1.5 bg-black/30 rounded-full overflow-hidden">
-              <View className="h-full bg-[#00D4FF] rounded-full" style={{ width: '72%' }} />
-            </View>
-          </View>
-          <View className="flex-row w-full mt-4 border-t border-white/5 pt-5">
-            <View className="flex-1 items-center">
-              <Text className="text-white text-xl font-black italic">24</Text>
-              <Text className="text-gray-500 text-[9px] font-black tracking-widest uppercase">{t('movies')}</Text>
-            </View>
-            <View className="w-[1px] h-8 bg-white/10" />
-            <View className="flex-1 items-center">
-              <Text className="text-white text-xl font-black italic">38</Text>
-              <Text className="text-gray-500 text-[9px] font-black tracking-widest uppercase">{t('tickets')}</Text>
-            </View>
-            <View className="w-[1px] h-8 bg-white/10" />
-            <View className="flex-1 items-center">
-              <Text className="text-white text-xl font-black italic">4.8</Text>
-              <Text className="text-gray-500 text-[9px] font-black tracking-widest uppercase">{t('rating')}</Text>
-            </View>
-          </View>
+          <View className="flex-row w-full mt-4 border-t border-white/5 pt-5" />
         </View>
 
         {/* Quick Actions Grid */}
@@ -139,8 +161,8 @@ export default function ProfileScreen({ navigation }) {
                   ? <FontAwesome5 name={item.icon} size={20} color={item.iconColor} />
                   : <Ionicons name={item.icon} size={22} color={item.iconColor} />}
               </View>
-              <Text className={`${colors.text} text-sm font-bold mb-1`}>{t(item.id)}</Text>
-              <Text className={`${colors.textMuted} text-[11px] font-medium`}>{t(item.sub_key)}</Text>
+              <Text className={`${colors.text} text-sm font-bold mb-1`}>{t(item.labelKey)}</Text>
+              <Text className={`${colors.textMuted} text-[11px] font-medium`}>{t(item.subKey)}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -159,14 +181,83 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Logout Button */}
         <TouchableOpacity
-          className="flex-row items-center justify-center gap-2.5 bg-[#1A0505] border border-[#FF4444]/30 rounded-2xl py-4 mb-24"
+          className="flex-row items-center justify-center gap-2.5 bg-[#1A0505] border border-[#FF4444]/30 rounded-2xl py-4 mb-15"
           onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={20} color="#FF4444" />
-          <Text className="text-[#FF4444] text-base font-black italic tracking-widest">{t('sign_out')}</Text>
+          <Text className={`${colors.text} text-base font-black italic tracking-widest`}>{t('sign_out')}</Text>
         </TouchableOpacity>
+
+        <View className="h-24" />
       </ScrollView>
       <BottomNav />
+
+      {/* Edit Profile Modal */}
+      <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className={`rounded-t-[32px] p-6 pt-8 ${theme === 'dark' ? 'bg-[#141420]' : 'bg-white'}`}>
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className={`${colors.text} text-2xl font-black italic tracking-tighter`}>Edit Profile</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)} className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 items-center justify-center">
+                <Ionicons name="close" size={20} color={theme === 'dark' ? '#FFF' : '#000'} />
+              </TouchableOpacity>
+            </View>
+
+            <Text className={`${colors.textMuted} text-xs font-black tracking-widest uppercase mb-2 ml-1`}>Full Name</Text>
+            <TextInput
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Your name"
+              placeholderTextColor="#666"
+              className={`w-full h-14 px-4 rounded-xl mb-4 ${theme === 'dark' ? 'bg-[#0A0A0F] text-white' : 'bg-gray-100 text-black'}`}
+            />
+
+            <Text className={`${colors.textMuted} text-xs font-black tracking-widest uppercase mb-2 ml-1`}>Email</Text>
+            <TextInput
+              value={editEmail}
+              onChangeText={setEditEmail}
+              placeholder="Your email"
+              placeholderTextColor="#666"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              className={`w-full h-14 px-4 rounded-xl mb-6 ${theme === 'dark' ? 'bg-[#0A0A0F] text-white' : 'bg-gray-100 text-black'}`}
+            />
+
+            <View className="h-[1px] bg-gray-200 dark:bg-white/10 mb-6" />
+
+            <Text className={`${colors.textMuted} text-xs font-black tracking-widest uppercase mb-2 ml-1`}>Change Password (Optional)</Text>
+            <TextInput
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              placeholder="Current Password"
+              placeholderTextColor="#666"
+              secureTextEntry
+              className={`w-full h-14 px-4 rounded-xl mb-4 ${theme === 'dark' ? 'bg-[#0A0A0F] text-white' : 'bg-gray-100 text-black'}`}
+            />
+            <TextInput
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="New Password"
+              placeholderTextColor="#666"
+              secureTextEntry
+              className={`w-full h-14 px-4 rounded-xl mb-8 ${theme === 'dark' ? 'bg-[#0A0A0F] text-white' : 'bg-gray-100 text-black'}`}
+            />
+
+            <TouchableOpacity
+              onPress={handleSaveProfile}
+              disabled={saving}
+              className={`w-full h-14 rounded-2xl items-center justify-center flex-row px-4 ${saving ? 'bg-gray-500' : 'bg-[#00D4FF]'}`}
+            >
+              {saving ? (
+                <ActivityIndicator color="#0A0A0F" />
+              ) : (
+                <Text className="text-[#0A0A0F] text-lg font-black tracking-wider italic" numberOfLines={1} adjustsFontSizeToFit>{t('save_changes')}</Text>
+              )}
+            </TouchableOpacity>
+            <View className="h-10" />
+          </View>
+        </View>
+      </Modal>
     </ScreenWrapper>
   );
 }

@@ -83,7 +83,7 @@ export default function MovieListScreen({ navigation }) {
             setLoading(false);
         }
     }
-    
+
     useEffect(() => {
         const filtered = movies.filter((m) =>
             m.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -126,7 +126,7 @@ export default function MovieListScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
                 {loading ? (
                     <View className="h-64 items-center justify-center">
                         <ActivityIndicator size="large" color="#00D4FF" />
@@ -154,9 +154,10 @@ export default function MovieListScreen({ navigation }) {
                                             style={{
                                                 width: CARD_W,
                                                 marginRight: CARD_GAP,
+                                                flexShrink: 0
                                             }}
                                         >
-                                            <View className="rounded-3xl overflow-hidden" style={{ minHeight: 280 }}>
+                                            <View className="rounded-3xl overflow-hidden" style={{ height: 340 }}>
                                                 {/* Movie poster as background */}
                                                 {movie.poster ? (
                                                     <Image
@@ -170,9 +171,9 @@ export default function MovieListScreen({ navigation }) {
                                                 <LinearGradient
                                                     colors={movie.poster
                                                         ? ['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0.95)']
-                                                        : movie.gradientColors
+                                                        : (movie.gradientColors || ['#1A1A2E', '#16213E'])
                                                     }
-                                                    className="px-5 pt-24 pb-5 min-h-[280px] justify-end"
+                                                    className="px-5 pt-24 pb-5 h-full justify-end"
                                                     start={{ x: 0.5, y: 0 }}
                                                     end={{ x: 0.5, y: 1 }}
                                                 >
@@ -276,7 +277,6 @@ export default function MovieListScreen({ navigation }) {
                         </View>
                     </>
                 )}
-                <View className="h-20" />
             </ScrollView>
 
             <BottomNav />

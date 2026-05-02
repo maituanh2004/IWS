@@ -132,7 +132,7 @@ export default function ShowtimeListScreen({ route, navigation }) {
           </TouchableOpacity>
 
           {/* Poster thumb */}
-          <View style={{ width: 64, height: 86, borderRadius: 12, overflow: 'hidden', backgroundColor: theme === 'dark' ? '#1E1E2E' : '#E0E0E0', marginLeft: 44, borderWidth: 1, borderColor: borderColor }}>
+          <View className="shadow-lg shadow-black/20" style={{ width: 84, height: 118, borderRadius: 16, overflow: 'hidden', backgroundColor: theme === 'dark' ? '#1E1E2E' : '#E0E0E0', marginLeft: 44, borderWidth: 1, borderColor: borderColor }}>
             {movie.poster ? (
               <Image source={{ uri: movie.poster }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
             ) : (
@@ -143,11 +143,11 @@ export default function ShowtimeListScreen({ route, navigation }) {
           </View>
 
           {/* Movie meta */}
-          <View style={{ flex: 1, paddingBottom: 4, gap: 4 }}>
+          <View style={{ flex: 1, paddingBottom: 4, gap: 6 }}>
             <Text style={{ color: '#00D4FF', fontSize: 10, fontWeight: '900', letterSpacing: 2, textTransform: 'uppercase' }}>
               SHOWTIMES
             </Text>
-            <Text style={{ color: textColor, fontSize: 16, fontWeight: '900' }} numberOfLines={1}>
+            <Text style={{ color: textColor, fontSize: 18, fontWeight: '900' }} numberOfLines={2}>
               {movie.title}
             </Text>
           </View>
