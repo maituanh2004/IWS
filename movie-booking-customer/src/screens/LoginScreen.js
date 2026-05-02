@@ -16,6 +16,7 @@ import ScreenWrapper from '../components/ScreenWrapper';
 import CustomerInput from '../components/CustomerInput';
 import CustomerButton from '../components/CustomerButton';
 
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,22 +24,28 @@ export default function LoginScreen({ navigation }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
+
   const { signIn } = useAuth();
   const { t, colors, theme } = useUI();
+
 
   const handleLogin = async () => {
     console.log("🔥 CLICK LOGIN");
     console.log("EMAIL:", email);
     console.log("PASSWORD:", password);
 
+
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
+
     console.log("✅ VALIDATE PASS");
 
+
     setLoading(true);
+
 
     try {
       console.log("🔥 CALLING signIn...");
@@ -50,6 +57,9 @@ export default function LoginScreen({ navigation }) {
       setLoading(false);
     }
   };
+
+
+
 
 
 
@@ -72,17 +82,20 @@ export default function LoginScreen({ navigation }) {
               />
             </View>
 
+
             <View className="flex-row items-center gap-2.5 mb-2.5">
               <Text className="text-3xl">🎬</Text>
-              <Text className={`${theme === 'dark' ? 'text-white' : 'text-[#0A0A0F]'} text-4xl font-black italic tracking-[3px]`}>CINEVIET</Text>
+              <Text className={`${theme === 'dark' ? 'text-white' : 'text-[#0A0A0F]'} text-4xl font-black italic tracking-[5px]`}>CINEVIET</Text>
             </View>
             <Text className={`${colors.textSecondary} text-[15px] tracking-wide`}>Your ultimate cinema experience</Text>
           </View>
+
 
           {/* ── Form Card ── */}
           <View className={`flex-1 ${colors.card} rounded-t-[32px] px-6 pt-8 pb-10`}>
             <Text className={`${colors.text} text-2xl font-bold mb-1.5`}>{t('welcome')}</Text>
             <Text className={`${colors.textSecondary} text-sm mb-7`}>{t('signin_continue')}</Text>
+
 
             <CustomerInput
               label={t('email')}
@@ -93,6 +106,7 @@ export default function LoginScreen({ navigation }) {
               keyboardType="email-address"
               autoCapitalize="none"
             />
+
 
             <View className="relative">
               <CustomerInput
@@ -115,6 +129,7 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
+
             <View className="flex-row items-center justify-between mb-7">
               <TouchableOpacity
                 className="flex-row items-center gap-2.5"
@@ -126,10 +141,12 @@ export default function LoginScreen({ navigation }) {
                 <Text className={`${colors.textSecondary} text-sm`}>{t('remember_me')}</Text>
               </TouchableOpacity>
 
+
               <TouchableOpacity onPress={() => Alert.alert('Coming Soon', 'This feature will be available soon!')}>
                 <Text className="text-[#00D4FF] text-sm font-semibold">{t('forgot_password')}</Text>
               </TouchableOpacity>
             </View>
+
 
             <CustomerButton
               title={t('signin')}
@@ -137,12 +154,15 @@ export default function LoginScreen({ navigation }) {
               loading={loading}
             />
 
+
             <View className="flex-row justify-center items-center mb-7">
               <Text className={`${colors.textSecondary} text-sm`}>{t('no_account')} </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                 <Text className="text-[#00D4FF] text-sm font-bold">{t('signup')}</Text>
               </TouchableOpacity>
             </View>
+
+
 
 
           </View>
