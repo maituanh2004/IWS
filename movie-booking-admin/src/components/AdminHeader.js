@@ -15,7 +15,11 @@ export default function AdminHeader({ title, rightButtons = [], showBack = false
                 <View className="flex-row items-center">
                     {showBack ? (
                         <TouchableOpacity
-                            onPress={() => navigation.goBack()}
+                            onPress={() => {
+                                if (navigation.canGoBack()) {
+                                    navigation.goBack();
+                                }
+                            }}
                             className="p-2.5 bg-white/5 rounded-2xl mr-4 border border-white/10"
                         >
                             <ChevronLeft color="#fff" size={24} />
@@ -37,7 +41,13 @@ export default function AdminHeader({ title, rightButtons = [], showBack = false
                         </TouchableOpacity>
                     ))}
                     {showClose && (
-                        <TouchableOpacity onPress={() => navigation.goBack()} className="p-3 bg-white/5 rounded-2xl border border-white/10 ml-2">
+                        <TouchableOpacity 
+                            onPress={() => {
+                                if (navigation.canGoBack()) {
+                                    navigation.goBack();
+                                }
+                            }} 
+                            className="p-3 bg-white/5 rounded-2xl border border-white/10 ml-2">
                             <X color="#fff" size={20} />
                         </TouchableOpacity>
                     )}

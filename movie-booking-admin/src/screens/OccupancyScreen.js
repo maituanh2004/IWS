@@ -13,6 +13,7 @@ import * as showtimeApi from '../services/showtimeService';
 import AdminHeader from '../components/AdminHeader';
 import Navbar from '../components/Navbar';
 import BackgroundWrapper from '../components/BackgroundWrapper';
+import * as bookingApi from '../services/bookingService';
 
 const { width } = Dimensions.get('window');
 const SEAT_SIZE = (width - 60) / 10;
@@ -20,6 +21,7 @@ const SEAT_SIZE = (width - 60) / 10;
 export default function OccupancyScreen({ route, navigation }) {
     const { showtimeId } = route.params || {};
     const [showtime, setShowtime] = useState(null);
+    const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -28,17 +30,17 @@ export default function OccupancyScreen({ route, navigation }) {
 
     const loadShowtime = async () => {
         setLoading(true);
-        if (!showtimeId) {
-            setShowtime(null);
-            setLoading(false);
-            return;
-        }
         try {
-            const response = await showtimeApi.getShowtime(showtimeId);
-            setShowtime(response.data.data);
+            const [showtimeRes, bookingsRes] = await Promise.all([
+                showtimeApi.getShowtime(showtimeId),
+                bookingApi.getBookingsByShowtime(showtimeId)
+            ]);
+
+            setShowtime(showtimeRes.data.data);
+            setBookings(bookingsRes.data.data);
+
         } catch (error) {
-            console.error('Failed to load showtime details:', error);
-            setShowtime(null);
+            console.error('Failed to load data:', error);
         } finally {
             setLoading(false);
         }
@@ -58,22 +60,23 @@ export default function OccupancyScreen({ route, navigation }) {
     const endVipRow = startVipRow + 3;
 
     const bookedSeats = useMemo(() => {
-        const booked = new Set();
-        if (!showtime) return booked;
-        const bookedCount = showtime.bookedSeats || 0;
-        const seedValue = showtime._id ? showtime._id.slice(-4) : '0';
-        const seed = parseInt(seedValue, 16) || 123;
-        let m_w = seed;
-        const random = () => {
-            m_w = (1103515245 * m_w + 12345) & 0x7fffffff;
-            return m_w / 0x7fffffff;
-        };
-        while (booked.size < bookedCount) {
-            const randomSeat = Math.floor(random() * capacity);
-            booked.add(randomSeat);
-        }
-        return booked;
-    }, [capacity, showtime]);
+        if (!bookings) return new Set();
+
+        const set = new Set();
+
+        bookings.forEach(b => {
+            if (b.seat) {
+                // convert A1 → index
+                const row = b.seat.charCodeAt(0) - 65;
+                const col = parseInt(b.seat.slice(1)) - 1;
+
+                const index = row * cols + col;
+                set.add(index);
+            }
+        });
+
+        return set;
+    }, [bookings]);
 
     if (loading) {
         return (
@@ -177,7 +180,7 @@ export default function OccupancyScreen({ route, navigation }) {
                         </View>
                         <View className="bg-[#c04444] px-4 py-2 rounded-2xl shadow-lg shadow-[#c04444]/40">
                             <Text className="text-white font-black text-xs italic">
-                                {Math.round(((showtime.bookedSeats || 0) / capacity) * 100)}%
+                                {Math.round(((bookings.length || 0) / capacity) * 100)}%
                             </Text>
                         </View>
                     </View>
@@ -185,7 +188,7 @@ export default function OccupancyScreen({ route, navigation }) {
                         <View className="flex-1 flex-row items-center">
                             <Info color="#6b7280" size={14} />
                             <Text className="text-gray-400 text-[10px] font-black uppercase ml-2 tracking-widest">
-                                {showtime.bookedSeats || 0} / {capacity} SEATS BOOKED
+                                {bookings.length || 0} / {capacity} SEATS BOOKED
                             </Text>
                         </View>
                     </View>

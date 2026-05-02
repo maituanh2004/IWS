@@ -62,9 +62,7 @@ function AppStack() {
             <Stack.Screen
                 name="AddEditShowtime"
                 component={AddEditShowtimeScreen}
-                options={({ route }) => ({
-                    title: route.params?.showtime ? 'Edit Showtime' : 'Add Showtime',
-                })}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="DiscountManagement"
@@ -79,7 +77,7 @@ function AppStack() {
             <Stack.Screen
                 name="Occupancy"
                 component={OccupancyScreen}
-                options={{ title: 'Theater Occupancy' }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="BookingList"

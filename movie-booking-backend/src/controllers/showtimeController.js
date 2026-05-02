@@ -1,15 +1,34 @@
 const showtimeService = require('../services/showtimeService');
 
 // GET ALL SHOWTIMES
+const Booking = require('../models/Booking');
+
 exports.getShowtimes = async (req, res) => {
   try {
     const showtimes = await showtimeService.getAllShowtimes();
 
+    // 🔥 add bookedSeats vào từng showtime
+    const result = await Promise.all(
+      showtimes.map(async (s) => {
+        const count = await Booking.countDocuments({
+          showtime: s._id,
+          status: 'CONFIRMED'
+        });
+
+        return {
+          ...s.toObject(),
+          bookedSeats: count,
+          price: s.movie?.price || 0
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
-      count: showtimes.length,
-      data: showtimes,
+      count: result.length,
+      data: result,
     });
+
   } catch (err) {
     res.status(400).json({
       success: false,

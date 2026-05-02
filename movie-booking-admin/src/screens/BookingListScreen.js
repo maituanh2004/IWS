@@ -42,6 +42,19 @@ export default function BookingListScreen({ route, navigation }) {
         }
     };
 
+    const groupedBookings = Object.values(
+        bookings.reduce((acc, b) => {
+            if (!acc[b.bookingGroupId]) {
+            acc[b.bookingGroupId] = {
+                ...b,
+                seats: []
+            };
+            }
+            acc[b.bookingGroupId].seats.push(b.seat);
+            return acc;
+        }, {})
+    );
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -120,7 +133,7 @@ export default function BookingListScreen({ route, navigation }) {
                 )}
 
                 <FlatList
-                    data={bookings}
+                    data={groupedBookings}
                     keyExtractor={(item) => item._id}
                     contentContainerClassName="pb-32"
                     renderItem={({ item }) => (
@@ -145,7 +158,7 @@ export default function BookingListScreen({ route, navigation }) {
                                 <View className="flex-1">
                                     <Text className="text-gray-500 text-[8px] font-black uppercase tracking-widest mb-1">Seats</Text>
                                     <View className="flex-row flex-wrap gap-1">
-                                        {(item.seatNumber || []).map((seat, i) => (
+                                        {(item.seats || []).map((seat, i) => (
                                             <View key={i} className="bg-[#c04444] px-2 py-1 rounded-lg">
                                                 <Text className="text-white text-[10px] font-black italic">{seat}</Text>
                                             </View>
