@@ -7,6 +7,7 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    ScrollView 
 } from 'react-native';
 import { Clock, MapPin, Ticket, Edit, Trash2, Plus } from 'lucide-react-native';
 import * as showtimeApi from '../services/showtimeService';
@@ -14,10 +15,27 @@ import Navbar from '../components/Navbar';
 import AdminHeader from '../components/AdminHeader';
 import BackgroundWrapper from '../components/BackgroundWrapper';
 import AnimatedCard from '../components/AnimatedCard';
+import * as movieApi from '../services/movieService';
 
 export default function ShowtimeManagementScreen({ navigation }) {
     const [showtimes, setShowtimes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [movies, setMovies] = useState([]);
+    const [selectedMovie, setSelectedMovie] = useState('all');
+    const [showDropdown, setShowDropdown] = useState(false);
+
+    useEffect(() => {
+        loadMovies();
+        }, []);
+
+        const loadMovies = async () => {
+        const res = await movieApi.getMovies();
+        setMovies(res.data.data);
+    };
+
+    const filteredShowtimes = selectedMovie === 'all'
+        ? showtimes
+        : showtimes.filter(s => s.movie?._id === selectedMovie);
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
@@ -176,9 +194,64 @@ export default function ShowtimeManagementScreen({ navigation }) {
                     { title: "NEW", onPress: () => navigation.navigate('AddEditShowtime', {}) }
                 ]}
             />
-            
+
+            <View className="relative mb-4">
+
+            {/* Button */}
+            <TouchableOpacity
+                onPress={() => setShowDropdown(!showDropdown)}
+                className="bg-white/5 px-5 py-4 rounded-2xl border border-white/10 flex-row justify-between items-center"
+            >
+                <Text className="text-white font-bold">
+                {selectedMovie === 'all'
+                    ? 'All Movies'
+                    : movies.find(m => m._id === selectedMovie)?.title}
+                </Text>
+
+                <Text className="text-gray-400">▼</Text>
+            </TouchableOpacity>
+
+            {/* Dropdown */}
+            {showDropdown && (
+                <View className="absolute top-full mt-2 w-full bg-black rounded-2xl border border-white/10 z-50">
+                
+                <ScrollView style={{ maxHeight: 250 }}>
+                    
+                    <TouchableOpacity
+                    onPress={() => {
+                        setSelectedMovie('all');
+                        setShowDropdown(false);
+                    }}
+                    className="p-4 border-b border-white/10"
+                    >
+                    <Text className="text-white font-bold">All Movies</Text>
+                    </TouchableOpacity>
+
+                    {movies.map(movie => (
+                    <TouchableOpacity
+                        key={movie._id}
+                        onPress={() => {
+                        setSelectedMovie(movie._id);
+                        setShowDropdown(false);
+                        }}
+                        className={`p-4 ${
+                        selectedMovie === movie._id ? 'bg-[#c04444]/20' : ''
+                        }`}
+                    >
+                        <Text className="text-white">
+                        {movie.title} ({movie.duration}m)
+                        </Text>
+                    </TouchableOpacity>
+                    ))}
+
+                </ScrollView>
+                </View>
+            )}
+
+            </View>       
+
             <FlatList
-                data={showtimes}
+                data={filteredShowtimes}
                 renderItem={({ item, index }) => renderShowtime({ item, index })}
                 keyExtractor={(item) => item._id}
                 contentContainerClassName="px-4 py-8 pb-32"

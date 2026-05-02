@@ -9,6 +9,7 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
+    FlatList
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import * as movieApi from '../services/movieService';
@@ -21,6 +22,7 @@ const ROOMS = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
 export default function AddEditShowtimeScreen({ route, navigation }) {
     const { showtime } = route.params || {};
     const isEdit = !!showtime;
+    const [showMovieDropdown, setShowMovieDropdown] = useState(false);
 
     const [movies, setMovies] = useState([]);
     const [selectedMovieId, setSelectedMovieId] = useState(showtime?.movie?._id || '');
@@ -116,88 +118,206 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
     };
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-        >
-            <BackgroundWrapper>
-                <AdminHeader title={isEdit ? 'Edit Showtime' : 'New Showtime'} showClose={true} />
-                
-                <ScrollView className="flex-1" contentContainerClassName="p-6 pb-20">
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Select Movie*</Text>
-                    <View className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 mb-6">
-                        <Picker 
-                            selectedValue={selectedMovieId} 
-                            onValueChange={setSelectedMovieId} 
-                            style={{ color: '#fff' }} 
-                            dropdownIconColor="#fff"
-                        >
-                            {movies.map((movie) => <Picker.Item key={movie._id} label={`${movie.title} (${movie.duration}m)`} value={movie._id} color={Platform.OS === 'ios' ? '#fff' : '#111827'} />)}
-                        </Picker>
-                    </View>
+    <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
+        <BackgroundWrapper>
+        <AdminHeader
+            title={isEdit ? 'Edit Showtime' : 'New Showtime'}
+            showClose={true}
+        />
 
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Start Date* (YYYY-MM-DD)</Text>
-                    <TextInput className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6 focus:border-[#c04444]" value={startDate} onChangeText={setStartDate} placeholder="2024-01-01" placeholderTextColor="#4b5563" />
+        <View style={{ flex: 1 }}>
+            <ScrollView
+            className="flex-1"
+            contentContainerClassName="p-6 pb-20"
+            >
+            {/* MOVIE */}
+            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                Select Movie*
+            </Text>
 
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Start Time* (HH:MM)</Text>
-                    <TextInput className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6 focus:border-[#c04444]" value={startTime} onChangeText={setStartTime} placeholder="14:30" placeholderTextColor="#4b5563" />
+            <View className="relative mb-6">
+                <TouchableOpacity
+                onPress={() => setShowMovieDropdown(!showMovieDropdown)}
+                className="bg-white/5 p-5 rounded-2xl border border-white/10 flex-row justify-between items-center"
+                >
+                <Text className="text-white font-black">
+                    {movies.find(m => m._id === selectedMovieId)?.title ||
+                    'Select Movie'}
+                </Text>
+                <Text className="text-gray-400">▼</Text>
+                </TouchableOpacity>
+            </View>
 
-                    <View className="flex-row gap-4 mb-6">
-                        <View className="flex-1">
-                            <Text className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">End Date (Auto)</Text>
-                            <TextInput 
-                                className="bg-white/5 text-white/40 p-5 rounded-2xl border border-white/5 font-black italic" 
-                                value={endDate} 
-                                editable={false}
-                                placeholder="Auto" 
-                                placeholderTextColor="#4b5563" 
-                            />
-                        </View>
-                        <View className="flex-1">
-                            <Text className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">End Time (Auto)</Text>
-                            <TextInput 
-                                className="bg-white/5 text-white/40 p-5 rounded-2xl border border-white/5 font-black italic" 
-                                value={endTime} 
-                                editable={false}
-                                placeholder="Auto" 
-                                placeholderTextColor="#4b5563" 
-                            />
-                        </View>
-                    </View>
+            {/* START DATE */}
+            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                Start Date* (YYYY-MM-DD)
+            </Text>
+            <TextInput
+                className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6"
+                value={startDate}
+                onChangeText={setStartDate}
+                placeholder="2024-01-01"
+                placeholderTextColor="#4b5563"
+            />
 
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Theater Room*</Text>
-                    <View className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 mb-6">
-                        <Picker 
-                            selectedValue={room} 
-                            onValueChange={setRoom} 
-                            style={{ color: '#fff' }} 
-                            dropdownIconColor="#fff"
-                        >
-                            {ROOMS.map((r) => <Picker.Item key={r} label={`Room ${r}`} value={r} color={Platform.OS === 'ios' ? '#fff' : '#111827'} />)}
-                        </Picker>
-                    </View>
+            {/* START TIME */}
+            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                Start Time* (HH:MM)
+            </Text>
+            <TextInput
+                className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6"
+                value={startTime}
+                onChangeText={setStartTime}
+                placeholder="14:30"
+                placeholderTextColor="#4b5563"
+            />
 
-                    <View className="flex-row gap-4 mb-10">
-                        <View className="flex-1">
-                            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Total Seats*</Text>
-                            <TextInput className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic focus:border-[#c04444]" value={totalSeats} onChangeText={setTotalSeats} keyboardType="numeric" placeholderTextColor="#4b5563" />
-                        </View>
-                        <View className="flex-1">
-                            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Price (VND)*</Text>
-                            <TextInput className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic focus:border-[#c04444]" value={price} onChangeText={setPrice} keyboardType="numeric" placeholder="95000" placeholderTextColor="#4b5563" />
-                        </View>
-                    </View>
+            {/* END TIME */}
+            <View className="flex-row gap-4 mb-6">
+                <View className="flex-1">
+                <Text className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">
+                    End Date (Auto)
+                </Text>
+                <TextInput
+                    className="bg-white/5 text-white/40 p-5 rounded-2xl border border-white/5 font-black italic"
+                    value={endDate}
+                    editable={false}
+                />
+                </View>
+                <View className="flex-1">
+                <Text className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">
+                    End Time (Auto)
+                </Text>
+                <TextInput
+                    className="bg-white/5 text-white/40 p-5 rounded-2xl border border-white/5 font-black italic"
+                    value={endTime}
+                    editable={false}
+                />
+                </View>
+            </View>
 
-                    <TouchableOpacity 
-                        className="bg-[#c04444] p-6 rounded-[24px] items-center shadow-2xl shadow-[#c04444]/40 mb-10" 
-                        onPress={handleSave} 
-                        disabled={loading}
+            {/* ROOM */}
+            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                Theater Room*
+            </Text>
+            <View className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 mb-6">
+                <Picker
+                selectedValue={room}
+                onValueChange={setRoom}
+                style={{ color: '#fff' }}
+                >
+                {ROOMS.map(r => (
+                    <Picker.Item
+                    key={r}
+                    label={`Room ${r}`}
+                    value={r}
+                    />
+                ))}
+                </Picker>
+            </View>
+
+            {/* SEATS + PRICE */}
+            <View className="flex-row gap-4 mb-10">
+                <View className="flex-1">
+                <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                    Total Seats*
+                </Text>
+                <TextInput
+                    className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic"
+                    value={totalSeats}
+                    onChangeText={setTotalSeats}
+                    keyboardType="numeric"
+                />
+                </View>
+
+                <View className="flex-1">
+                <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                    Price (VND)*
+                </Text>
+                <TextInput
+                    className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic"
+                    value={price}
+                    onChangeText={setPrice}
+                    keyboardType="numeric"
+                />
+                </View>
+            </View>
+
+            {/* BUTTON */}
+            <TouchableOpacity
+                className="bg-[#c04444] p-6 rounded-[24px] items-center mb-10"
+                onPress={handleSave}
+                disabled={loading}
+            >
+                {loading ? (
+                <ActivityIndicator color="#fff" />
+                ) : (
+                <Text className="text-white text-lg font-black uppercase italic">
+                    {isEdit ? 'Update Showtime' : 'Create Showtime'}
+                </Text>
+                )}
+            </TouchableOpacity>
+            </ScrollView>
+
+            {/* 🔥 DROPDOWN OVERLAY (tách khỏi ScrollView → FIX LAG + CLICK) */}
+            {showMovieDropdown && (
+            <>
+                {/* Click outside */}
+                <TouchableOpacity
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 10,
+                }}
+                onPress={() => setShowMovieDropdown(false)}
+                />
+
+                {/* Dropdown */}
+                <View
+                style={{
+                    position: 'absolute',
+                    top: 120,
+                    left: 20,
+                    right: 20,
+                    backgroundColor: '#000',
+                    borderRadius: 16,
+                    zIndex: 20,
+                    elevation: 20,
+                    maxHeight: 250,
+                }}
+                >
+                <ScrollView>
+                    {movies.map(movie => (
+                    <TouchableOpacity
+                        key={movie._id}
+                        onPress={() => {
+                        setSelectedMovieId(movie._id);
+                        setShowMovieDropdown(false);
+                        }}
+                        style={{
+                        padding: 16,
+                        borderBottomWidth: 1,
+                        borderBottomColor: '#222',
+                        }}
                     >
-                        {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase italic tracking-widest">{isEdit ? 'Update Schedule' : 'Create Schedule'}</Text>}
+                        <Text style={{ color: '#fff' }}>
+                        {movie.title} ({movie.duration}m)
+                        </Text>
                     </TouchableOpacity>
+                    ))}
                 </ScrollView>
-            </BackgroundWrapper>
-        </KeyboardAvoidingView>
+                </View>
+            </>
+            )}
+        </View>
+        </BackgroundWrapper>
+    </KeyboardAvoidingView>
     );
 }
