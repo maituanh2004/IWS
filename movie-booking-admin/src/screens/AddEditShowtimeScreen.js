@@ -39,7 +39,6 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
         showtime?.endTime ? new Date(showtime.endTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '16:00'
     );
     const [room, setRoom] = useState(showtime?.room?.toString() || '1');
-    const [totalSeats, setTotalSeats] = useState(showtime?.totalSeats?.toString() || '100');
     const [price, setPrice] = useState(showtime?.basePrice?.toString() || '');
     const [loading, setLoading] = useState(false);
 
@@ -80,16 +79,20 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             Alert.alert('Error', 'Failed to load movies');
         }
     };
-
-    const handleSave = async () => {
-        if (!selectedMovieId || !startDate || !startTime || !endDate || !endTime || !room || !price) {
-            Alert.alert('Error', 'Please fill in all fields');
-            return;
-        }
-        if (!price || isNaN(price) || Number(price) <= 0) {
-            Alert.alert('Error', 'Please enter a valid base price');
-            return;
-        }
+        const [totalSeats, setTotalSeats] = useState(
+                (showtime?.totalSeats === 80 || showtime?.totalSeats === 100) 
+                ? showtime.totalSeats.toString() 
+                : '100'
+            );
+        const handleSave = async () => {
+            if (!selectedMovieId || !startDate || !startTime || !endDate || !endTime || !room || !price) {
+                Alert.alert('Error', 'Please fill in all fields');
+                return;
+            }
+            if (!price || isNaN(price) || Number(price) <= 0) {
+                Alert.alert('Error', 'Please enter a valid base price');
+                return;
+            }
 
         const showtimeData = {
             movieId: selectedMovieId,
@@ -220,32 +223,40 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
                 </Picker>
             </View>
 
-            {/* SEATS + PRICE */}
-            <View className="flex-row gap-4 mb-10">
-                <View className="flex-1">
+          <View className="flex-1">
+            <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
+                Total Seats*
+            </Text>
+            <View className="flex-row bg-white/5 p-1 rounded-2xl border border-white/10">
+                <TouchableOpacity 
+                    onPress={() => setTotalSeats('80')}
+                    className={`flex-1 py-4 items-center rounded-xl ${totalSeats === '80' ? 'bg-[#c04444]' : ''}`}
+                >
+                    <Text className={`font-black ${totalSeats === '80' ? 'text-white' : 'text-gray-500'}`}>80</Text>
+                </TouchableOpacity>
+                
+                
+                <TouchableOpacity 
+                    onPress={() => setTotalSeats('100')}
+                    className={`flex-1 py-4 items-center rounded-xl ${totalSeats === '100' ? 'bg-[#c04444]' : ''}`}
+                >
+                    <Text className={`font-black ${totalSeats === '100' ? 'text-white' : 'text-gray-500'}`}>100</Text>
+                </TouchableOpacity>
+            </View>
+            {/* BASE PRICE */}
                 <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
-                    Total Seats*
+                    Base Price (VND)*
                 </Text>
                 <TextInput
-                    className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic"
-                    value={totalSeats}
-                    onChangeText={setTotalSeats}
-                    keyboardType="numeric"
-                />
-                </View>
-
-                <View className="flex-1">
-                <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
-                    Price (VND)*
-                </Text>
-                <TextInput
-                    className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic"
+                    className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6"
                     value={price}
                     onChangeText={setPrice}
-                    keyboardType="numeric"
-                />
-                </View>
-            </View>
+                    placeholder="e.g. 80000"
+                    placeholderTextColor="#4b5563"
+                    keyboardType="numeric" // Hiển thị bàn phím số
+                    returnKeyType="done"
+/>
+        </View>
 
             {/* BUTTON */}
             <TouchableOpacity

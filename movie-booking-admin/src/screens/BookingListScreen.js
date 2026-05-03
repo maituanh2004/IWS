@@ -176,8 +176,8 @@ export default function BookingListScreen({ route, navigation }) {
                                     <CreditCard color="#6b7280" size={14} />
                                     <Text className="text-gray-400 text-[10px] font-black uppercase ml-2 tracking-widest">Credit Card</Text>
                                 </View>
-                                <View className={`px-4 py-1.5 rounded-xl border ${item.status === 'confirmed' ? 'bg-green-900/20 border-green-500/30' : 'bg-[#c04444]/10 border-[#c04444]/20'}`}>
-                                    <Text className={`${item.status === 'confirmed' ? 'text-green-500' : 'text-[#c04444]'} font-black text-[10px] uppercase tracking-widest italic`}>{item.status}</Text>
+                                <View className={`px-4 py-1.5 rounded-xl border ${((item.status||'').toUpperCase() === 'CONFIRMED') ? 'bg-green-900/20 border-green-500/30' : 'bg-[#c04444]/10 border-[#c04444]/20'}`}>
+                                    <Text className={`${((item.status||'').toUpperCase() === 'CONFIRMED') ? 'text-green-500' : 'text-[#c04444]'} font-black text-[10px] uppercase tracking-widest italic`}>{item.status}</Text>
                                 </View>
                             </View>
                         </View>

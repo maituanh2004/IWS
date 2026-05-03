@@ -14,7 +14,7 @@ import * as discountService from '../services/discountService';
 import * as movieService from '../services/movieService';
 import AdminHeader from '../components/AdminHeader';
 import BackgroundWrapper from '../components/BackgroundWrapper';
-
+import DateTimePicker from '@react-native-community/datetimepicker';
 export default function AddEditMovieScreen({ route, navigation }) {
     const { movie } = route.params || {};
     const isEdit = !!movie;
@@ -31,6 +31,8 @@ export default function AddEditMovieScreen({ route, navigation }) {
     const [selectedDiscounts, setSelectedDiscounts] = useState(movie?.availableDiscounts || []);
     const [discounts, setDiscounts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [dateValue, setDateValue] = useState(movie?.releaseDate ? new Date(movie.releaseDate) : new Date());
 
     const descRef = useRef(null);
     const priceRef = useRef(null);
@@ -65,7 +67,17 @@ export default function AddEditMovieScreen({ route, navigation }) {
             handleApiError(error, navigation);
         }
     };
-
+    const onChangeDate = (event, selectedDate) => {
+            setShowDatePicker(false); 
+            if (selectedDate) {
+                if (selectedDate < new Date()) {
+                    alert("Release date cannot be in the past");
+                    return;
+                }
+                setDateValue(selectedDate);
+                setReleaseDate(selectedDate.toISOString().split('T')[0]);
+            }
+        };
     const handleSave = async () => {
 
         if (!title || !description || !duration || !genre || !releaseDate || !price) {
@@ -120,7 +132,7 @@ export default function AddEditMovieScreen({ route, navigation }) {
                 await movieService.createMovie(movieData);
             }
 
-            alert('Success');
+            alert('Movie created successfully');
             navigation.goBack();
 
         } catch (error) {
@@ -322,19 +334,29 @@ export default function AddEditMovieScreen({ route, navigation }) {
                     </View>
 
 
-                    {/* RELEASE DATE */}
                     <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase ml-1">
-                    Release Date (YYYY-MM-DD)*
+                        Release Date*
                     </Text>
+                    <TouchableOpacity 
+            onPress={() => setShowDatePicker(true)}
+            className="bg-white/5 p-5 rounded-2xl border border-white/10 mb-10 flex-row justify-between items-center"
+        >
+            <Text className="text-white font-black italic">
+                {releaseDate || "Select Date"}
+            </Text>
+            <Text className="text-gray-400">📅</Text>
+        </TouchableOpacity>
 
-                    <TextInput
-                    ref={releaseDateRef}
-                    className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 mb-10"
-                    value={releaseDate}
-                    onChangeText={setReleaseDate}
-                    placeholder="2024-01-01"
-                    placeholderTextColor="#4b5563"
-                    />
+        {showDatePicker && (
+            <DateTimePicker
+                value={dateValue}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={onChangeDate}
+            />
+        )}
+
+                
 
                     {/* SAVE BUTTON */}
                     <View className="rounded-[24px] bg-[#c04444]">

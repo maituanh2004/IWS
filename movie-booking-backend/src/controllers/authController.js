@@ -8,15 +8,18 @@ const formatUser = require('../utils/formatUser');
 exports.register = async (req, res, next) => {
     try {
         console.log('Registration attempt:', req.body.email);
-        const { name, email, password, role } = req.body;
+        const { name, email, password } = req.body;
         const trimmedEmail = email ? email.trim().toLowerCase() : '';
         const trimmedName = name ? name.trim() : '';
+
+        // Force role to 'user' for public registration to prevent privilege escalation
+        const roleToAssign = 'user';
 
         const user = await User.create({
             name: trimmedName,
             email: trimmedEmail,
             password,
-            role
+            role: roleToAssign
         });
 
         console.log('Registration successful:', email);

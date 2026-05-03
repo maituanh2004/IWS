@@ -17,7 +17,9 @@ export const AuthProvider = ({ children }) => {
             const token = await AsyncStorage.getItem('token');
             if (token) {
                 const response = await api.getMe();
-                setUser(response.data.data);
+                const raw = response.data?.data || response.data?.user || response.data;
+                const normalized = normalizeUser(raw);
+                setUser(normalized);
             }
         } catch (error) {
             await AsyncStorage.removeItem('token');
@@ -28,16 +30,29 @@ export const AuthProvider = ({ children }) => {
 
     const signIn = async (email, password) => {
         const response = await api.login(email, password);
-        await AsyncStorage.setItem('token', response.data.token);
-        setUser(response.data.user);
-        return response.data;
+        const token = response.data?.token || response.data?.data?.token;
+        const raw = response.data?.user || response.data?.data || response.data;
+        await AsyncStorage.setItem('token', token);
+        const normalized = normalizeUser(raw);
+        setUser(normalized);
+        return { ...response.data, user: normalized, token };
     };
 
     const signUp = async (name, email, password) => {
         const response = await api.register(name, email, password);
-        await AsyncStorage.setItem('token', response.data.token);
-        setUser(response.data.user);
-        return response.data;
+        const token = response.data?.token || response.data?.data?.token;
+        const raw = response.data?.user || response.data?.data || response.data;
+        await AsyncStorage.setItem('token', token);
+        const normalized = normalizeUser(raw);
+        setUser(normalized);
+        return { ...response.data, user: normalized, token };
+    };
+
+    const normalizeUser = (u) => {
+        if (!u) return null;
+        const _id = u._id || u.id || (u.user && (u.user._id || u.user.id));
+        const id = u.id || u._id || (u.user && (u.user.id || u.user._id));
+        return { ...u, _id, id };
     };
 
     const signOut = async () => {

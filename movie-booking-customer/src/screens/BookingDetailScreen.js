@@ -78,7 +78,7 @@ export default function BookingDetailScreen({ route }) {
         </Text>
 
         <Text style={{ color:'#888', marginBottom:10 }}>
-          Ghế: {booking.seatNumber}
+          Ghế: {booking.seat || (Array.isArray(booking.seats) ? booking.seats.join(', ') : booking.seatNumber || '')}
         </Text>
 
         <View style={{ height:1, backgroundColor:'#1E1E2E', marginVertical:10 }} />
