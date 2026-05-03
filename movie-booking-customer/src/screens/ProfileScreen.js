@@ -35,7 +35,9 @@ export default function ProfileScreen({ navigation }) {
 
   const handleQuickAction = (id) => {
     if (id === 'tickets') {
-      navigation.navigate('DiscountHistory');
+      navigation.navigate('DiscountHistory', {
+        initialTab: 'promos'
+      });
     } else if (id === 'edit_profile') {
       setName(user?.name || '');
       setEmail(user?.email || '');

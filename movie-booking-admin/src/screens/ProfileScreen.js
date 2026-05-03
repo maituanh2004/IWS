@@ -106,7 +106,7 @@ export default function ProfileScreen() {
                                 <View className="bg-[#c04444] px-3 py-1 rounded-xl shadow-lg shadow-[#c04444]/30">
                                     <Text className="text-white text-[8px] font-black uppercase tracking-widest italic">{user?.role}</Text>
                                 </View>
-                                <Text className="text-gray-400 text-[10px] ml-4 font-black uppercase tracking-widest">{user?.email}</Text>
+                                <Text className="text-gray-400 text-[10px] ml-3 italic font-black tracking-widest">{user?.email}</Text>
                             </View>
                         </View>
                     </View>
@@ -231,8 +231,8 @@ export default function ProfileScreen() {
                                 <LogOut color="#fff" size={24} />
                             </View>
                             <View>
-                                <Text className="text-xl font-black text-white italic tracking-tighter">Sign Out</Text>
-                                <Text className="text-gray-600 text-[10px] font-black uppercase tracking-widest mt-1">End Session</Text>
+                                <Text className="text-xl font-black text-white tracking-tighter">SIGN OUT</Text>
+                                <Text className="text-gray-600 text-[10px] font-black uppercase tracking-widest mt-1">END SESSION</Text>
                             </View>
                         </View>
                         <ChevronRight color="#4b5563" size={24} />

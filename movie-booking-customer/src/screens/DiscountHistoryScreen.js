@@ -33,10 +33,11 @@ const { width } = Dimensions.get('window');
 const formatVND = (n) =>
     n ? n.toLocaleString('vi-VN') + 'đ' : '0đ';
 
-export default function DiscountHistoryScreen({ navigation }) {
+export default function DiscountHistoryScreen({ navigation, route }) {
     const { user } = useAuth();
     const { t, colors, theme } = useUI();
-    const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' or 'promos'
+    const initialTab = route?.params?.initialTab || 'tickets';
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [statusFilter, setStatusFilter] = useState('all');
     const [bookings, setBookings] = useState([]);
     const [discounts, setDiscounts] = useState([]);
@@ -51,6 +52,12 @@ export default function DiscountHistoryScreen({ navigation }) {
     useEffect(() => {
         loadData();
     }, [user?._id]);
+
+    useEffect(() => {
+        if (route?.params?.initialTab) {
+            setActiveTab(route.params.initialTab);
+        }
+    }, [route?.params?.initialTab]);
 
     const loadData = async () => {
         setLoading(true);

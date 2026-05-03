@@ -12,7 +12,7 @@ const discountSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Please add discount percentage'],
         min: 1,
-        max: 100
+        max: 50
     },
     minPrice: {
         type: Number,

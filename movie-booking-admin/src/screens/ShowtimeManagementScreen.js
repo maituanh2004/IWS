@@ -23,7 +23,27 @@ export default function ShowtimeManagementScreen({ navigation }) {
     const [movies, setMovies] = useState([]);
     const [selectedMovie, setSelectedMovie] = useState('all');
     const [showDropdown, setShowDropdown] = useState(false);
+    const getDateKey = (date) => {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
 
+    const generateDates = (days = 7) => {
+    const dates = [];
+    const today = new Date();
+
+    for (let i = 0; i < days; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        dates.push(d);
+    }
+
+    return dates;
+    };
+
+    const uniqueDates = generateDates(7);
+    const [selectedDate, setSelectedDate] = useState(getDateKey(new Date()));
+    
     useEffect(() => {
         loadMovies();
         }, []);
@@ -33,9 +53,15 @@ export default function ShowtimeManagementScreen({ navigation }) {
         setMovies(res.data.data);
     };
 
-    const filteredShowtimes = selectedMovie === 'all'
-        ? showtimes
-        : showtimes.filter(s => s.movie?._id === selectedMovie);
+    const filteredShowtimes = showtimes.filter(st => {
+    const matchMovie =
+        selectedMovie === 'all' || st.movie?._id === selectedMovie;
+
+    const matchDate =
+        getDateKey(st.startTime) === selectedDate;
+
+    return matchMovie && matchDate;
+    });
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
@@ -174,6 +200,12 @@ export default function ShowtimeManagementScreen({ navigation }) {
             </AnimatedCard>
         );
     };
+    
+    useEffect(() => {
+    if (!selectedDate) {
+        setSelectedDate(getDateKey(new Date()));
+    }
+    }, []);
 
     if (loading) {
         return (
@@ -186,78 +218,135 @@ export default function ShowtimeManagementScreen({ navigation }) {
     }
 
     return (
-        <BackgroundWrapper>
-            <AdminHeader 
-                title="Showtimes" 
-                showBack={true} 
-                rightButtons={[
-                    { title: "NEW", onPress: () => navigation.navigate('AddEditShowtime', {}) }
-                ]}
-            />
+    <BackgroundWrapper>
+        <AdminHeader 
+        title="Showtimes" 
+        showBack={true} 
+        rightButtons={[
+            { title: "NEW", onPress: () => navigation.navigate('AddEditShowtime', {}) }
+        ]}
+        />
 
-            <View className="relative mb-4">
+        {/* ===== FIX: TÁCH FILTER KHỎI LIST ===== */}
+        <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
 
-            {/* Button */}
+        {/* ===== MOVIE DROPDOWN ===== */}
+        <View className="relative mb-3">
             <TouchableOpacity
-                onPress={() => setShowDropdown(!showDropdown)}
-                className="bg-white/5 px-5 py-4 rounded-2xl border border-white/10 flex-row justify-between items-center"
+            onPress={() => setShowDropdown(!showDropdown)}
+            className="bg-white/5 px-5 py-4 rounded-2xl border border-white/10 flex-row justify-between items-center"
             >
-                <Text className="text-white font-bold">
+            <Text className="text-white font-bold">
                 {selectedMovie === 'all'
-                    ? 'All Movies'
-                    : movies.find(m => m._id === selectedMovie)?.title}
-                </Text>
-
-                <Text className="text-gray-400">▼</Text>
+                ? 'All Movies'
+                : movies.find(m => m._id === selectedMovie)?.title}
+            </Text>
+            <Text className="text-gray-400">▼</Text>
             </TouchableOpacity>
 
-            {/* Dropdown */}
             {showDropdown && (
-                <View className="absolute top-full mt-2 w-full bg-black rounded-2xl border border-white/10 z-50">
-                
+            <View className="absolute top-full mt-2 w-full bg-black rounded-2xl border border-white/10 z-50">
                 <ScrollView style={{ maxHeight: 250 }}>
-                    
-                    <TouchableOpacity
+                <TouchableOpacity
                     onPress={() => {
-                        setSelectedMovie('all');
-                        setShowDropdown(false);
+                    setSelectedMovie('all');
+                    setShowDropdown(false);
                     }}
                     className="p-4 border-b border-white/10"
-                    >
+                >
                     <Text className="text-white font-bold">All Movies</Text>
-                    </TouchableOpacity>
+                </TouchableOpacity>
 
-                    {movies.map(movie => (
+                {movies.map(movie => (
                     <TouchableOpacity
-                        key={movie._id}
-                        onPress={() => {
+                    key={movie._id}
+                    onPress={() => {
                         setSelectedMovie(movie._id);
                         setShowDropdown(false);
-                        }}
-                        className={`p-4 ${
+                    }}
+                    className={`p-4 ${
                         selectedMovie === movie._id ? 'bg-[#c04444]/20' : ''
-                        }`}
+                    }`}
                     >
-                        <Text className="text-white">
+                    <Text className="text-white">
                         {movie.title} ({movie.duration}m)
-                        </Text>
+                    </Text>
                     </TouchableOpacity>
-                    ))}
-
+                ))}
                 </ScrollView>
-                </View>
+            </View>
             )}
+        </View>
 
-            </View>       
+        {/* ===== DATE FILTER ===== */}
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginBottom: 12 }}
+            contentContainerStyle={{ paddingRight: 16 }}
+        >
+            {uniqueDates.map((date) => {
+            const dateKey = getDateKey(date);
+            const isActive = selectedDate === dateKey;
 
-            <FlatList
-                data={filteredShowtimes}
-                renderItem={({ item, index }) => renderShowtime({ item, index })}
-                keyExtractor={(item) => item._id}
-                contentContainerClassName="px-4 py-8 pb-32"
-            />
-            
-            <Navbar />
-        </BackgroundWrapper>
+            return (
+                <TouchableOpacity
+                key={dateKey}
+                onPress={() => setSelectedDate(dateKey)}
+                style={{
+                    marginRight: 10,
+                    paddingVertical: 8,
+                    borderRadius: 16,
+                    backgroundColor: isActive ? '#c04444' : 'rgba(255,255,255,0.08)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 82,
+                    paddingHorizontal: 16,
+                }}
+                >
+                <Text style={{
+                    color: isActive ? '#fff' : '#999',
+                    fontWeight: '700',
+                    fontSize: 11,
+                }}>
+                    {date.toLocaleDateString('vi-VN', { weekday: 'short' })}
+                </Text>
+
+                <Text style={{
+                    color: isActive ? '#fff' : '#bbb',
+                    fontWeight: '900',
+                    fontSize: 14,
+                }}>
+                    {date.getDate()}/{date.getMonth() + 1}
+                </Text>
+                </TouchableOpacity>
+            );
+            })}
+        </ScrollView>
+
+        </View>
+
+        {/* ===== LIST RIÊNG (KHÔNG ẢNH HƯỞNG FILTER) ===== */}
+        <FlatList
+        data={filteredShowtimes}
+        renderItem={({ item, index }) => renderShowtime({ item, index })}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 10,
+            paddingBottom: 140,
+            flexGrow: 1
+        }}
+        ListEmptyComponent={
+            <View style={{ marginTop: 40, alignItems: 'center' }}>
+            <Text className="text-gray-400 font-black uppercase">
+                No showtimes on this date
+            </Text>
+            </View>
+        }
+        />
+
+        <Navbar />
+    </BackgroundWrapper>
     );
 }

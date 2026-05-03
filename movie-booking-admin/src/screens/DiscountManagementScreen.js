@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, TextInput, ScrollView, Platform} from 'react-native';
 import { Tag, Edit, Trash2, Calendar, Plus, X } from 'lucide-react-native';
 import AdminHeader from '../components/AdminHeader';
 import EmptyState from '../components/EmptyState';
@@ -8,6 +8,7 @@ import BackgroundWrapper from '../components/BackgroundWrapper';
 import * as discountService from '../services/discountService';
 import { BlurView } from 'expo-blur';
 import AnimatedCard from '../components/AnimatedCard';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function DiscountManagementScreen({ navigation }) {
     const [discounts, setDiscounts] = useState([]);
@@ -15,7 +16,8 @@ export default function DiscountManagementScreen({ navigation }) {
     const [modalVisible, setModalVisible] = useState(false);
     const [editingDiscount, setEditingDiscount] = useState(null);
     const [submitting, setSubmitting] = useState(false);
-
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [dateValue, setDateValue] = useState(new Date());
     // Form states
     const [code, setCode] = useState('');
     const [percentage, setPercentage] = useState('');
@@ -228,17 +230,37 @@ export default function DiscountManagementScreen({ navigation }) {
                             </View>
 
                             <Text className="text-xs font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">Expiry Date* (YYYY-MM-DD)</Text>
-                            <TextInput 
-                                className="bg-white/5 p-5 rounded-2xl border border-white/10 text-white font-black italic mb-10 focus:border-[#c04444]"
-                                value={expiryDate} onChangeText={setExpiryDate} placeholder="2024-12-31" placeholderTextColor="#4b5563"
+                            <TouchableOpacity
+                            onPress={() => setShowDatePicker(true)}
+                            className="bg-white/5 p-5 rounded-2xl border border-white/10 mb-10 flex-row justify-between items-center"
+                            >
+                            <Text className="text-white font-black italic">
+                                {expiryDate || 'Select Expiry Date'}
+                            </Text>
+                            <Text className="text-gray-400">📅</Text>
+                            </TouchableOpacity>
+
+                            {showDatePicker && (
+                            <DateTimePicker
+                                value={dateValue}
+                                mode="date"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                onChange={(event, selectedDate) => {
+                                setShowDatePicker(false);
+                                if (selectedDate) {
+                                    setDateValue(selectedDate);
+                                    setExpiryDate(selectedDate.toISOString().split('T')[0]);
+                                }
+                                }}
                             />
+                            )}
 
                             <TouchableOpacity 
                                 className="bg-[#c04444] p-6 rounded-[24px] items-center shadow-2xl shadow-[#c04444]/40" 
                                 onPress={handleSave} 
                                 disabled={submitting}
                             >
-                                {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase italic tracking-widest">{editingDiscount ? 'Update Discount' : 'Create Discount'}</Text>}
+                                {submitting ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-lg font-black uppercase tracking-widest">{editingDiscount ? 'Update Discount' : 'Create Discount'}</Text>}
                             </TouchableOpacity>
                         </ScrollView>
                     </View>

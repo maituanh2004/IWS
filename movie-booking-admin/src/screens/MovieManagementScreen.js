@@ -21,14 +21,18 @@ export default function MovieManagementScreen({ navigation }) {
     const [movies, setMovies] = useState([]);
     const [discounts, setDiscounts] = useState({});
     const [loading, setLoading] = useState(true);
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            loadData();
+            if (!loaded) {
+                loadData();
+                setLoaded(true);
+            }
         });
         return unsubscribe;
-    }, [navigation]);
-
+    }, [navigation, loaded]);
+    
     const loadData = async () => {
         try {
             const [movieRes, discountRes] = await Promise.all([
