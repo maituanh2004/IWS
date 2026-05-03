@@ -22,85 +22,84 @@ export default function PaymentSuccessScreen({ route, navigation }) {
   const { t } = useUI();
   const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState({
-    bookingId: route.params?.bookingId || '',
+    bookingId: route.params?.bookingGroupId || '',
     movieTitle: route.params?.movieTitle || '',
     seats: route.params?.seats || [],
     totalPrice: route.params?.totalPrice || 0,
     cinemaName: route.params?.cinemaName || 'CineViet',
     showtime: route.params?.showtime || null,
   });
+  console.log("ROUTE PARAMS:", route.params);
 
   const { status, bookingGroupId } = route.params ?? {};
 
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(40)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
   const ring1 = useRef(new Animated.Value(1)).current;
   const ring2 = useRef(new Animated.Value(1)).current;
   const ring3 = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (status === 'fail') {
-      Alert.alert(t('payment_failed'), t('payment_failed_msg'), [
-        { text: 'OK', onPress: () => navigation.navigate('MovieList') }
-      ]);
+    if (status === 'FAILED' || status === 'fail') {
+      navigation.replace('PaymentFail', {bookingGroupId});
       return;
     }
 
-    if (bookingGroupId && !details.bookingId) {
-      fetchBookingDetails();
+    if (!bookingGroupId) {
+      Alert.alert("Lỗi", "Thiếu bookingGroupId");
+      navigation.replace("MovieList");
+      return;
     }
 
-    // Pulse rings
-    const pulseRing = (anim, delay) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.timing(anim, { toValue: 1.6, duration: 1200, useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 1, duration: 1200, useNativeDriver: true }),
-        ])
-      ).start();
-    };
-    pulseRing(ring1, 0);
-    pulseRing(ring2, 400);
-    pulseRing(ring3, 800);
-
-    // Main entrance animation
-    Animated.sequence([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 5,
-        tension: 80,
-        useNativeDriver: true,
-      }),
-      Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
-      ]),
-    ]).start();
+    fetchBookingDetails();
   }, []);
 
-  const fetchBookingDetails = async () => {
-    setLoading(true);
+  useEffect(() => {
+    // fallback để không bị invisible
+    fadeAnim.setValue(1);
+    scaleAnim.setValue(1);
+    slideAnim.setValue(0);
+
+    // animate nhẹ sau đó
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+  }, []);
+
+  const fetchBookingDetails = async (retry = 0) => {
     try {
+      if (retry === 0) setLoading(true);
+
       const res = await api.getBookingByGroupId(bookingGroupId);
-      if (res.data.success) {
-        const group = res.data.data;
-        setDetails({
-          bookingId: group.bookingGroupId,
-          movieTitle: group.showtime?.movie?.title || 'Unknown Movie',
-          seats: group.seats,
-          totalPrice: group.totalPrice,
-          cinemaName: 'CineViet', // Derived or static
-          showtime: group.showtime,
-        });
+      const group = res.data.data;
+
+      console.log("FETCH GROUP:", group);
+
+      if (!group) {
+        if (retry < 5) {
+          setTimeout(() => fetchBookingDetails(retry + 1), 1500);
+          return;
+        }
+
+        Alert.alert("Lỗi", "Không lấy được booking");
+        return;
       }
-    } catch (error) {
-      console.error('Failed to fetch booking details:', error);
-      navigation.navigate('SystemError', {
-        errorType: '500',
-        message: 'Could not retrieve booking confirmation'
+
+      setDetails({
+        bookingId: group.bookingGroupId,
+        movieTitle: group.showtime?.movie?.title || 'Unknown Movie',
+        seats: group.seats || [],
+        totalPrice: group.totalPrice || 0,
+        cinemaName: 'CineViet',
+        showtime: group.showtime,
       });
+
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -195,7 +194,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
             {t('booking') || 'BOOKING'}
           </Text>
           <Text className="text-white text-4xl font-black italic tracking-tight mb-6">
-            {t('confirmed_badge') || 'CONFIRMED!'}
+            {t('confirmed_badge') === 'confirmed_badge' ? 'CONFIRMED!' : t('confirmed_badge')}
           </Text>
 
           {/* Booking code card */}
@@ -249,7 +248,7 @@ export default function PaymentSuccessScreen({ route, navigation }) {
                 </View>
               ) : null}
 
-              {details.seats.length > 0 ? (
+              {Array.isArray(details.seats) && details.seats.length > 0 ? (
                 <View className="flex-row justify-between items-center">
                   <Text className="text-gray-500 text-xs font-bold uppercase tracking-widest">{t('seats')}</Text>
                   <Text className="text-white text-sm font-bold">{details.seats.join(', ')}</Text>

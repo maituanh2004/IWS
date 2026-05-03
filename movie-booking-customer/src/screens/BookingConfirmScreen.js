@@ -30,6 +30,7 @@ export default function BookingConfirmScreen({ route, navigation }) {
   const [selectedDiscount, setSelectedDiscount] = useState(null);
   const [isDiscountModalVisible, setIsDiscountModalVisible] = useState(false);
   const [hasNavigated, setHasNavigated] = useState(false);
+  const bookingRef = useRef(null);
 
   useEffect(() => {
     fetchDiscounts();
@@ -142,8 +143,10 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
         currentBookingGroupId = bookingRes.data.data.bookingGroupId;
 
-        // lưu lại để dùng retry
+        bookingRef.current = currentBookingGroupId;
         setBookingGroupId(currentBookingGroupId);
+
+        console.log("BOOKING GROUP ID:", currentBookingGroupId);
       }
 
       // ✅ luôn dùng booking cũ để payment
@@ -168,20 +171,15 @@ export default function BookingConfirmScreen({ route, navigation }) {
     }
   };
 
-  const checkPaymentStatus = async () => {
+  const checkPaymentStatus = async (retry = 0) => {
     try {
-      if (!bookingGroupId) return;
+      const id = bookingRef.current || bookingGroupId;
+      if (!id) return;
 
-      const res = await api.getBookingByGroupId(bookingGroupId);
-
-      console.log("CHECK PAYMENT RESPONSE:", res.data);
-
+      const res = await api.getBookingByGroupId(id);
       const booking = res.data.data;
 
-      if (!booking) {
-        console.log("Booking chưa sẵn sàng");
-        return;
-      }
+      if (!booking) return;
 
       const paymentStatus = booking.paymentStatus;
 
@@ -189,7 +187,10 @@ export default function BookingConfirmScreen({ route, navigation }) {
 
       if (paymentStatus === "SUCCESS" && !hasNavigated) {
         setHasNavigated(true);
-        navigation.replace("BookingDetail", { bookingGroupId });
+        navigation.replace("PaymentSuccess", {
+          bookingGroupId: id,
+          status: "success"
+        });
         return;
       }
 
@@ -199,16 +200,13 @@ export default function BookingConfirmScreen({ route, navigation }) {
         return;
       }
 
-      // PENDING hoặc status khác thì đứng yên
-      console.log("Payment still pending...");
-    } catch (err) {
-      console.log("CHECK PAYMENT ERROR STATUS:", err?.response?.status);
-      console.log("CHECK PAYMENT ERROR DATA:", err?.response?.data);
-      console.log("CHECK PAYMENT ERROR MESSAGE:", err?.message);
+      // 🔥 RETRY nếu chưa xong
+      if (retry < 8) {
+        setTimeout(() => checkPaymentStatus(retry + 1), 3000);
+      }
 
-      // ❌ KHÔNG navigation PaymentFail trong catch
-      // Vì lỗi mạng / 401 / 404 / timeout không chắc chắn là thanh toán thất bại
-      return;
+    } catch (err) {
+      console.log("CHECK ERROR:", err.message);
     }
   };
 

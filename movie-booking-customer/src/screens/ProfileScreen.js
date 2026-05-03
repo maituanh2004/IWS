@@ -187,7 +187,6 @@ export default function ProfileScreen({ navigation }) {
 
         <View className="h-24" />
       </ScrollView>
-      <BottomNav />
 
       {/* Edit Profile Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
@@ -255,6 +254,8 @@ export default function ProfileScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+      
+      <BottomNav />
     </ScreenWrapper>
   );
 }

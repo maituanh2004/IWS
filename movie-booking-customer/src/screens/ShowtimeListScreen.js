@@ -61,7 +61,8 @@ export default function ShowtimeListScreen({ route, navigation }) {
 
   useEffect(() => {
     if (showtimes.length > 0 && !selectedDate) {
-      setSelectedDate(new Date(showtimes[0].startTime).toDateString());
+      const today = new Date().toDateString();
+      setSelectedDate(today);
     }
   }, [showtimes]);
   

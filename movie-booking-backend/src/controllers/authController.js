@@ -13,7 +13,7 @@ exports.register = async (req, res, next) => {
         const trimmedName = name ? name.trim() : '';
 
         // Force role to 'user' for public registration to prevent privilege escalation
-        const roleToAssign = 'user';
+        const roleToAssign = 'customer';
 
         const user = await User.create({
             name: trimmedName,

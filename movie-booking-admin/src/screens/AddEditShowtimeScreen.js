@@ -45,9 +45,15 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showTimePicker, setShowTimePicker] = useState(false);
 
+    const [totalSeats, setTotalSeats] = useState(
+        showtime?.totalSeats?.toString() || '100'
+    );
+    const [isAuto, setIsAuto] = useState(false);
+
     useEffect(() => {
         loadMovies();
     }, []);
+
 
     // ✨ Auto-calculate end time when movie or start time changes
     useEffect(() => {
@@ -82,11 +88,19 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             Alert.alert('Error', 'Failed to load movies');
         }
     };
-    const [totalSeats, setTotalSeats] = useState(
-            (showtime?.totalSeats === 80 || showtime?.totalSeats === 100) 
-            ? showtime.totalSeats.toString() 
-            : '100'
-        );
+
+    useEffect(() => {
+        if (!isAuto) return;
+
+        const roomNumber = parseInt(room);
+
+        if (roomNumber >= 1 && roomNumber <= 5) {
+            setTotalSeats('80');
+        } else if (roomNumber >= 6 && roomNumber <= 10) {
+            setTotalSeats('100');
+        }
+    }, [room]);
+    
     const handleSave = async () => {
         if (!selectedMovieId || !startDate || !startTime || !endDate || !endTime || !room || !price) {
             Alert.alert('Error', 'Please fill in all fields');
@@ -243,7 +257,10 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
                 <View className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 mb-6">
                     <Picker
                     selectedValue={room}
-                    onValueChange={setRoom}
+                    onValueChange={(value) => {
+                        setRoom(value);
+                        setIsAuto(true); 
+                    }}
                     style={{ color: '#fff' }}
                     >
                     {ROOMS.map(r => (
@@ -260,40 +277,84 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
                 <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
                     Total Seats*
                 </Text>
-                <View className="flex-row bg-white/5 p-1 rounded-2xl border border-white/10">
-                    <TouchableOpacity 
-                        onPress={() => setTotalSeats('80')}
-                        className={`flex-1 py-4 items-center rounded-xl ${totalSeats === '80' ? 'bg-[#c04444]' : ''}`}
-                    >
-                        <Text className={`font-black ${totalSeats === '80' ? 'text-white' : 'text-gray-500'}`}>80</Text>
-                    </TouchableOpacity>
-                    
-                    
-                    <TouchableOpacity 
-                        onPress={() => setTotalSeats('100')}
-                        className={`flex-1 py-4 items-center rounded-xl ${totalSeats === '100' ? 'bg-[#c04444]' : ''}`}
-                    >
-                        <Text className={`font-black ${totalSeats === '100' ? 'text-white' : 'text-gray-500'}`}>100</Text>
-                    </TouchableOpacity>
-                </View>
-                {/* BASE PRICE */}
-                    <Text className="text-[10px] font-black text-gray-500 mb-3 uppercase tracking-widest ml-1">
-                        Base Price (VND)*
-                    </Text>
-                    <TextInput
-                        className="bg-white/5 text-white p-5 rounded-2xl border border-white/10 font-black italic mb-6"
-                        value={price}
-                        onChangeText={setPrice}
-                        placeholder="e.g. 80000"
-                        placeholderTextColor="#4b5563"
-                        keyboardType="numeric" // Hiển thị bàn phím số
-                        returnKeyType="done"
-                    />
-            </View>
+                <View
+                style={{
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    borderRadius: 20,
+                    padding: 4,
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.08)',
+                }}
+                >
+                <View style={{ flexDirection: 'row' }}>
 
+                    {/* 80 */}
+                    <View
+                    style={{
+                        flex: 1,
+                        paddingVertical: 16,
+                        borderRadius: 16,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor:
+                        totalSeats === '80'
+                            ? 'rgba(192,68,68,0.9)'
+                            : 'transparent',
+                        shadowColor: totalSeats === '80' ? '#c04444' : 'transparent',
+                        shadowOpacity: 0.4,
+                        shadowRadius: 10,
+                        elevation: totalSeats === '80' ? 6 : 0,
+                    }}
+                    >
+                    <Text
+                        style={{
+                        fontWeight: '900',
+                        fontSize: 16,
+                        color: totalSeats === '80' ? '#fff' : '#777',
+                        letterSpacing: 1,
+                        }}
+                    >
+                        80
+                    </Text>
+                    </View>
+
+                    {/* 100 */}
+                    <View
+                    style={{
+                        flex: 1,
+                        paddingVertical: 16,
+                        borderRadius: 16,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor:
+                        totalSeats === '100'
+                            ? 'rgba(192,68,68,0.9)'
+                            : 'transparent',
+                        shadowColor: totalSeats === '100' ? '#c04444' : 'transparent',
+                        shadowOpacity: 0.4,
+                        shadowRadius: 10,
+                        elevation: totalSeats === '100' ? 6 : 0,
+                    }}
+                    >
+                    <Text
+                        style={{
+                        fontWeight: '900',
+                        fontSize: 16,
+                        color: totalSeats === '100' ? '#fff' : '#777',
+                        letterSpacing: 1,
+                        }}
+                    >
+                        100
+                    </Text>
+                    </View>
+
+                </View>
+            </View>
+                
+            </View>
                 {/* BUTTON */}
                 <TouchableOpacity
-                    className="bg-[#c04444] p-6 rounded-[24px] items-center mb-10"
+                    className="bg-[#c04444] p-6 rounded-[24px] items-center mb-10 mt-4"
                     onPress={handleSave}
                     disabled={loading}
                 >

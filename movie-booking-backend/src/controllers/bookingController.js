@@ -118,22 +118,43 @@ exports.previewBooking = async (req, res) => {
 // Get Booking by Group Id
 exports.getBookingByGroupId = async (req, res) => {
   try {
-    const bookings = await Booking.find({
-      bookingGroupId: req.params.bookingGroupId
-    });
-    
+    const { bookingGroupId } = req.params;
+
+    const bookings = await Booking.find({ bookingGroupId })
+      .populate("user", "name email")
+      .populate({
+        path: "showtime",
+        populate: {
+          path: "movie",
+          model: "Movie"
+        }
+      });
+
     if (!bookings.length) {
       return res.json({
         success: true,
-        data: null, 
+        data: null,
         paymentStatus: "PENDING"
       });
     }
 
+    // 🔥 GROUP DATA CHUẨN
+    const first = bookings[0];
+
+    const grouped = {
+      bookingGroupId,
+      seats: bookings.map(b => b.seat),
+      totalPrice: bookings.reduce((sum, b) => sum + b.totalPrice, 0),
+      paymentStatus: first.paymentStatus,
+      status: first.status,
+      showtime: first.showtime,
+      user: first.user,
+    };
+
     return res.json({
       success: true,
-      data: bookings[0],
-      paymentStatus: bookings[0].paymentStatus
+      data: grouped,
+      paymentStatus: first.paymentStatus
     });
 
   } catch (err) {
