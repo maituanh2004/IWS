@@ -48,7 +48,6 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
     const [totalSeats, setTotalSeats] = useState(
         showtime?.totalSeats?.toString() || '100'
     );
-    const [isAuto, setIsAuto] = useState(false);
 
     useEffect(() => {
         loadMovies();
@@ -82,7 +81,14 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             const response = await movieApi.getMovies();
             setMovies(response.data.data);
             if (!selectedMovieId && response.data.data.length > 0) {
-                setSelectedMovieId(response.data.data[0]._id);
+                const firstMovie = response.data.data[0];
+
+                setSelectedMovieId(firstMovie._id);
+
+                // 🔥 SET PRICE NGAY TỪ ĐẦU
+                if (firstMovie.price) {
+                    setPrice(firstMovie.price.toString());
+                }
             }
         } catch (error) {
             Alert.alert('Error', 'Failed to load movies');
@@ -90,8 +96,6 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
     };
 
     useEffect(() => {
-        if (!isAuto) return;
-
         const roomNumber = parseInt(room);
 
         if (roomNumber >= 1 && roomNumber <= 5) {
@@ -100,6 +104,16 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             setTotalSeats('100');
         }
     }, [room]);
+
+    useEffect(() => {
+        if (selectedMovieId && movies.length > 0) {
+            const movie = movies.find(m => m._id === selectedMovieId);
+
+            if (movie?.price) {
+            setPrice(movie.price.toString());
+            }
+        }
+    }, [selectedMovieId, movies]);
     
     const handleSave = async () => {
         if (!selectedMovieId || !startDate || !startTime || !endDate || !endTime || !room || !price) {
@@ -110,16 +124,18 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
             Alert.alert('Error', 'Please enter a valid base price');
             return;
         }
+        const movie = movies.find(m => m._id === selectedMovieId);
+        const start = new Date(`${startDate}T${startTime}:00`);
+        const end = new Date(start.getTime() + movie.duration * 60 * 1000);
 
         const showtimeData = {
             movieId: selectedMovieId,
-            startTime: new Date(`${startDate}T${startTime}:00`),
-            endTime: new Date(`${endDate}T${endTime}:00`),
+            startTime: start,
+            endTime: end,
             roomId: room,
             totalSeats: parseInt(totalSeats),
             basePrice: parseFloat(price),
         };
-
         setLoading(true);
         try {
             if (isEdit) {
@@ -259,7 +275,6 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
                     selectedValue={room}
                     onValueChange={(value) => {
                         setRoom(value);
-                        setIsAuto(true); 
                     }}
                     style={{ color: '#fff' }}
                     >
@@ -286,7 +301,7 @@ export default function AddEditShowtimeScreen({ route, navigation }) {
                     borderColor: 'rgba(255,255,255,0.08)',
                 }}
                 >
-                <View style={{ flexDirection: 'row' }}>
+                <View style={{ flexDirection: 'row', height: 60, borderRadius: 16, overflow: 'hidden' }}>
 
                     {/* 80 */}
                     <View
