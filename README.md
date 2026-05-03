@@ -49,13 +49,17 @@ npm install
 ```bash
 # Customer app
 cd ../movie-booking-customer
-npm install
+npm install --legacy-peer-deps
+npm install lucide-react-native --legacy-peer-deps
+npx expo install expo-blur
 ```
 
 ```bash
 # Admin app
 cd ../movie-booking-admin
-npm install
+npm install --legacy-peer-deps
+npx expo install @react-native-community/datetimepicker
+npm install lucide-react-native --legacy-peer-deps
 ```
 
 ---
